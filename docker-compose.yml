@@ -2,7 +2,7 @@ services:
   # (~) Database
   database-postgres:
     profiles: ["db-postgres"]
-    image: postgres:17-alpine
+    image: mirror.gcr.io/library/postgres:17-alpine
     environment:
       POSTGRES_DB: ${DB_NAME:-appdb}
       POSTGRES_USER: ${DB_USER:-appuser}
@@ -25,7 +25,7 @@ services:
 
   database-mysql:
     profiles: ["db-mysql"]
-    image: mysql:8.4
+    image: mirror.gcr.io/library/mysql:8.4
     environment:
       MYSQL_DATABASE: ${DB_NAME:-appdb}
       MYSQL_USER: ${DB_USER:-appuser}
@@ -50,7 +50,7 @@ services:
   # (~) RabbitMQ
   rabbitmq:
     profiles: ["queue"]
-    image: rabbitmq:3.13-management-alpine
+    image: mirror.gcr.io/library/rabbitmq:3.13-management-alpine
     container_name: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-queue_user}

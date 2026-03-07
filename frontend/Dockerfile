@@ -1,5 +1,5 @@
 # Dev stage
-FROM node:20-slim AS dev
+FROM mirror.gcr.io/library/node:20-slim AS dev
 RUN apt-get update && apt-get install -y openssl
 WORKDIR /app
 RUN corepack enable
@@ -10,7 +10,7 @@ CMD ["sh", "-c", "pnpm install --frozen-lockfile \
   && pnpm run dev"]
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM mirror.gcr.io/library/node:20-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 RUN corepack enable
@@ -20,7 +20,7 @@ COPY . ./
 RUN pnpm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM mirror.gcr.io/library/node:20-alpine AS production
 WORKDIR /app
 COPY --from=builder /app/.output ./
 COPY --from=builder /app/package*.json ./
