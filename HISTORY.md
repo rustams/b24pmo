@@ -1,0 +1,118 @@
+# HISTORY
+
+## Project Context
+- Repository in use: `rustams/b24pmo` (origin on VPS is `git@github.com:rustams/b24pmo.git`)
+- Server: `85.239.54.74` (Ubuntu 24.04.3)
+- Domain: `russalp.ru`
+- Active stack: `frontend + php + postgres` (no CloudPub tunnel)
+- Runtime mode: app is served via Docker Compose, proxied by Nginx, TLS via Let's Encrypt
+
+## What Was Done (Chronological)
+
+### 1) Initial VPS Provisioning
+- Installed base tooling: `git`, `make`, `docker.io`, `docker compose plugin`, `nginx`, `certbot`, `python3-certbot-nginx`, `ufw`.
+- Cloned project to `/opt/b24-ai-starter`.
+- Created and configured `.env` manually (without `make dev-init`) to avoid CloudPub path.
+
+### 2) Compose/Runtime Setup Without CloudPub
+- Started stack with profiles:
+  - `frontend`
+  - `php`
+  - `db-postgres`
+- Added `docker-compose.override.yml` to bind frontend only on localhost:
+  - `127.0.0.1:3000:3000`
+- Kept backend/api internal for platform use and development.
+
+### 3) Docker Hub Rate-Limit Mitigation
+- Encountered Docker Hub anonymous pull limits (`429 Too Many Requests`).
+- Switched base images to `mirror.gcr.io` in:
+  - `frontend/Dockerfile`
+  - `backends/php/docker/php-fpm/Dockerfile`
+  - `backends/php/docker/php-cli/Dockerfile`
+  - `docker-compose.yml` images for database/queue
+- This was committed on VPS and pushed to current repo.
+
+### 4) HTTPS + Nginx + Redirect
+- Configured Nginx reverse proxy:
+  - `https://russalp.ru/*` -> `http://127.0.0.1:3000`
+- Issued Let's Encrypt certificate for `russalp.ru`.
+- Enabled HTTP -> HTTPS redirect.
+- Verified:
+  - `http://russalp.ru` => `301`
+  - `https://russalp.ru` => `200`
+
+### 5) Service Persistence
+- Added systemd unit for app startup:
+  - `/etc/systemd/system/b24-ai-starter.service`
+- Enabled service to start on boot.
+
+### 6) Operational Commands
+- Added helper scripts:
+  - `/usr/local/bin/b24-deploy`
+  - `/usr/local/bin/b24-status`
+  - `/usr/local/bin/b24-logs`
+- `b24-deploy master` does:
+  - fetch + checkout + ff-only pull
+  - restart `b24-ai-starter`
+  - wait for `https://russalp.ru` health `200`
+
+### 7) Git Remote Migration
+- Switched remote from starter template repo to project repo:
+  - `rustams/b24pmo`
+- Pushed current branch (`master`) to new origin.
+
+### 8) SSH Hardening + Deploy User
+- Created `deploy` user for operations.
+- Configured SSH key auth for `deploy`.
+- Disabled insecure SSH options:
+  - `PermitRootLogin no`
+  - `PasswordAuthentication no`
+  - `KbdInteractiveAuthentication no`
+- Root SSH login is disabled.
+
+### 9) Webhook Auto-Deploy
+- Implemented webhook service:
+  - `/usr/local/bin/b24-webhook.py`
+  - `/etc/systemd/system/b24-webhook.service`
+  - `/etc/b24/webhook.env` (contains secret and branch/repo restrictions)
+- Added Nginx route:
+  - `POST https://russalp.ru/deploy-webhook` -> webhook service (`127.0.0.1:9001`)
+- Security checks in webhook:
+  - Verifies `X-Hub-Signature-256` HMAC
+  - Accepts only repo `rustams/b24pmo`
+  - Accepts only ref `refs/heads/master`
+  - Triggers `b24-deploy master` via `flock` lock
+
+## Current Working Model
+
+### Development flow
+1. Work locally in Cursor on cloned `rustams/b24pmo`.
+2. Commit and push to `master`.
+3. GitHub webhook triggers deploy automatically on VPS.
+
+### Manual operations on VPS (as `deploy`)
+- `b24-status` - show git/services/containers/http health
+- `b24-deploy master` - manual deploy
+- `b24-logs 200` - tail logs
+
+## Important Paths
+- App: `/opt/b24-ai-starter`
+- Nginx site: `/etc/nginx/sites-available/russalp.ru`
+- App systemd unit: `/etc/systemd/system/b24-ai-starter.service`
+- Webhook script: `/usr/local/bin/b24-webhook.py`
+- Webhook unit: `/etc/systemd/system/b24-webhook.service`
+- Webhook env/secret: `/etc/b24/webhook.env`
+- Webhook log: `/var/log/b24-webhook.log`
+- SSH hardening: `/etc/ssh/sshd_config.d/99-hardening.conf`
+
+## Known Notes / Caveats
+- Mirror registry (`mirror.gcr.io`) is intentionally used to avoid Docker Hub rate limits.
+- Branch in use for deploy is `master`.
+- Frontend is bound to localhost only; public ingress is only through Nginx.
+- CloudPub is intentionally not used in this deployment.
+
+## Verification Snapshot (at time of writing)
+- `b24-ai-starter.service`: active
+- `b24-webhook.service`: active
+- `https://russalp.ru`: HTTP 200
+- Webhook endpoint rejects unsigned requests and accepts signed `ping`/`push` payloads.
