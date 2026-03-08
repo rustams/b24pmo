@@ -41,10 +41,15 @@ if [[ "$REMOTE_LOCAL_COMMIT" != "$REMOTE_ORIGIN_COMMIT" ]]; then
   echo "ERROR: VPS HEAD differs from origin/master" >&2
   exit 3
 fi
-if ! grep -q '^active$' <<<"$SERVICES"; then
-  echo "ERROR: some required services are not active" >&2
-  exit 4
-fi
+while IFS= read -r service_state; do
+  if [[ -z "$service_state" ]]; then
+    continue
+  fi
+  if [[ "$service_state" != "active" ]]; then
+    echo "ERROR: some required services are not active (state=$service_state)" >&2
+    exit 4
+  fi
+done <<< "$SERVICES"
 if [[ "$HEALTH_CODE" != "200" ]]; then
   echo "ERROR: health check is not 200" >&2
   exit 5
