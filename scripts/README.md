@@ -123,6 +123,29 @@ python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure \
 - Вложенные подзадачи (`2.1`, `2.2`) задаются через поле `parent` в `docs/ROADMAP_TASKS.json`.
 - Последовательность выполнения отражается зависимостями (Gantt links).
 - Межэпиковые зависимости также создаются через связи задач.
+- При закрытии задачи фиксируй `Результат задачи`: что сделано + ссылка на commit.
+- Для эпиков включай автозакрытие основной задачи при закрытии подзадач; закрытый эпик должен содержать в названии `Завершена`.
+
+Записать результаты всех завершенных roadmap-задач:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-task-results \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --status-file docs/ROADMAP_EXECUTION_STATUS.json \
+  --commit-url "https://github.com/rustams/b24pmo/commit/<hash>" \
+  --apply
+```
+
+Синхронизировать автозакрытие эпиков и закрыть/пометить завершенные эпики:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-epic-completion \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --status-file docs/ROADMAP_EXECUTION_STATUS.json \
+  --apply
+```
 
 Получение актуальных канбан-стадий из Bitrix24:
 

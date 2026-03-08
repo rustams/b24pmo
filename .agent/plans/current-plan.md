@@ -1,7 +1,7 @@
 # Current Plan
 
-Task: Apply visual numbering for epic subtask hierarchy in Bitrix24.
+Task: Внедрить правило "Результат задачи" + автозакрытие эпиков и обновить все артефакты процесса.
 
-1. Extend title generation to include hierarchical numbering by epic tree. [completed]
-2. Re-sync Bitrix24 structure and verify titles in tasks. [completed]
-3. Update history/artifacts and finalize with commit/push + VPS verification. [in_progress]
+1. Добавить в `roadmap_sync.py` команды для записи результата задачи и синхронизации закрытия эпиков. [completed]
+2. Применить новые команды к текущим задачам Bitrix24 (включая завершённые) и проверить изменения. [in_progress]
+3. Обновить инструкции/skills/историю и контекстные артефакты, выполнить self-check по rubric. [pending]

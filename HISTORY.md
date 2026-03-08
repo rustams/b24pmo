@@ -218,6 +218,29 @@
   - supports dry-run and apply modes
   - creates project tasks via `tasks.task.add`
   - links dependencies via `task.dependence.add` (finish-start)
+
+### 16) Bitrix24 Task Result + Epic Auto-Close Rules (March 9, 2026)
+- Added new mandatory workflow rules for Bitrix24 task operations:
+  - when task is completed, write `Результат задачи` with done summary + commit link,
+  - for epic/root tasks enable auto-close logic based on subtasks,
+  - when epic is closed, append `Завершена` to title.
+- Extended roadmap automation script:
+  - `sync-task-results` mode in `scripts/bitrix24/roadmap_sync.py`
+    - selects completed roadmap tasks from `docs/ROADMAP_EXECUTION_STATUS.json`
+    - writes completion comment via `task.comment.add`
+    - attempts binding as task result via `tasks.task.result.addFromComment`
+  - `sync-epic-completion` mode
+    - enables epic auto-close fields (`AUTOCOMPLETE_SUB_TASKS`, `SE_PARAMETER`)
+    - closes epic when all its roadmap subtasks are completed
+    - appends `Завершена` in epic title when closed.
+- Updated operating docs and agent templates/skills:
+  - `instructions/knowledge.md`
+  - `instructions/agents/knowledge.md`
+  - `instructions/agents/workflows.md`
+  - `docs/CHAT_START_TEMPLATE.md`
+  - `.cursor/skills/bitrix24-project-ops/SKILL.md`
+  - `.claude/skills/bitrix24-project-ops/SKILL.md`
+  - `scripts/README.md`
   - updates task statuses via `tasks.task.update`
 - Updated operational script docs:
   - `scripts/README.md`

@@ -28,6 +28,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -122,6 +123,36 @@ class BitrixWebhookClient:
             url,
             data=data,
             headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                body = resp.read().decode("utf-8")
+        except urllib.error.HTTPError as err:
+            detail = err.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"HTTP {err.code} for {method}: {detail}") from err
+        except urllib.error.URLError as err:
+            raise RuntimeError(f"Network error for {method}: {err}") from err
+
+        try:
+            parsed = json.loads(body)
+        except json.JSONDecodeError as err:
+            raise RuntimeError(f"Invalid JSON for {method}: {body}") from err
+
+        if "error" in parsed:
+            raise RuntimeError(
+                f"Bitrix error for {method}: {parsed.get('error')} - {parsed.get('error_description')}"
+            )
+        return parsed
+
+    def call_form(self, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Call legacy Bitrix methods that expect form-encoded payload."""
+        url = f"{self.webhook_url}/{method}.json"
+        encoded = urllib.parse.urlencode(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=encoded,
+            headers={"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"},
             method="POST",
         )
         try:
@@ -979,6 +1010,146 @@ def fetch_stages_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_done_result_text(task: RoadmapTask, commit_url: str, now_iso: str) -> str:
+    epic_value = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+    lines = [
+        f"Результат задачи {task.key}: {task.title}",
+        f"Эпик: {epic_value}",
+        f"Сделано: {task.description}",
+        f"Дата фиксации: {now_iso}",
+        f"Коммит: {commit_url}",
+    ]
+    return "\n".join(lines)
+
+
+def sync_task_results_mode(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    map_file = Path(args.map_file)
+    status_file = Path(args.status_file)
+    tasks = load_roadmap(source)
+    by_key = {task.key: task for task in tasks}
+    mapping = json.loads(map_file.read_text(encoding="utf-8"))
+    statuses = json.loads(status_file.read_text(encoding="utf-8"))
+
+    task_ids: dict[str, int] = mapping.get("tasks", {})
+    requested_statuses: dict[str, Any] = statuses.get("tasks", {})
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    done_code = BITRIX_STATUS_ALIAS["COMPLETED"]
+    now_iso = datetime.now(timezone.utc).isoformat()
+    changed = 0
+
+    for key, status_value in requested_statuses.items():
+        status_code = normalize_status(status_value)
+        if status_code != done_code:
+            continue
+        task_id = int(task_ids.get(key, 0))
+        if task_id <= 0:
+            print(f"[WARN] Skip result for {key}: task ID missing")
+            continue
+        if key not in by_key:
+            print(f"[WARN] Skip result for {key}: missing in roadmap source")
+            continue
+
+        task = by_key[key]
+        message = _build_done_result_text(task, args.commit_url, now_iso)
+        if not args.apply:
+            print(f"[DRY-RUN] result {key}#{task_id}: {message}")
+            continue
+
+        # Legacy method is the only stable way to create comment id usable for task result binding.
+        comment_res = client.call_form(
+            "task.comment.add",
+            {
+                "TASKID": int(task_id),
+                "COMMENTTEXT": message,
+            },
+        )
+        comment_id = int(comment_res.get("result", 0))
+        if comment_id <= 0:
+            print(f"[WARN] Comment ID missing for {key}#{task_id}; skip result bind")
+            continue
+        try:
+            client.call("tasks.task.result.addFromComment", {"commentId": int(comment_id)})
+            print(f"Added task result for {key}#{task_id} via comment {comment_id}")
+        except RuntimeError as error:
+            print(
+                f"[WARN] Failed to bind comment {comment_id} as result for {key}#{task_id}: {error}. "
+                "Comment was created and kept."
+            )
+        changed += 1
+
+    print(f"Result sync finished. Processed completed tasks: {changed}")
+    return 0
+
+
+def _ensure_done_suffix(title: str) -> str:
+    if "завершена" in title.lower():
+        return title
+    return f"{title} (Завершена)"
+
+
+def sync_epic_completion_mode(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    map_file = Path(args.map_file)
+    status_file = Path(args.status_file)
+
+    tasks = load_roadmap(source)
+    statuses = json.loads(status_file.read_text(encoding="utf-8"))
+    mapping = json.loads(map_file.read_text(encoding="utf-8"))
+    requested_statuses: dict[str, Any] = statuses.get("tasks", {})
+    epic_ids: dict[str, int] = mapping.get("epics", {})
+
+    epic_tasks: dict[str, list[RoadmapTask]] = defaultdict(list)
+    for task in tasks:
+        epic_value = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+        epic_code = _epic_code(epic_value)
+        epic_tasks[epic_code].append(task)
+
+    done_code = BITRIX_STATUS_ALIAS["COMPLETED"]
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    changed = 0
+
+    for epic_code, task_list in sorted(epic_tasks.items()):
+        epic_id = int(epic_ids.get(epic_code, 0))
+        if epic_id <= 0:
+            print(f"[WARN] Skip epic {epic_code}: epic task ID missing")
+            continue
+
+        all_done = True
+        for task in task_list:
+            status_code = normalize_status(requested_statuses.get(task.key))
+            if status_code != done_code:
+                all_done = False
+                break
+
+        # Enable parent auto-close behavior for all epic roots.
+        fields: dict[str, Any] = {
+            "AUTOCOMPLETE_SUB_TASKS": "Y",
+            "SE_PARAMETER": ["AUTO_COMPLETE"],
+        }
+        action = "update"
+
+        if all_done:
+            epic_get = client.call("tasks.task.get", {"taskId": int(epic_id)}) if args.apply else {"result": {"task": {}}}
+            current_title = str(epic_get.get("result", {}).get("task", {}).get("title", ""))
+            if current_title:
+                fields["TITLE"] = _ensure_done_suffix(current_title)
+            fields["STATUS"] = int(done_code)
+            action = "complete"
+
+        payload = {"taskId": int(epic_id), "fields": fields}
+        if not args.apply:
+            print(f"[DRY-RUN] epic {epic_code}#{epic_id} {action}: {json.dumps(payload, ensure_ascii=False)}")
+            continue
+
+        client.call("tasks.task.update", payload)
+        changed += 1
+        print(f"Updated epic {epic_code}#{epic_id}: auto-close=Y, action={action}")
+
+    print(f"Epic completion sync finished. Updated epics: {changed}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Bitrix24 roadmap sync utility")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1070,6 +1241,47 @@ def build_parser() -> argparse.ArgumentParser:
         help="Where to save fetched stages",
     )
 
+    sync_results = subparsers.add_parser(
+        "sync-task-results",
+        help="Write task completion results (comment + task result bind) for completed roadmap tasks",
+    )
+    sync_results.add_argument("--webhook-url", help="Incoming webhook base URL")
+    sync_results.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
+    sync_results.add_argument(
+        "--map-file",
+        default=".agent/context/bitrix-task-map.json",
+        help="Roadmap key -> task ID mapping file",
+    )
+    sync_results.add_argument(
+        "--status-file",
+        default="docs/ROADMAP_EXECUTION_STATUS.json",
+        help="Roadmap execution status file",
+    )
+    sync_results.add_argument(
+        "--commit-url",
+        required=True,
+        help="Commit URL to include into task result text",
+    )
+    sync_results.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
+
+    sync_epic_completion = subparsers.add_parser(
+        "sync-epic-completion",
+        help="Enable epic auto-close and close/rename epics when all subtasks are completed",
+    )
+    sync_epic_completion.add_argument("--webhook-url", help="Incoming webhook base URL")
+    sync_epic_completion.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
+    sync_epic_completion.add_argument(
+        "--map-file",
+        default=".agent/context/bitrix-task-map.json",
+        help="Roadmap task/epic mapping file",
+    )
+    sync_epic_completion.add_argument(
+        "--status-file",
+        default="docs/ROADMAP_EXECUTION_STATUS.json",
+        help="Roadmap execution status file",
+    )
+    sync_epic_completion.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
+
     return parser
 
 
@@ -1091,6 +1303,10 @@ def main() -> int:
             return create_missing_mode(args)
         if args.command == "sync-epic-structure":
             return sync_epic_structure_mode(args)
+        if args.command == "sync-task-results":
+            return sync_task_results_mode(args)
+        if args.command == "sync-epic-completion":
+            return sync_epic_completion_mode(args)
         parser.print_help()
         return 1
     except Exception as exc:  # pylint: disable=broad-except

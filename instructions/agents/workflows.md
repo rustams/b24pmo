@@ -7,9 +7,11 @@
 4. Implement backend + frontend slices.
 5. Keep Bitrix24 task tree in sync (`эпик -> подзадачи -> вложенные подзадачи`) and gantt links for sequence/cross-epic dependencies.
 6. Move active task status in Bitrix24 and kanban (`В работе` -> `На тестировании` -> `Сделаны`) and mirror the same in repository status file.
-7. Validate endpoint/UI behavior.
-8. Record results in artifact files.
-9. After `git push`, run VPS sync check: `./scripts/vps/verify-sync.sh`.
+7. При завершении задачи записать `Результат задачи` в Bitrix24: что сделано + ссылка на коммит.
+8. Для базовых задач (эпиков) включить автозакрытие при закрытии подзадач; после фактического закрытия добавить в название `Завершена`.
+9. Validate endpoint/UI behavior.
+10. Record results in artifact files.
+11. After `git push`, run VPS sync check: `./scripts/vps/verify-sync.sh`.
 
 ## Workflow B: Long-Running/Complex Task
 1. Activate `context-fundamentals` + `filesystem-context`.

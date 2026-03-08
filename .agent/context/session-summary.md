@@ -1,7 +1,7 @@
 # Session Summary
 
 ## Goal
-- Transition Bitrix24 project board to epic-centered hierarchy for clearer visual management.
+- Enforce new Bitrix24 execution policy: task results with commit links + epic auto-close and completed epic naming.
 
 ## Active Skills
 - bitrix24-project-ops
@@ -10,22 +10,20 @@
 - filesystem-context
 
 ## Current Status
-- Added epic structure sync mode to roadmap automation (`sync-epic-structure`).
-- Created epic root tasks in Bitrix24:
-  - EPIC-FND (#241)
-  - EPIC-INS (#243)
-  - EPIC-CORE (#239)
-  - EPIC-OPS (#245)
-  - EPIC-SEC (#247)
-  - EPIC-V11 (#249)
-- Reattached roadmap tasks as epic subtasks.
-- Added nested subtask links (e.g. RD-502/RD-503 under RD-501).
-- Applied gantt cross-epic dependencies on epic roots.
-- Updated roadmap source with `parent` fields and updated docs/skills/rules.
+- Extended `scripts/bitrix24/roadmap_sync.py` with:
+  - `sync-task-results` (writes completion comments and binds Bitrix task result),
+  - `sync-epic-completion` (enables epic auto-close fields, closes completed epics, appends `Завершена` to epic title).
+- Updated process docs and startup templates with mandatory rules for:
+  - `Результат задачи` usage on completion,
+  - auto-close behavior for epic root tasks,
+  - `Завершена` marker for closed epic titles.
+- Updated mirrored skills in `.cursor/skills` and `.claude/skills`.
+- Dry-run validation completed for both new sync commands on project `GROUP_ID=17`.
 
 ## Notes
-- Bitrix24 blocks parent links that create dependency cycles; script now auto-falls back to epic parent and continues safely.
+- Bitrix task result REST API requires legacy comment creation (`task.comment.add` with form payload) before calling `tasks.task.result.addFromComment`.
 
 ## Next Steps
-- Commit/push updates.
-- Verify VPS sync by mandatory workflow script.
+- Commit changes and run real Bitrix24 sync with new commit URL.
+- Verify task board updates.
+- Push and verify VPS sync/health.

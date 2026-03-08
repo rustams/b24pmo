@@ -31,7 +31,8 @@
 3. Проверить интеграцию с Bitrix24 (install/getToken/widgets/events).
 4. Прогнать проверки (минимум lint/security по задаче).
 5. Для roadmap-задач: синхронизировать Bitrix24 статусы и канбан через `scripts/bitrix24/roadmap_sync.py`.
-6. После `git push`: выполнить `./scripts/vps/verify-sync.sh`.
+6. Для завершенных roadmap-задач: фиксировать `Результат задачи` (что сделано + commit URL) и синхронизировать закрытие эпиков.
+7. После `git push`: выполнить `./scripts/vps/verify-sync.sh`.
 
 ## Принципы
 - Не использовать удалённый в этом репозитории PHP-стек и связанные инструкции.

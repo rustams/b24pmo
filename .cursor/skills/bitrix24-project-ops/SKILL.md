@@ -1,6 +1,6 @@
 ---
 name: bitrix24-project-ops
-description: Управление задачами проекта в Bitrix24 через webhook: синхронизация статусов и канбана, обновление описаний по roadmap, и обязательная проверка синхронизации деплоя на VPS после push.
+description: Управление задачами проекта в Bitrix24 через webhook: синхронизация статусов и канбана, обновление описаний, запись результата задачи, автозакрытие эпиков и обязательная проверка синхронизации деплоя на VPS после push.
 ---
 
 # Bitrix24 Project Ops
@@ -21,8 +21,11 @@ description: Управление задачами проекта в Bitrix24 ч
 4. Эпик в Bitrix24 — это отдельная базовая задача верхнего уровня.
 5. Задачи эпика оформляются как подзадачи эпика; вложенные уровни (`2.1`, `2.2`) — через `parent`.
 6. В описании эпика обязательно: состав задач, используемые skills/инструменты, критерий завершения эпика.
-4. Описание задачи в Bitrix24 — на русском языке.
-5. После `git push` обязательно запускать `./scripts/vps/verify-sync.sh`.
+7. Описание задач — на русском языке.
+8. При завершении задачи обязательно заполнить в Bitrix24 `Результат задачи`: что сделано + ссылка на commit.
+9. Для эпиков включить опцию автозакрытия основной задачи при закрытии подзадач.
+10. Если эпик закрыт, добавить в его название слово `Завершена`.
+11. После `git push` обязательно запускать `./scripts/vps/verify-sync.sh`.
 
 ## Базовые команды
 
@@ -58,6 +61,25 @@ python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure \
   --source docs/ROADMAP_TASKS.json \
   --map-file .agent/context/bitrix-task-map.json \
   --default-responsible-id 1 \
+  --apply
+```
+
+Записать результаты завершенных задач (включая уже завершенные):
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-task-results \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --status-file docs/ROADMAP_EXECUTION_STATUS.json \
+  --commit-url "https://github.com/rustams/b24pmo/commit/<hash>" \
+  --apply
+```
+
+Синхронизировать автозакрытие эпиков и закрыть/переименовать завершенные эпики:
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-epic-completion \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --status-file docs/ROADMAP_EXECUTION_STATUS.json \
   --apply
 ```
 

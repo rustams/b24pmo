@@ -53,4 +53,6 @@ Combines:
   - descriptions in Russian
   - epic is a top-level task; roadmap tasks are epics' subtasks; nested subtasks use `parent`
   - kanban movement synced with task status transitions
+  - on completion, fill Bitrix24 task result with summary + commit link
+  - epic root tasks must have auto-close enabled; closed epic title includes `Завершена`
 - Post-push deployment guardrail: verify VPS sync and health with `./scripts/vps/verify-sync.sh`.
