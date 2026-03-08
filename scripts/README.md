@@ -73,3 +73,18 @@ python3 scripts/bitrix24/roadmap_sync.py sync-status \
 ```
 
 По умолчанию скрипт работает в dry-run режиме. Для реальной записи обязателен флаг `--apply`.
+
+Обновление описаний/названий задач из roadmap (эпик, skills, тесты, DoD):
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-metadata \
+  --webhook-url "https://<portal>/rest/<user>/<hook>/" \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --apply
+```
+
+Рекомендуемое соответствие workflow-статусов:
+- `В работе` -> `STATUS=3`
+- `На тестировании` -> `STATUS=4`
+- `Сделаны` -> `STATUS=5`

@@ -41,6 +41,15 @@ BITRIX_STATUS_ALIAS = {
     "DECLINED": 7,
 }
 
+STAGE_EPIC_MAP = {
+    "Stage 0 - Foundation": "EPIC-FND Foundation & Delivery Ops",
+    "Stage 1 - Installer": "EPIC-INS Installer & Mapping",
+    "Stage 2 - Strategy & Delivery": "EPIC-CORE Strategy & Delivery Core",
+    "Stage 3 - Operations Domains": "EPIC-OPS Resources/Risks/Budget/Meetings",
+    "Stage 4 - RBAC & Hardening": "EPIC-SEC RBAC & Quality Hardening",
+    "Stage 5 - v1.1": "EPIC-V11 Product Extensions",
+}
+
 
 @dataclass
 class RoadmapTask:
@@ -53,6 +62,11 @@ class RoadmapTask:
     tags: list[str] = field(default_factory=list)
     responsible_id: int | None = None
     status: str | int | None = None
+    epic: str | None = None
+    skills: list[str] = field(default_factory=list)
+    technical_test: list[str] = field(default_factory=list)
+    ui_test: list[str] = field(default_factory=list)
+    done_definition: list[str] = field(default_factory=list)
 
 
 class BitrixWebhookClient:
@@ -105,6 +119,11 @@ def load_roadmap(path: Path) -> list[RoadmapTask]:
             tags=item.get("tags", []),
             responsible_id=item.get("responsible_id"),
             status=item.get("status"),
+            epic=item.get("epic"),
+            skills=item.get("skills", []),
+            technical_test=item.get("technical_test", []),
+            ui_test=item.get("ui_test", []),
+            done_definition=item.get("done_definition", []),
         )
         if task.key in keys:
             raise ValueError(f"Duplicate task key: {task.key}")
@@ -127,7 +146,127 @@ def normalize_status(value: str | int | None) -> int | None:
         return value
     if str(value).isdigit():
         return int(value)
-    return BITRIX_STATUS_ALIAS.get(str(value).strip().upper())
+    normalized = str(value).strip().upper()
+    ru_alias = {
+        "В РАБОТЕ": "IN_PROGRESS",
+        "НА ТЕСТИРОВАНИИ": "SUPPOSEDLY_COMPLETED",
+        "СДЕЛАНЫ": "COMPLETED",
+    }
+    normalized = ru_alias.get(normalized, normalized)
+    return BITRIX_STATUS_ALIAS.get(normalized)
+
+
+def derive_skills(task: RoadmapTask) -> list[str]:
+    if task.skills:
+        return task.skills
+
+    skills = ["navigate-b24-project", "project-development", "filesystem-context"]
+    if "backend" in task.tags:
+        skills.extend(["develop-b24-python", "implement-b24-features"])
+    if "frontend" in task.tags:
+        skills.extend(["develop-b24-frontend"])
+    if "security" in task.tags or "ops" in task.tags:
+        skills.extend(["evaluation"])
+    if "automation" in task.tags:
+        skills.extend(["tool-design"])
+    return sorted(set(skills))
+
+
+def derive_technical_test(task: RoadmapTask) -> list[str]:
+    if task.technical_test:
+        return task.technical_test
+    tests = [
+        "Проверить соответствие изменений требованиям задачи и зависимостям.",
+        "Прогнать профильные проверки (линт/валидация/скрипты по модулю задачи).",
+        "Проверить отсутствие регрессий в связанных backend/frontend модулях.",
+    ]
+    if "backend" in task.tags:
+        tests.append("Проверить API-ответы и обработку ошибок для измененного backend flow.")
+    if "frontend" in task.tags:
+        tests.append("Проверить успешную загрузку страницы и корректные API-вызовы в UI.")
+    return tests
+
+
+def derive_ui_test(task: RoadmapTask) -> list[str]:
+    if task.ui_test:
+        return task.ui_test
+    if "frontend" not in task.tags and "dashboard" not in task.tags:
+        return ["UI-проверка не требуется для этой задачи (backend/операционная задача)."]
+    return [
+        "Проверить целевой пользовательский сценарий в интерфейсе PMO Hub.",
+        "Проверить отображение состояний загрузки/ошибок и корректность данных.",
+        "Проверить поведение на desktop и мобильной ширине.",
+    ]
+
+
+def derive_done_definition(task: RoadmapTask) -> list[str]:
+    if task.done_definition:
+        return task.done_definition
+    return [
+        "Результат задачи зафиксирован в репозитории (код/документация/артефакты).",
+        "Техническое и UI-тестирование выполнено по чеклисту задачи.",
+        "Статусы синхронизированы в Bitrix24 и репозиторном трекере.",
+    ]
+
+
+def render_task_description(task: RoadmapTask) -> str:
+    epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+    deps = ", ".join(task.depends_on) if task.depends_on else "Нет"
+    skills = derive_skills(task)
+    technical_test = derive_technical_test(task)
+    ui_test = derive_ui_test(task)
+    done_definition = derive_done_definition(task)
+
+    parts = [
+        f"Roadmap key: {task.key}",
+        f"Epic: {epic}",
+        f"Stage: {task.stage}",
+        "",
+        "Что нужно сделать:",
+        f"- {task.description}",
+        "",
+        "Зависимости:",
+        f"- {deps}",
+        "",
+        "Какие skills использовать:",
+        *[f"- {skill}" for skill in skills],
+        "",
+        "Как тестировать (технически):",
+        *[f"- {item}" for item in technical_test],
+        "",
+        "Как тестировать (UI):",
+        *[f"- {item}" for item in ui_test],
+        "",
+        "Как понять, что задача выполнена:",
+        *[f"- {item}" for item in done_definition],
+        "",
+        "Workflow статусов Bitrix24:",
+        "- В работе -> STATUS=3 (IN_PROGRESS)",
+        "- На тестировании -> STATUS=4 (SUPPOSEDLY_COMPLETED)",
+        "- Сделаны -> STATUS=5 (COMPLETED)",
+        "",
+        "Источник истины: репозиторий (`docs/ROADMAP_TASKS.json`, `.agent/*`).",
+    ]
+    return "\n".join(parts)
+
+
+def render_task_title(task: RoadmapTask) -> str:
+    epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+    short_epic = epic.split(" ", 1)[0]
+    return f"[{task.key}][{short_epic}] {task.title}"
+
+
+def render_task_tags(task: RoadmapTask) -> list[str]:
+    epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+    epic_tag = epic.split(" ", 1)[0]
+    merged = list(task.tags) + ["pmo-roadmap", task.stage, epic_tag]
+    seen: set[str] = set()
+    unique: list[str] = []
+    for tag in merged:
+        if tag not in seen:
+            seen.add(tag)
+            unique.append(tag)
+    return unique
 
 
 def topological_order(tasks: list[RoadmapTask]) -> list[RoadmapTask]:
@@ -181,7 +320,7 @@ def create_mode(args: argparse.Namespace) -> int:
             "TITLE": f"[{task.key}] {task.title}",
             "DESCRIPTION": f"{task.description}\n\nStage: {task.stage}\nRoadmap key: {task.key}",
             "GROUP_ID": int(args.project_id),
-            "TAGS": task.tags + ["pmo-roadmap", task.stage],
+            "TAGS": render_task_tags(task),
         }
         if parent_id:
             fields["PARENT_ID"] = int(parent_id)
@@ -273,6 +412,46 @@ def sync_status_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def sync_metadata_mode(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    map_file = Path(args.map_file)
+
+    tasks = load_roadmap(source)
+    by_key = {task.key: task for task in tasks}
+    mapping = json.loads(map_file.read_text(encoding="utf-8"))
+    task_ids: dict[str, int] = mapping.get("tasks", {})
+
+    client = BitrixWebhookClient(args.webhook_url)
+    changed = 0
+
+    for key, task_id in task_ids.items():
+        if key not in by_key:
+            print(f"[WARN] Task key {key} not found in source roadmap, skip")
+            continue
+        if task_id <= 0:
+            print(f"[WARN] Task key {key} has invalid ID in mapping, skip")
+            continue
+
+        task = by_key[key]
+        fields = {
+            "TITLE": render_task_title(task),
+            "DESCRIPTION": render_task_description(task),
+            "TAGS": render_task_tags(task),
+        }
+        payload = {"taskId": int(task_id), "fields": fields}
+
+        if not args.apply:
+            print(f"[DRY-RUN] metadata {key}#{task_id}: {json.dumps(payload, ensure_ascii=False)}")
+            continue
+
+        client.call("tasks.task.update", payload)
+        changed += 1
+        print(f"Updated metadata for {key}#{task_id}")
+
+    print(f"Metadata sync finished. Updated tasks: {changed}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Bitrix24 roadmap sync utility")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -304,6 +483,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sync_status.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
+    sync_meta = subparsers.add_parser("sync-metadata", help="Update titles/descriptions from roadmap source")
+    sync_meta.add_argument("--webhook-url", required=True, help="Incoming webhook base URL")
+    sync_meta.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
+    sync_meta.add_argument(
+        "--map-file",
+        default=".agent/context/bitrix-task-map.json",
+        help="Roadmap key -> task ID mapping file",
+    )
+    sync_meta.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
+
     return parser
 
 
@@ -316,6 +505,8 @@ def main() -> int:
             return create_mode(args)
         if args.command == "sync-status":
             return sync_status_mode(args)
+        if args.command == "sync-metadata":
+            return sync_metadata_mode(args)
         parser.print_help()
         return 1
     except Exception as exc:  # pylint: disable=broad-except

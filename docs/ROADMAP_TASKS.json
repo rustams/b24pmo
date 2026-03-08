@@ -13,217 +13,371 @@
     {
       "key": "RD-001",
       "title": "Freeze MVP scope and release gates",
-      "description": "Align MVP boundaries, acceptance gates, and rollout criteria with product spec.",
+      "description": "Align MVP boundaries and release gates with product spec. Produce docs/MVP_SCOPE_RELEASE_GATES.md and lock acceptance gates.",
       "stage": "Stage 0 - Foundation",
-      "tags": ["roadmap", "mvp"],
-      "status": "NEW"
+      "tags": [
+        "roadmap",
+        "mvp"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-FND Foundation & Delivery Ops"
     },
     {
       "key": "RD-002",
       "title": "Set CI quality baseline",
       "description": "Configure lint/test execution paths and minimal quality checks for backend/frontend.",
       "stage": "Stage 0 - Foundation",
-      "depends_on": ["RD-001"],
-      "tags": ["ci", "quality"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-001"
+      ],
+      "tags": [
+        "ci",
+        "quality"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-FND Foundation & Delivery Ops"
     },
     {
       "key": "RD-003",
       "title": "Automate Bitrix24 roadmap sync",
       "description": "Create automation to publish roadmap tasks and dependencies into Bitrix24 project board.",
       "stage": "Stage 0 - Foundation",
-      "depends_on": ["RD-001"],
-      "tags": ["automation", "bitrix24"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-001"
+      ],
+      "tags": [
+        "automation",
+        "bitrix24"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-FND Foundation & Delivery Ops"
     },
     {
       "key": "RD-101",
       "title": "Implement installer service contract",
       "description": "Define installer API contract, idempotency rules, and persistent mapping model.",
       "stage": "Stage 1 - Installer",
-      "depends_on": ["RD-002"],
-      "tags": ["installer", "backend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-002"
+      ],
+      "tags": [
+        "installer",
+        "backend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping"
     },
     {
       "key": "RD-102",
       "title": "Build SP/Lists mapping UI",
       "description": "Frontend flow for selecting existing Smart Processes/Lists or creating defaults.",
       "stage": "Stage 1 - Installer",
-      "depends_on": ["RD-101"],
-      "tags": ["installer", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-101"
+      ],
+      "tags": [
+        "installer",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping"
     },
     {
       "key": "RD-103",
       "title": "Implement permission/scope checker",
       "description": "Validate required scopes and provide admin remediation instructions in onboarding.",
       "stage": "Stage 1 - Installer",
-      "depends_on": ["RD-101"],
-      "tags": ["installer", "security"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-101"
+      ],
+      "tags": [
+        "installer",
+        "security"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping"
     },
     {
       "key": "RD-104",
       "title": "Run initial sync skeleton",
       "description": "Initial users/tasks/calendar read and bootstrap resource cache for active users.",
       "stage": "Stage 1 - Installer",
-      "depends_on": ["RD-102", "RD-103"],
-      "tags": ["sync", "resources"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-102",
+        "RD-103"
+      ],
+      "tags": [
+        "sync",
+        "resources"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping"
     },
     {
       "key": "RD-201",
       "title": "Deliver strategy APIs (Goals/Initiatives)",
       "description": "Implement backend service/view layer for Goals and Initiatives lifecycle.",
       "stage": "Stage 2 - Strategy & Delivery",
-      "depends_on": ["RD-104"],
-      "tags": ["strategy", "backend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-104"
+      ],
+      "tags": [
+        "strategy",
+        "backend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-CORE Strategy & Delivery Core"
     },
     {
       "key": "RD-202",
       "title": "Deliver strategy UI pages",
       "description": "Implement strategy pages with list/detail flows and creation forms.",
       "stage": "Stage 2 - Strategy & Delivery",
-      "depends_on": ["RD-201"],
-      "tags": ["strategy", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-201"
+      ],
+      "tags": [
+        "strategy",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-CORE Strategy & Delivery Core"
     },
     {
       "key": "RD-203",
       "title": "Implement project domain API",
       "description": "Projects/program links, basic status flow, and domain-level DTOs.",
       "stage": "Stage 2 - Strategy & Delivery",
-      "depends_on": ["RD-104"],
-      "tags": ["delivery", "backend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-104"
+      ],
+      "tags": [
+        "delivery",
+        "backend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-CORE Strategy & Delivery Core"
     },
     {
       "key": "RD-204",
       "title": "Implement milestone CRUD and progress logic",
       "description": "Milestone list operations and progress computation from task updates.",
       "stage": "Stage 2 - Strategy & Delivery",
-      "depends_on": ["RD-203"],
-      "tags": ["delivery", "milestones"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-203"
+      ],
+      "tags": [
+        "delivery",
+        "milestones"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-CORE Strategy & Delivery Core"
     },
     {
       "key": "RD-205",
       "title": "Integrate task webhook to milestone updates",
       "description": "Handle task events and propagate changes into milestone progress model.",
       "stage": "Stage 2 - Strategy & Delivery",
-      "depends_on": ["RD-204"],
-      "tags": ["events", "webhooks"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-204"
+      ],
+      "tags": [
+        "events",
+        "webhooks"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-CORE Strategy & Delivery Core"
     },
     {
       "key": "RD-301",
       "title": "Implement resource allocation API",
       "description": "CRUD for ResourceAllocations and recalc trigger queue contracts.",
       "stage": "Stage 3 - Operations Domains",
-      "depends_on": ["RD-205"],
-      "tags": ["resources", "backend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-205"
+      ],
+      "tags": [
+        "resources",
+        "backend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
     },
     {
       "key": "RD-302",
       "title": "Implement resource timeline UI",
       "description": "Timeline matrix with create/edit allocation interactions.",
       "stage": "Stage 3 - Operations Domains",
-      "depends_on": ["RD-301"],
-      "tags": ["resources", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-301"
+      ],
+      "tags": [
+        "resources",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
     },
     {
       "key": "RD-303",
       "title": "Implement risk workflow",
       "description": "Manual risk CRUD and project-level risk visibility.",
       "stage": "Stage 3 - Operations Domains",
-      "depends_on": ["RD-205"],
-      "tags": ["risks", "backend", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-205"
+      ],
+      "tags": [
+        "risks",
+        "backend",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
     },
     {
       "key": "RD-304",
       "title": "Implement budget transaction flow",
       "description": "Plan/fact transaction CRUD and project aggregation read model.",
       "stage": "Stage 3 - Operations Domains",
-      "depends_on": ["RD-205"],
-      "tags": ["budget", "backend", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-205"
+      ],
+      "tags": [
+        "budget",
+        "backend",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
     },
     {
       "key": "RD-305",
       "title": "Implement meeting protocol flow",
       "description": "Meeting records with linked tasks and decisions.",
       "stage": "Stage 3 - Operations Domains",
-      "depends_on": ["RD-205"],
-      "tags": ["meetings", "backend", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-205"
+      ],
+      "tags": [
+        "meetings",
+        "backend",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
     },
     {
       "key": "RD-401",
       "title": "Enforce RBAC in backend",
       "description": "Role-based scope checks per domain endpoint.",
       "stage": "Stage 4 - RBAC & Hardening",
-      "depends_on": ["RD-303", "RD-304", "RD-305"],
-      "tags": ["rbac", "security"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-303",
+        "RD-304",
+        "RD-305"
+      ],
+      "tags": [
+        "rbac",
+        "security"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-SEC RBAC & Quality Hardening"
     },
     {
       "key": "RD-402",
       "title": "Enforce RBAC in frontend",
       "description": "Route/module guards and capability-based UI controls.",
       "stage": "Stage 4 - RBAC & Hardening",
-      "depends_on": ["RD-401"],
-      "tags": ["rbac", "frontend"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-401"
+      ],
+      "tags": [
+        "rbac",
+        "frontend"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-SEC RBAC & Quality Hardening"
     },
     {
       "key": "RD-403",
       "title": "Add project manager dashboard",
       "description": "Consolidated milestones/risks/resource load cards and trends.",
       "stage": "Stage 4 - RBAC & Hardening",
-      "depends_on": ["RD-302", "RD-303", "RD-304"],
-      "tags": ["dashboard", "pm"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-302",
+        "RD-303",
+        "RD-304"
+      ],
+      "tags": [
+        "dashboard",
+        "pm"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-SEC RBAC & Quality Hardening"
     },
     {
       "key": "RD-404",
       "title": "Observability and health hardening",
       "description": "Health checks, structured logs, and baseline error monitoring hooks.",
       "stage": "Stage 4 - RBAC & Hardening",
-      "depends_on": ["RD-401"],
-      "tags": ["ops", "monitoring"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-401"
+      ],
+      "tags": [
+        "ops",
+        "monitoring"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-SEC RBAC & Quality Hardening"
     },
     {
       "key": "RD-501",
       "title": "Portfolio and CEO dashboards",
       "description": "Portfolio/CEO aggregated views with strategic KPI summaries.",
       "stage": "Stage 5 - v1.1",
-      "depends_on": ["RD-403"],
-      "tags": ["v1.1", "dashboard"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-403"
+      ],
+      "tags": [
+        "v1.1",
+        "dashboard"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-V11 Product Extensions"
     },
     {
       "key": "RD-502",
       "title": "AI keyword risk detector worker",
       "description": "MVP AI worker for keyword-based risk suggestions and logging.",
       "stage": "Stage 5 - v1.1",
-      "depends_on": ["RD-303", "RD-404"],
-      "tags": ["v1.1", "ai", "risks"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-303",
+        "RD-404"
+      ],
+      "tags": [
+        "v1.1",
+        "ai",
+        "risks"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-V11 Product Extensions"
     },
     {
       "key": "RD-503",
       "title": "Roles/skills matching in planner",
       "description": "Suggest replacement candidates by role/skill for overloaded allocations.",
       "stage": "Stage 5 - v1.1",
-      "depends_on": ["RD-302", "RD-402"],
-      "tags": ["v1.1", "resources", "skills"],
-      "status": "NEW"
+      "depends_on": [
+        "RD-302",
+        "RD-402"
+      ],
+      "tags": [
+        "v1.1",
+        "resources",
+        "skills"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-V11 Product Extensions"
     }
   ]
 }

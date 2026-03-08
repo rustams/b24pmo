@@ -239,3 +239,21 @@
   - created all dependency links (`finish-start`) from local roadmap graph
 - Persisted roadmap mapping artifact for future status sync:
   - `.agent/context/bitrix-task-map.json`
+
+### 17) Stage-1 Execution Control + RD-001 Completion (March 8, 2026)
+- Extended roadmap automation script with metadata synchronization mode:
+  - `sync-metadata` updates task titles/descriptions/tags from repository roadmap source.
+- Introduced epic duplication in tags for all roadmap tasks (for board filtering).
+- Updated all 24 Bitrix24 tasks in project `GROUP_ID=17` with enriched execution template:
+  - what to do
+  - skills to use
+  - technical/UI testing approach
+  - definition of done
+  - workflow status mapping
+- Added repository execution state file:
+  - `docs/ROADMAP_EXECUTION_STATUS.json`
+- Completed first execution task `RD-001` and moved through statuses:
+  - `IN_PROGRESS (3)` -> `TESTING (4)` -> `DONE (5)`
+- Added RD-001 artifact:
+  - `docs/MVP_SCOPE_RELEASE_GATES.md`
+- Paused further tasks by request; remaining roadmap tasks are kept in `NEW (1)`.

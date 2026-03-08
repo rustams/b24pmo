@@ -11,3 +11,5 @@
 {"timestamp":"2026-03-08T10:04:58Z","artifact":"docs/ROADMAP_STATUS.example.json","type":"template","note":"Status sync template for Bitrix24 task updates"}
 {"timestamp":"2026-03-08T10:04:58Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"CLI to create tasks/dependencies and sync statuses via webhook"}
 {"timestamp":"2026-03-08T10:16:12Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Roadmap key to Bitrix24 task ID mapping for GROUP_ID=17"}
+{"timestamp":"2026-03-08T10:37:03Z","artifact":"docs/MVP_SCOPE_RELEASE_GATES.md","type":"planning-deliverable","note":"RD-001 MVP scope and release gates document"}
+{"timestamp":"2026-03-08T10:37:03Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Repository source-of-truth for roadmap task statuses"}
