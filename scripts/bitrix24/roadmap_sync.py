@@ -382,6 +382,63 @@ def render_task_title(task: RoadmapTask) -> str:
     return f"{task.title} [{task.key}][{short_epic}]"
 
 
+def _task_key_sort_value(task_key: str) -> int:
+    try:
+        return int(task_key.split("-", 1)[1])
+    except (IndexError, ValueError):
+        return 999999
+
+
+def build_task_numbering(tasks: list[RoadmapTask]) -> dict[str, str]:
+    by_key = {task.key: task for task in tasks}
+    numbering: dict[str, str] = {}
+
+    epics: dict[str, list[RoadmapTask]] = {}
+    for task in tasks:
+        epic_code = _epic_code(task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC"))
+        epics.setdefault(epic_code, []).append(task)
+
+    for epic_code, epic_tasks in epics.items():
+        epic_keys = {task.key for task in epic_tasks}
+        children: dict[str, list[str]] = {}
+        roots: list[str] = []
+
+        for task in epic_tasks:
+            parent = task.parent
+            if parent and parent in epic_keys:
+                children.setdefault(parent, []).append(task.key)
+            else:
+                roots.append(task.key)
+
+        roots.sort(key=_task_key_sort_value)
+        for child_list in children.values():
+            child_list.sort(key=_task_key_sort_value)
+
+        def visit(node_key: str, prefix: str) -> None:
+            numbering[node_key] = prefix
+            for idx, child_key in enumerate(children.get(node_key, []), start=1):
+                visit(child_key, f"{prefix}.{idx}")
+
+        for idx, root_key in enumerate(roots, start=1):
+            visit(root_key, str(idx))
+
+        # Fallback: include orphaned/cyclic nodes not reached by DFS
+        for task in epic_tasks:
+            if task.key not in numbering:
+                numbering[task.key] = str(len(numbering) + 1)
+
+    return numbering
+
+
+def render_task_title_for_bitrix(task: RoadmapTask, task_number: str | None) -> str:
+    base_title = task.title
+    if task_number:
+        base_title = f"Задача {task_number}. {base_title}"
+    epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+    short_epic = epic.split(" ", 1)[0]
+    return f"{base_title} [{task.key}][{short_epic}]"
+
+
 def render_task_tags(task: RoadmapTask) -> list[str]:
     epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
     epic_tag = epic.split(" ", 1)[0]
@@ -502,6 +559,7 @@ def create_mode(args: argparse.Namespace) -> int:
     output = Path(args.output)
     tasks = load_roadmap(source)
     ordered = topological_order(tasks)
+    task_numbering = build_task_numbering(tasks)
 
     print(f"Loaded {len(ordered)} roadmap tasks from {source}")
 
@@ -513,7 +571,7 @@ def create_mode(args: argparse.Namespace) -> int:
         responsible_id = task.responsible_id or args.default_responsible_id
 
         fields: dict[str, Any] = {
-            "TITLE": render_task_title(task),
+            "TITLE": render_task_title_for_bitrix(task, task_numbering.get(task.key)),
             "DESCRIPTION": render_task_description(task),
             "GROUP_ID": int(args.project_id),
             "TAGS": render_task_tags(task),
@@ -573,6 +631,7 @@ def create_missing_mode(args: argparse.Namespace) -> int:
     map_file = Path(args.map_file)
     tasks = load_roadmap(source)
     ordered = topological_order(tasks)
+    task_numbering = build_task_numbering(tasks)
 
     mapping = {"tasks": {}}
     if map_file.exists():
@@ -589,7 +648,7 @@ def create_missing_mode(args: argparse.Namespace) -> int:
 
         responsible_id = task.responsible_id or args.default_responsible_id
         fields: dict[str, Any] = {
-            "TITLE": render_task_title(task),
+            "TITLE": render_task_title_for_bitrix(task, task_numbering.get(task.key)),
             "DESCRIPTION": render_task_description(task),
             "GROUP_ID": int(args.project_id),
             "TAGS": render_task_tags(task),
@@ -638,6 +697,7 @@ def sync_epic_structure_mode(args: argparse.Namespace) -> int:
     map_file = Path(args.map_file)
     tasks = load_roadmap(source)
     by_key = {task.key: task for task in tasks}
+    task_numbering = build_task_numbering(tasks)
     epics = build_epics(tasks)
 
     mapping = {"tasks": {}, "epics": {}}
@@ -709,7 +769,7 @@ def sync_epic_structure_mode(args: argparse.Namespace) -> int:
                 parent_id = direct_parent_id
 
         fields = {
-            "TITLE": render_task_title(task),
+            "TITLE": render_task_title_for_bitrix(task, task_numbering.get(task.key)),
             "DESCRIPTION": render_task_description(task),
             "TAGS": render_task_tags(task),
         }
@@ -862,6 +922,7 @@ def sync_metadata_mode(args: argparse.Namespace) -> int:
 
     tasks = load_roadmap(source)
     by_key = {task.key: task for task in tasks}
+    task_numbering = build_task_numbering(tasks)
     mapping = json.loads(map_file.read_text(encoding="utf-8"))
     task_ids: dict[str, int] = mapping.get("tasks", {})
 
@@ -878,7 +939,7 @@ def sync_metadata_mode(args: argparse.Namespace) -> int:
 
         task = by_key[key]
         fields = {
-            "TITLE": render_task_title(task),
+            "TITLE": render_task_title_for_bitrix(task, task_numbering.get(task.key)),
             "DESCRIPTION": render_task_description(task),
             "TAGS": render_task_tags(task),
         }

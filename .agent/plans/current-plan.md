@@ -1,9 +1,7 @@
 # Current Plan
 
-Task: Restructure Bitrix24 roadmap board into epic/subtask hierarchy with gantt links.
+Task: Apply visual numbering for epic subtask hierarchy in Bitrix24.
 
-1. Extend automation to support epic root tasks and parent/subtask sync. [completed]
-2. Define nested task hierarchy in roadmap source (`parent` links). [completed]
-3. Apply epic structure migration to Bitrix24 project and sync dependencies. [completed]
-4. Update skills/docs/prompts/rules to reflect new Bitrix24 visualization standard. [completed]
-5. Persist memory/history artifacts and finalize commit/push with VPS sync verification. [in_progress]
+1. Extend title generation to include hierarchical numbering by epic tree. [completed]
+2. Re-sync Bitrix24 structure and verify titles in tasks. [completed]
+3. Update history/artifacts and finalize with commit/push + VPS verification. [in_progress]

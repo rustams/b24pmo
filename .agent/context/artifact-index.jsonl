@@ -27,3 +27,4 @@
 {"timestamp":"2026-03-08T21:53:10Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Added sync-epic-structure mode for epic/subtask hierarchy and gantt links"}
 {"timestamp":"2026-03-08T21:53:10Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added parent links for nested task structure under epics"}
 {"timestamp":"2026-03-08T21:53:10Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Now stores epic root task IDs in epics mapping"}
+{"timestamp":"2026-03-08T21:58:21Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Added hierarchical subtask numbering in Bitrix task titles"}

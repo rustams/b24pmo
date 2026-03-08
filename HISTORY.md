@@ -341,3 +341,12 @@
 - Updated mapping artifact to include epic IDs:
   - `.agent/context/bitrix-task-map.json` now has `epics` section.
 - Updated docs/rules/skills to reflect new operational standard for Bitrix24 board structure.
+
+### 23) Bitrix24 Subtask Numbering for Visual Hierarchy (March 9, 2026)
+- Added hierarchical numbering in Bitrix24 task titles by epic tree level:
+  - root task in epic: `Задача N.`
+  - nested task: `Задача N.M.`
+- Implemented numbering logic in roadmap sync automation:
+  - `build_task_numbering`
+  - title renderer `render_task_title_for_bitrix`
+- Applied numbering to existing Bitrix24 board via `sync-epic-structure`.
