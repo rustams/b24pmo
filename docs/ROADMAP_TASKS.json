@@ -35,7 +35,8 @@
         "quality"
       ],
       "status": "NEW",
-      "epic": "EPIC-FND Foundation & Delivery Ops"
+      "epic": "EPIC-FND Foundation & Delivery Ops",
+      "parent": "RD-001"
     },
     {
       "key": "RD-003",
@@ -50,7 +51,8 @@
         "bitrix24"
       ],
       "status": "NEW",
-      "epic": "EPIC-FND Foundation & Delivery Ops"
+      "epic": "EPIC-FND Foundation & Delivery Ops",
+      "parent": "RD-001"
     },
     {
       "key": "RD-101",
@@ -80,7 +82,8 @@
         "frontend"
       ],
       "status": "NEW",
-      "epic": "EPIC-INS Installer & Mapping"
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-101"
     },
     {
       "key": "RD-103",
@@ -95,7 +98,8 @@
         "security"
       ],
       "status": "NEW",
-      "epic": "EPIC-INS Installer & Mapping"
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-101"
     },
     {
       "key": "RD-104",
@@ -111,7 +115,8 @@
         "resources"
       ],
       "status": "NEW",
-      "epic": "EPIC-INS Installer & Mapping"
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-101"
     },
     {
       "key": "RD-105",
@@ -144,7 +149,8 @@
         "v2",
         "workflow"
       ],
-      "status": "NEW"
+      "status": "NEW",
+      "parent": "RD-105"
     },
     {
       "key": "RD-201",
@@ -174,7 +180,8 @@
         "frontend"
       ],
       "status": "NEW",
-      "epic": "EPIC-CORE Strategy & Delivery Core"
+      "epic": "EPIC-CORE Strategy & Delivery Core",
+      "parent": "RD-201"
     },
     {
       "key": "RD-203",
@@ -204,7 +211,8 @@
         "milestones"
       ],
       "status": "NEW",
-      "epic": "EPIC-CORE Strategy & Delivery Core"
+      "epic": "EPIC-CORE Strategy & Delivery Core",
+      "parent": "RD-203"
     },
     {
       "key": "RD-205",
@@ -219,7 +227,8 @@
         "webhooks"
       ],
       "status": "NEW",
-      "epic": "EPIC-CORE Strategy & Delivery Core"
+      "epic": "EPIC-CORE Strategy & Delivery Core",
+      "parent": "RD-203"
     },
     {
       "key": "RD-301",
@@ -249,7 +258,8 @@
         "frontend"
       ],
       "status": "NEW",
-      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings"
+      "epic": "EPIC-OPS Resources/Risks/Budget/Meetings",
+      "parent": "RD-301"
     },
     {
       "key": "RD-303",
@@ -329,7 +339,8 @@
         "frontend"
       ],
       "status": "NEW",
-      "epic": "EPIC-SEC RBAC & Quality Hardening"
+      "epic": "EPIC-SEC RBAC & Quality Hardening",
+      "parent": "RD-401"
     },
     {
       "key": "RD-403",
@@ -361,7 +372,8 @@
         "monitoring"
       ],
       "status": "NEW",
-      "epic": "EPIC-SEC RBAC & Quality Hardening"
+      "epic": "EPIC-SEC RBAC & Quality Hardening",
+      "parent": "RD-401"
     },
     {
       "key": "RD-501",
@@ -393,7 +405,8 @@
         "risks"
       ],
       "status": "NEW",
-      "epic": "EPIC-V11 Product Extensions"
+      "epic": "EPIC-V11 Product Extensions",
+      "parent": "RD-501"
     },
     {
       "key": "RD-503",
@@ -410,7 +423,8 @@
         "skills"
       ],
       "status": "NEW",
-      "epic": "EPIC-V11 Product Extensions"
+      "epic": "EPIC-V11 Product Extensions",
+      "parent": "RD-501"
     }
   ]
 }

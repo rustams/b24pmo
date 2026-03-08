@@ -18,6 +18,9 @@ description: Управление задачами проекта в Bitrix24 ч
 3. Название задачи в Bitrix24:
 - сначала человекопонятное название,
 - потом служебный хвост: `[RD-xxx][EPIC-xxx]`.
+4. Эпик в Bitrix24 — это отдельная базовая задача верхнего уровня.
+5. Задачи эпика оформляются как подзадачи эпика; вложенные уровни (`2.1`, `2.2`) — через `parent`.
+6. В описании эпика обязательно: состав задач, используемые skills/инструменты, критерий завершения эпика.
 4. Описание задачи в Bitrix24 — на русском языке.
 5. После `git push` обязательно запускать `./scripts/vps/verify-sync.sh`.
 
@@ -45,6 +48,16 @@ python3 scripts/bitrix24/roadmap_sync.py sync-status \
   --status-file docs/ROADMAP_EXECUTION_STATUS.json \
   --sync-kanban \
   --kanban-entity-id "$B24_PROJECT_GROUP_ID" \
+  --apply
+```
+
+Синхронизировать иерархию эпиков/подзадач и связи по Ганту:
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure \
+  --project-id "$B24_PROJECT_GROUP_ID" \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --default-responsible-id 1 \
   --apply
 ```
 

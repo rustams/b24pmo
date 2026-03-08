@@ -24,3 +24,6 @@
 {"timestamp":"2026-03-08T11:34:58Z","artifact":"docs/V1_INSTALLATION_DONE.md","type":"milestone-doc","note":"V1 installation milestone summary and acceptance criteria"}
 {"timestamp":"2026-03-08T11:34:58Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-feature","note":"Settings page with installation success message and DB payload output"}
 {"timestamp":"2026-03-08T11:34:58Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Extended installation persistence and installation context API response"}
+{"timestamp":"2026-03-08T21:53:10Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Added sync-epic-structure mode for epic/subtask hierarchy and gantt links"}
+{"timestamp":"2026-03-08T21:53:10Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added parent links for nested task structure under epics"}
+{"timestamp":"2026-03-08T21:53:10Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Now stores epic root task IDs in epics mapping"}

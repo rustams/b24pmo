@@ -71,6 +71,11 @@ Exit criteria:
 - Task-id mapping output: `.agent/context/bitrix-task-map.json`
 - Naming rule in Bitrix24: human-readable task title first, then `[RD-xxx][EPIC-xxx]`.
 - Task descriptions in Bitrix24 are maintained in Russian.
+- Epic model in Bitrix24:
+  - epic is a top-level base task,
+  - roadmap tasks are epic subtasks,
+  - nested subtasks are defined by `parent` in roadmap JSON,
+  - sequence and cross-epic dependencies are represented via Gantt task links.
 - After every push, deployment sync on VPS must be verified with `scripts/vps/verify-sync.sh`.
 
 ## Bitrix24 Integration Contract

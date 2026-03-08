@@ -323,3 +323,21 @@
 - Fixed domain change save hook field typo:
   - `portal_url` -> `domain_url`
 - Extended installation context output to include saved token/auth timing fields for V1 verification page.
+
+### 22) Bitrix24 Epic/Subtask Board Restructure (March 9, 2026)
+- Implemented new board model for Bitrix24 visualization:
+  - epic = top-level base task
+  - roadmap tasks = epic subtasks
+  - nested subtasks driven by `parent` in roadmap source
+- Extended `scripts/bitrix24/roadmap_sync.py`:
+  - added `sync-epic-structure` command
+  - auto-creates/updates epic root tasks
+  - syncs parent links and gantt dependencies
+  - adds safe handling for existing link/cycle conflicts
+- Applied restructure to Bitrix24 project (`GROUP_ID=17`):
+  - created epic roots: `EPIC-FND`, `EPIC-INS`, `EPIC-CORE`, `EPIC-OPS`, `EPIC-SEC`, `EPIC-V11`
+  - re-parented roadmap tasks under epics
+  - synced cross-epic gantt links between epic root tasks
+- Updated mapping artifact to include epic IDs:
+  - `.agent/context/bitrix-task-map.json` now has `epics` section.
+- Updated docs/rules/skills to reflect new operational standard for Bitrix24 board structure.

@@ -63,6 +63,15 @@ STAGE_EPIC_MAP = {
     "Stage 5 - v1.1": "EPIC-V11 Product Extensions",
 }
 
+EPIC_TITLES_RU = {
+    "EPIC-FND": "Подготовка проекта и контроль поставки",
+    "EPIC-INS": "Установка приложения и базовая настройка",
+    "EPIC-CORE": "Ядро стратегии и проектной доставки",
+    "EPIC-OPS": "Операционные домены PMO Hub",
+    "EPIC-SEC": "RBAC и качество промышленной эксплуатации",
+    "EPIC-V11": "Развитие версии v1.1",
+}
+
 
 @dataclass
 class RoadmapTask:
@@ -80,6 +89,16 @@ class RoadmapTask:
     technical_test: list[str] = field(default_factory=list)
     ui_test: list[str] = field(default_factory=list)
     done_definition: list[str] = field(default_factory=list)
+
+
+@dataclass
+class EpicTask:
+    key: str
+    code: str
+    title: str
+    description: str
+    stage: str
+    tags: list[str] = field(default_factory=list)
 
 
 class BitrixWebhookClient:
@@ -376,6 +395,76 @@ def render_task_tags(task: RoadmapTask) -> list[str]:
     return unique
 
 
+def _epic_code(epic_value: str) -> str:
+    return epic_value.split(" ", 1)[0].strip()
+
+
+def build_epics(tasks: list[RoadmapTask]) -> list[EpicTask]:
+    grouped: dict[str, list[RoadmapTask]] = {}
+    for task in tasks:
+        epic_value = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC Misc")
+        code = _epic_code(epic_value)
+        grouped.setdefault(code, []).append(task)
+
+    epics: list[EpicTask] = []
+    for code, epic_tasks in grouped.items():
+        epic_tasks_sorted = sorted(epic_tasks, key=lambda item: item.key)
+        stage = epic_tasks_sorted[0].stage
+        title = EPIC_TITLES_RU.get(code, f"Эпик {code}")
+        epic_key = f"{code}-ROOT"
+        description = render_epic_description(code, title, stage, epic_tasks_sorted)
+        epics.append(
+            EpicTask(
+                key=epic_key,
+                code=code,
+                title=title,
+                description=description,
+                stage=stage,
+                tags=["pmo-epic", code, stage],
+            )
+        )
+    epics.sort(key=lambda item: item.code)
+    return epics
+
+
+def render_epic_title(epic: EpicTask) -> str:
+    return f"{epic.title} [{epic.code}]"
+
+
+def render_epic_description(code: str, title: str, stage: str, tasks: list[RoadmapTask]) -> str:
+    task_lines = [f"- {task.title} [{task.key}]" for task in tasks]
+    skills = sorted({skill for task in tasks for skill in derive_skills(task)})
+    tools = [
+        "Bitrix24 REST webhook",
+        "scripts/bitrix24/roadmap_sync.py",
+        "docs/ROADMAP_TASKS.json",
+        "docs/ROADMAP_EXECUTION_STATUS.json",
+    ]
+    done = [
+        "Все задачи эпика выполнены и синхронизированы в Bitrix24 и репозитории.",
+        "По задачам соблюден workflow: В работе -> На тестировании -> Сделаны.",
+        "Смежные зависимости по Ганту проставлены и актуальны.",
+    ]
+    parts = [
+        f"Эпик: {title}",
+        f"Код эпика: {code}",
+        f"Стадия roadmap: {stage}",
+        "",
+        "Какие задачи решаем в эпике:",
+        *task_lines,
+        "",
+        "Какие skills используем:",
+        *[f"- {skill}" for skill in skills],
+        "",
+        "Инструменты:",
+        *[f"- {item}" for item in tools],
+        "",
+        "Результат завершения эпика:",
+        *[f"- {item}" for item in done],
+    ]
+    return "\n".join(parts)
+
+
 def topological_order(tasks: list[RoadmapTask]) -> list[RoadmapTask]:
     by_key = {task.key: task for task in tasks}
     deps: dict[str, set[str]] = {}
@@ -534,6 +623,167 @@ def create_missing_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def _link_dependency_safe(client: BitrixWebhookClient, from_id: int, to_id: int) -> None:
+    try:
+        client.call("task.dependence.add", {"taskIdFrom": int(from_id), "taskIdTo": int(to_id), "linkType": 2})
+    except RuntimeError as error:
+        message = str(error)
+        if "ILLEGAL_NEW_LINK" in message or "ACTION_FAILED" in message:
+            return
+        raise
+
+
+def sync_epic_structure_mode(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    map_file = Path(args.map_file)
+    tasks = load_roadmap(source)
+    by_key = {task.key: task for task in tasks}
+    epics = build_epics(tasks)
+
+    mapping = {"tasks": {}, "epics": {}}
+    if map_file.exists():
+        mapping = json.loads(map_file.read_text(encoding="utf-8"))
+    task_id_map: dict[str, int] = dict(mapping.get("tasks", {}))
+    epic_id_map: dict[str, int] = dict(mapping.get("epics", {}))
+
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    changed = 0
+
+    # Ensure epic root tasks
+    for epic in epics:
+        epic_id = int(epic_id_map.get(epic.code, 0))
+        fields = {
+            "TITLE": render_epic_title(epic),
+            "DESCRIPTION": epic.description,
+            "GROUP_ID": int(args.project_id),
+            "TAGS": epic.tags,
+        }
+        if args.default_responsible_id:
+            fields["RESPONSIBLE_ID"] = int(args.default_responsible_id)
+
+        if epic_id <= 0:
+            payload = {"fields": fields}
+            if not args.apply:
+                print(f"[DRY-RUN] create epic {epic.code}: {json.dumps(payload, ensure_ascii=False)}")
+                continue
+            result = client.call("tasks.task.add", payload)
+            epic_id = int(result["result"]["task"]["id"])
+            epic_id_map[epic.code] = epic_id
+            changed += 1
+            print(f"Created epic {epic.code} -> task #{epic_id}")
+        else:
+            payload = {"taskId": epic_id, "fields": fields}
+            if not args.apply:
+                print(f"[DRY-RUN] update epic {epic.code}#{epic_id}")
+                continue
+            client.call("tasks.task.update", payload)
+            changed += 1
+            print(f"Updated epic {epic.code}#{epic_id}")
+
+    # Update task parent links and metadata
+    for task in tasks:
+        task_id = int(task_id_map.get(task.key, 0))
+        if task_id <= 0:
+            print(f"[WARN] Task {task.key} missing in mapping, skip parent sync")
+            continue
+
+        epic_value = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
+        epic_code = _epic_code(epic_value)
+        epic_parent_id = int(epic_id_map.get(epic_code, 0))
+        direct_parent_key = task.parent
+        parent_id = epic_parent_id
+        if direct_parent_key:
+            direct_parent_id = int(task_id_map.get(direct_parent_key, 0))
+            has_conflict = False
+            if direct_parent_key in task.depends_on:
+                has_conflict = True
+            elif direct_parent_key in by_key and task.key in by_key[direct_parent_key].depends_on:
+                has_conflict = True
+
+            if has_conflict:
+                print(
+                    f"[WARN] Skip direct parent {direct_parent_key} for {task.key} due to dependency conflict; "
+                    f"use epic parent"
+                )
+            elif direct_parent_id > 0:
+                parent_id = direct_parent_id
+
+        fields = {
+            "TITLE": render_task_title(task),
+            "DESCRIPTION": render_task_description(task),
+            "TAGS": render_task_tags(task),
+        }
+        if parent_id > 0:
+            fields["PARENT_ID"] = parent_id
+
+        if not args.apply:
+            print(f"[DRY-RUN] update task {task.key}#{task_id} parent={parent_id}")
+            continue
+        try:
+            client.call("tasks.task.update", {"taskId": task_id, "fields": fields})
+            changed += 1
+            print(f"Updated task {task.key}#{task_id} parent={parent_id}")
+        except RuntimeError as error:
+            if "Невозможно назначить родительскую задачу" in str(error) and "PARENT_ID" in fields:
+                fallback_fields = dict(fields)
+                fallback_fields.pop("PARENT_ID", None)
+                client.call("tasks.task.update", {"taskId": task_id, "fields": fallback_fields})
+                changed += 1
+                print(f"[WARN] Parent removed for {task.key}#{task_id} due dependency conflict")
+            else:
+                print(f"[WARN] Failed to update task {task.key}#{task_id}: {error}")
+
+    # Gantt dependencies between tasks
+    for task in tasks:
+        to_id = int(task_id_map.get(task.key, 0))
+        if to_id <= 0:
+            continue
+        for dep_key in task.depends_on:
+            from_id = int(task_id_map.get(dep_key, 0))
+            if from_id <= 0:
+                continue
+            if not args.apply:
+                print(f"[DRY-RUN] link {dep_key}({from_id}) -> {task.key}({to_id})")
+                continue
+            _link_dependency_safe(client, from_id, to_id)
+
+    # Cross-epic gantt dependencies on epic roots
+    cross_epic_edges: set[tuple[str, str]] = set()
+    for task in tasks:
+        to_epic = _epic_code(task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC"))
+        for dep_key in task.depends_on:
+            if dep_key not in by_key:
+                continue
+            dep_task = by_key[dep_key]
+            from_epic = _epic_code(dep_task.epic or STAGE_EPIC_MAP.get(dep_task.stage, "EPIC-MISC"))
+            if from_epic != to_epic:
+                cross_epic_edges.add((from_epic, to_epic))
+
+    for from_epic, to_epic in sorted(cross_epic_edges):
+        from_id = int(epic_id_map.get(from_epic, 0))
+        to_id = int(epic_id_map.get(to_epic, 0))
+        if from_id <= 0 or to_id <= 0:
+            continue
+        if not args.apply:
+            print(f"[DRY-RUN] epic-link {from_epic}({from_id}) -> {to_epic}({to_id})")
+            continue
+        _link_dependency_safe(client, from_id, to_id)
+        print(f"Linked epic dependency {from_epic}({from_id}) -> {to_epic}({to_id})")
+
+    mapping_payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": str(source),
+        "project_id": int(args.project_id),
+        "dry_run": not args.apply,
+        "tasks": task_id_map,
+        "epics": epic_id_map,
+    }
+    map_file.parent.mkdir(parents=True, exist_ok=True)
+    map_file.write_text(json.dumps(mapping_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Saved mapping to {map_file}; structure updates: {changed}")
+    return 0
+
+
 def sync_status_mode(args: argparse.Namespace) -> int:
     map_file = Path(args.map_file)
     status_file = Path(args.status_file)
@@ -688,6 +938,21 @@ def build_parser() -> argparse.ArgumentParser:
     create_missing.add_argument("--created-by", type=int, help="Optional CREATED_BY user ID")
     create_missing.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
+    sync_structure = subparsers.add_parser(
+        "sync-epic-structure",
+        help="Sync epic hierarchy, parent/subtask links, and gantt dependencies",
+    )
+    sync_structure.add_argument("--webhook-url", help="Incoming webhook base URL")
+    sync_structure.add_argument("--project-id", required=True, help="Bitrix24 project/group ID")
+    sync_structure.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
+    sync_structure.add_argument(
+        "--map-file",
+        default=".agent/context/bitrix-task-map.json",
+        help="Roadmap task/epic mapping file",
+    )
+    sync_structure.add_argument("--default-responsible-id", type=int, help="Fallback RESPONSIBLE_ID")
+    sync_structure.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
+
     sync_status = subparsers.add_parser("sync-status", help="Update task statuses using key map")
     sync_status.add_argument("--webhook-url", help="Incoming webhook base URL")
     sync_status.add_argument(
@@ -753,6 +1018,8 @@ def main() -> int:
             return fetch_stages_mode(args)
         if args.command == "create-missing":
             return create_missing_mode(args)
+        if args.command == "sync-epic-structure":
+            return sync_epic_structure_mode(args)
         parser.print_help()
         return 1
     except Exception as exc:  # pylint: disable=broad-except

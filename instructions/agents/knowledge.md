@@ -51,5 +51,6 @@ Combines:
 - Task board conventions:
   - title format: human-readable title first, then `[RD-xxx][EPIC-xxx]`
   - descriptions in Russian
+  - epic is a top-level task; roadmap tasks are epics' subtasks; nested subtasks use `parent`
   - kanban movement synced with task status transitions
 - Post-push deployment guardrail: verify VPS sync and health with `./scripts/vps/verify-sync.sh`.

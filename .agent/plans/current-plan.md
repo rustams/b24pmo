@@ -1,9 +1,9 @@
 # Current Plan
 
-Task: Complete preparatory roadmap block and deliver V1 installation flow.
+Task: Restructure Bitrix24 roadmap board into epic/subtask hierarchy with gantt links.
 
-1. Add missing preparatory roadmap tasks and sync them to Bitrix24 with required templates/rules. [completed]
-2. Implement V1 installer persistence and installation context API in backend. [completed]
-3. Implement settings page in frontend with success message and DB installation payload output. [completed]
-4. Move tasks through Bitrix24 workflow states and sync kanban transitions. [completed]
-5. Record artifacts/history, commit, push, and verify VPS synchronization. [in_progress]
+1. Extend automation to support epic root tasks and parent/subtask sync. [completed]
+2. Define nested task hierarchy in roadmap source (`parent` links). [completed]
+3. Apply epic structure migration to Bitrix24 project and sync dependencies. [completed]
+4. Update skills/docs/prompts/rules to reflect new Bitrix24 visualization standard. [completed]
+5. Persist memory/history artifacts and finalize commit/push with VPS sync verification. [in_progress]

@@ -106,6 +106,24 @@ python3 scripts/bitrix24/roadmap_sync.py sync-metadata \
 - `На тестировании` -> `STATUS=4`
 - `Сделаны` -> `STATUS=5`
 
+Синхронизация структуры эпиков и подзадач (иерархия + связи по Ганту):
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure \
+  --project-id <GROUP_ID> \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --default-responsible-id <USER_ID> \
+  --apply
+```
+
+Правила структуры в Bitrix24:
+- Эпик — отдельная базовая задача верхнего уровня.
+- Все roadmap-задачи эпика — подзадачи эпика.
+- Вложенные подзадачи (`2.1`, `2.2`) задаются через поле `parent` в `docs/ROADMAP_TASKS.json`.
+- Последовательность выполнения отражается зависимостями (Gantt links).
+- Межэпиковые зависимости также создаются через связи задач.
+
 Получение актуальных канбан-стадий из Bitrix24:
 
 ```bash
