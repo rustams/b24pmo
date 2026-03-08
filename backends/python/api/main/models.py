@@ -70,7 +70,7 @@ class Bitrix24Account(models.Model, AbstractBitrixToken):
         return Client(self)
 
     def on_portal_domain_changed_event(self, _: PortalDomainChangedEvent):
-        self.save(update_fields=["portal_url"])
+        self.save(update_fields=["domain_url"])
 
     def on_oauth_token_renewed_event(self, event: OAuthTokenRenewedEvent):
         self.expires = event.renewed_oauth_token.oauth_token.expires
@@ -116,9 +116,12 @@ class Bitrix24Account(models.Model, AbstractBitrixToken):
         defaults = {
             "member_id": oauth_placement_data.member_id,
             "status": oauth_placement_data.status,
+            "application_token": getattr(oauth_placement_data, "application_token", None),
             "access_token": oauth_placement_data.oauth_token.access_token,
             "refresh_token": oauth_placement_data.oauth_token.refresh_token,
             "expires": int(oauth_placement_data.oauth_token.expires.timestamp()),
+            "expires_in": int(oauth_placement_data.oauth_token.expires_in),
+            "current_scope": getattr(oauth_placement_data.oauth_token, "scope", None),
             "application_version": app_info.install.version,
         }
 

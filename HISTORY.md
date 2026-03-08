@@ -314,3 +314,12 @@
   - added index page shortcut to settings
 - Added milestone documentation:
   - `docs/V1_INSTALLATION_DONE.md`
+
+### 21) Installer Data Hardening After OAuth Audit (March 8, 2026)
+- Verified required install/auth payload fields against Bitrix24 docs (OnAppInstall + OAuth simple flow).
+- Improved account persistence on installation/auth refresh:
+  - store `application_token` in `bitrix24account`
+  - store `expires_in` and `current_scope`
+- Fixed domain change save hook field typo:
+  - `portal_url` -> `domain_url`
+- Extended installation context output to include saved token/auth timing fields for V1 verification page.
