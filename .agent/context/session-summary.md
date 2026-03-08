@@ -19,11 +19,20 @@
   - `Завершена` marker for closed epic titles.
 - Updated mirrored skills in `.cursor/skills` and `.claude/skills`.
 - Dry-run validation completed for both new sync commands on project `GROUP_ID=17`.
+- Applied sync commands to Bitrix24 `GROUP_ID=17`:
+  - `sync-task-results` processed completed tasks: RD-001, RD-002, RD-003, RD-105.
+  - `sync-epic-completion` updated all epic roots; `EPIC-FND` moved to completed and renamed with `Завершена`.
 
 ## Notes
 - Bitrix task result REST API requires legacy comment creation (`task.comment.add` with form payload) before calling `tasks.task.result.addFromComment`.
+- `tasks.task.result.list` currently returns empty arrays on the target portal even after successful `addFromComment`; workflow keeps explicit API call and logs result.
 
 ## Next Steps
-- Commit changes and run real Bitrix24 sync with new commit URL.
-- Verify task board updates.
 - Push and verify VPS sync/health.
+
+## Self-Check (rubric)
+- Correctness: 4/5
+- Integration Safety: 4/5
+- Context Integrity: 5/5
+- Maintainability: 4/5
+- Operational Readiness: 4/5

@@ -32,3 +32,4 @@
 {"timestamp":"2026-03-09T22:20:00Z","artifact":".cursor/skills/bitrix24-project-ops/SKILL.md","type":"skill","note":"Updated with mandatory task-result and epic auto-close workflow rules"}
 {"timestamp":"2026-03-09T22:20:00Z","artifact":".claude/skills/bitrix24-project-ops/SKILL.md","type":"skill","note":"Mirrored Bitrix24 workflow rule updates"}
 {"timestamp":"2026-03-09T22:20:00Z","artifact":"docs/CHAT_START_TEMPLATE.md","type":"documentation","note":"Added startup rules for task result and epic completion naming"}
+{"timestamp":"2026-03-09T22:27:00Z","artifact":".agent/context/session-summary.md","type":"summary","note":"Recorded applied Bitrix sync outcomes for task results and epic completion"}
