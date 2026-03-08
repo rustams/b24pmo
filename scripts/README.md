@@ -33,9 +33,15 @@ make down
 
 4. Проверки перед релизом:
 ```bash
+make quality-check
 make security-scan
 make security-tests
 ```
+
+`make quality-check` запускает базовый контур качества (RD-002):
+- синтаксическая проверка Python-кода backend,
+- валидация ключевых JSON roadmap-файлов,
+- линт frontend (если установлен `pnpm`).
 
 ## Очереди
 

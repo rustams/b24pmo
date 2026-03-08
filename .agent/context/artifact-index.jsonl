@@ -18,3 +18,6 @@
 {"timestamp":"2026-03-08T11:04:48Z","artifact":".agent/context/bitrix-kanban-stages.json","type":"runtime-snapshot","note":"Live kanban stages snapshot fetched from Bitrix24 for GROUP_ID=17"}
 {"timestamp":"2026-03-08T11:04:48Z","artifact":".cursor/skills/bitrix24-project-ops/SKILL.md","type":"skill","note":"Bitrix24 task board operations workflow skill"}
 {"timestamp":"2026-03-08T11:04:48Z","artifact":".claude/skills/bitrix24-project-ops/SKILL.md","type":"skill","note":"Mirror skill for Claude environment"}
+{"timestamp":"2026-03-08T11:19:41Z","artifact":"scripts/quality-check.sh","type":"quality-tooling","note":"Unified baseline quality script for local and CI runs"}
+{"timestamp":"2026-03-08T11:19:41Z","artifact":".github/workflows/quality-baseline.yml","type":"ci-workflow","note":"GitHub Actions baseline quality pipeline for master push/PR"}
+{"timestamp":"2026-03-08T11:19:41Z","artifact":"docs/CI_QUALITY_BASELINE.md","type":"documentation","note":"RD-002 deliverable: quality baseline definition and usage"}

@@ -1,10 +1,9 @@
 # Current Plan
 
-Task: Enforce Bitrix24/VPS operational workflow globally and sync kanban execution behavior.
+Task: Execute RD-002 (CI quality baseline) using Bitrix24+repo synchronized workflow.
 
-1. Extend roadmap automation with kanban-stage fetch and card movement by status. [completed]
-2. Query live kanban stages from Bitrix24 webhook and sync current board state. [completed]
-3. Add secure env-based webhook configuration and ignore local secret env files. [completed]
-4. Add dedicated Bitrix24 project operations skill and update architecture docs/workflows/prompts. [completed]
-5. Add mandatory post-push VPS sync verification tooling and documentation. [completed]
-6. Update agent memory/history artifacts and prepare commit/push package. [completed]
+1. Move RD-002 to in-progress status in repository and Bitrix24 kanban. [completed]
+2. Implement minimal quality baseline tooling (script + make target + CI workflow). [completed]
+3. Run local validation checks and record outcomes. [completed]
+4. Move RD-002 to testing, then done after verification. [completed]
+5. Commit, push, run mandatory VPS sync verification, and report intermediate status. [in_progress]

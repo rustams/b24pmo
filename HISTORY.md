@@ -279,3 +279,17 @@
   - `.cursor/skills/bitrix24-project-ops/SKILL.md`
   - `.claude/skills/bitrix24-project-ops/SKILL.md`
 - Updated architecture docs/prompts/workflows/knowledge files with new global rules.
+
+### 19) RD-002 Completed: CI Quality Baseline (March 8, 2026)
+- Executed RD-002 through workflow statuses with Bitrix24+kanban synchronization:
+  - `IN_PROGRESS (3)` -> `TESTING (4)` -> `DONE (5)`
+- Added baseline quality tooling:
+  - `scripts/quality-check.sh` (python syntax + roadmap JSON validation + frontend lint when pnpm is available)
+  - `make quality-check` target in `makefile`
+  - GitHub Actions workflow: `.github/workflows/quality-baseline.yml`
+  - RD-002 deliverable doc: `docs/CI_QUALITY_BASELINE.md`
+- Updated roadmap artifact:
+  - refined RD-002 description in `docs/ROADMAP_TASKS.json`
+- Updated operational docs:
+  - `scripts/README.md` with new quality baseline command and behavior.
+- Synced task metadata/statuses to Bitrix24 using updated automation workflow.

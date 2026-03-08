@@ -1,4 +1,4 @@
-.PHONY: help dev-init create-version delete-version dev-front dev-python prod-python status ps down down-all logs clean queue-up queue-down security-scan security-tests db-backup db-restore
+.PHONY: help dev-init create-version delete-version dev-front dev-python prod-python status ps down down-all logs clean queue-up queue-down security-scan security-tests quality-check db-backup db-restore
 
 DOCKER_COMPOSE = docker compose
 
@@ -29,6 +29,7 @@ help:
 	@echo "Security:"
 	@echo "  security-scan   Dependency vulnerability audit"
 	@echo "  security-tests  Orchestrated security test suite"
+	@echo "  quality-check   Baseline quality checks (python/json/frontend lint)"
 
 dev-init:
 	@./scripts/dev-init.sh
@@ -63,6 +64,9 @@ security-scan:
 
 security-tests:
 	@./scripts/security-tests.sh $(SECURITY_TESTS_ARGS)
+
+quality-check:
+	@./scripts/quality-check.sh
 
 status:
 	docker stats
