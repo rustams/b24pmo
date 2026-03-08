@@ -30,6 +30,8 @@
 2. Добавить/изменить API в `backends/python/api/main/views.py` и сервисной логике.
 3. Проверить интеграцию с Bitrix24 (install/getToken/widgets/events).
 4. Прогнать проверки (минимум lint/security по задаче).
+5. Для roadmap-задач: синхронизировать Bitrix24 статусы и канбан через `scripts/bitrix24/roadmap_sync.py`.
+6. После `git push`: выполнить `./scripts/vps/verify-sync.sh`.
 
 ## Принципы
 - Не использовать удалённый в этом репозитории PHP-стек и связанные инструкции.
@@ -41,3 +43,4 @@
 - Матрица активации скиллов: `instructions/agents/skill-activation-map.md`
 - Стандартные workflow: `instructions/agents/workflows.md`
 - Операционные артефакты состояния: `.agent/context/*`, `.agent/plans/*`, `.agent/evaluation/*`
+- Отдельный skill для Bitrix24 task ops: `.cursor/skills/bitrix24-project-ops/SKILL.md` (и зеркально в `.claude/skills/`).

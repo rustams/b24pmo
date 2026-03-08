@@ -7,6 +7,7 @@
 - `develop-b24-python`: use for Django/API integration.
 - `implement-b24-features`: use for placement, events, robots.
 - `bitrix24-static-local-app`: use for static local app packaging.
+- `bitrix24-project-ops`: use for Bitrix24 task operations (status + kanban sync), roadmap metadata sync, and post-push VPS deploy verification.
 
 ## Context-Engineering Skills
 - `context-fundamentals`: when designing context boundaries.

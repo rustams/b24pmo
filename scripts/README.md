@@ -66,9 +66,10 @@ python3 scripts/bitrix24/roadmap_sync.py create \
 
 ```bash
 python3 scripts/bitrix24/roadmap_sync.py sync-status \
-  --webhook-url "https://<portal>/rest/<user>/<hook>/" \
   --map-file .agent/context/bitrix-task-map.json \
-  --status-file docs/ROADMAP_STATUS.example.json \
+  --status-file docs/ROADMAP_EXECUTION_STATUS.json \
+  --sync-kanban \
+  --kanban-entity-id <GROUP_ID> \
   --apply
 ```
 
@@ -78,7 +79,6 @@ python3 scripts/bitrix24/roadmap_sync.py sync-status \
 
 ```bash
 python3 scripts/bitrix24/roadmap_sync.py sync-metadata \
-  --webhook-url "https://<portal>/rest/<user>/<hook>/" \
   --source docs/ROADMAP_TASKS.json \
   --map-file .agent/context/bitrix-task-map.json \
   --apply
@@ -88,3 +88,25 @@ python3 scripts/bitrix24/roadmap_sync.py sync-metadata \
 - `В работе` -> `STATUS=3`
 - `На тестировании` -> `STATUS=4`
 - `Сделаны` -> `STATUS=5`
+
+Получение актуальных канбан-стадий из Bitrix24:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py fetch-stages \
+  --entity-id <GROUP_ID> \
+  --output .agent/context/bitrix-kanban-stages.json
+```
+
+Важно: если `--webhook-url` не передан, скрипт использует `B24_WEBHOOK_URL` из `.env` или `.env.webhooks`.
+
+## Проверка синхронизации деплоя на VPS (обязательно после push)
+
+```bash
+./scripts/vps/verify-sync.sh
+```
+
+Скрипт проверяет:
+- совпадение локального commit и commit на VPS,
+- совпадение commit на VPS с `origin/master`,
+- активность сервисов `b24-ai-starter` и `b24-webhook`,
+- health-check `200` на `VPS_HEALTH_URL`.

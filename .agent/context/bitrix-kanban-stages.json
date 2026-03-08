@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-03-08T11:03:23.056628+00:00",
+  "entity_id": 17,
+  "stages": [
+    {
+      "ID": "87",
+      "TITLE": "Новые",
+      "SORT": "100",
+      "COLOR": "00C4FB",
+      "SYSTEM_TYPE": "NEW",
+      "ENTITY_ID": "17",
+      "ENTITY_TYPE": "G",
+      "ADDITIONAL_FILTER": [],
+      "TO_UPDATE": [],
+      "TO_UPDATE_ACCESS": null,
+      "CAN_SORT_ITEMS": true
+    },
+    {
+      "ID": "89",
+      "TITLE": "Выполняются",
+      "SORT": "200",
+      "COLOR": "47D1E2",
+      "SYSTEM_TYPE": "",
+      "ENTITY_ID": "17",
+      "ENTITY_TYPE": "G",
+      "ADDITIONAL_FILTER": [],
+      "TO_UPDATE": [],
+      "TO_UPDATE_ACCESS": null
+    },
+    {
+      "ID": "93",
+      "TITLE": "На тестировании",
+      "SORT": "300",
+      "COLOR": "ffab00",
+      "SYSTEM_TYPE": "",
+      "ENTITY_ID": "17",
+      "ENTITY_TYPE": "G",
+      "ADDITIONAL_FILTER": [],
+      "TO_UPDATE": [],
+      "TO_UPDATE_ACCESS": null
+    },
+    {
+      "ID": "91",
+      "TITLE": "Сделаны",
+      "SORT": "400",
+      "COLOR": "75D900",
+      "SYSTEM_TYPE": "",
+      "ENTITY_ID": "17",
+      "ENTITY_TYPE": "G",
+      "ADDITIONAL_FILTER": [],
+      "TO_UPDATE": [],
+      "TO_UPDATE_ACCESS": null
+    }
+  ],
+  "system_type_map": {
+    "NEW": [
+      87
+    ]
+  }
+}

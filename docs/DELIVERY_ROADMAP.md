@@ -69,6 +69,9 @@ Exit criteria:
 - Optional status snapshot input: `docs/ROADMAP_STATUS.example.json`
 - Sync script: `scripts/bitrix24/roadmap_sync.py`
 - Task-id mapping output: `.agent/context/bitrix-task-map.json`
+- Naming rule in Bitrix24: human-readable task title first, then `[RD-xxx][EPIC-xxx]`.
+- Task descriptions in Bitrix24 are maintained in Russian.
+- After every push, deployment sync on VPS must be verified with `scripts/vps/verify-sync.sh`.
 
 ## Bitrix24 Integration Contract
 Required for automation:

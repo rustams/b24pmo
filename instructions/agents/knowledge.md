@@ -47,3 +47,9 @@ Combines:
 - Frontend: Nuxt 3 + Bitrix24 UI Kit
 - Integration-first workflow: Bitrix placement/events -> backend API -> UI
 - Heavy synchronization and recalculation tasks should be queue-ready by design.
+- Bitrix24 project task operations run via webhook from env (`B24_WEBHOOK_URL`, `B24_PROJECT_GROUP_ID`).
+- Task board conventions:
+  - title format: human-readable title first, then `[RD-xxx][EPIC-xxx]`
+  - descriptions in Russian
+  - kanban movement synced with task status transitions
+- Post-push deployment guardrail: verify VPS sync and health with `./scripts/vps/verify-sync.sh`.

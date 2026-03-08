@@ -14,3 +14,8 @@ The architecture is intentionally progressive-disclosure and file-centric:
 - minimal skills active by default,
 - state persisted in deterministic artifacts,
 - optional escalation to multi-agent/evaluation patterns when complexity rises.
+
+Operational guardrails:
+- roadmap/task execution state is mirrored in repository and Bitrix24;
+- Bitrix24 task cards are moved across kanban stages based on workflow status;
+- after each push, VPS deployment sync (`HEAD/local/origin`) and health are verified.

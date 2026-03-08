@@ -257,3 +257,25 @@
 - Added RD-001 artifact:
   - `docs/MVP_SCOPE_RELEASE_GATES.md`
 - Paused further tasks by request; remaining roadmap tasks are kept in `NEW (1)`.
+
+### 18) Workflow Guardrails: Bitrix24 Kanban Sync + VPS Deploy Verification (March 8, 2026)
+- Implemented mandatory Bitrix24 project-ops automation updates in `scripts/bitrix24/roadmap_sync.py`:
+  - new command `fetch-stages` (`task.stages.get`) to fetch actual kanban stages via webhook
+  - `sync-status` can now move cards across kanban (`task.stages.movetask`) with permission check (`task.stages.canmovetask`)
+  - webhook URL is now read from CLI arg or env (`B24_WEBHOOK_URL` in `.env` / `.env.webhooks`)
+  - title convention enforced: human-readable title first, then `[RD-xxx][EPIC-xxx]`
+  - task descriptions generated in Russian
+- Live kanban stages synchronized from portal for project `GROUP_ID=17` and stored in:
+  - `.agent/context/bitrix-kanban-stages.json`
+- Re-synchronized all roadmap tasks metadata and statuses in Bitrix24 with new naming/description/tagging rules.
+- Added secure env workflow for webhooks and project IDs:
+  - updated `.env.example` with `B24_WEBHOOK_URL`, `B24_PROJECT_GROUP_ID`, VPS check vars
+  - added `.env.webhooks.example`
+  - updated `.gitignore` to ignore local webhook/vps env files
+- Added mandatory post-push VPS verification script:
+  - `scripts/vps/verify-sync.sh`
+  - validates local/vps/origin commit sync + service status + health endpoint
+- Created dedicated skill for Bitrix24 operational workflow:
+  - `.cursor/skills/bitrix24-project-ops/SKILL.md`
+  - `.claude/skills/bitrix24-project-ops/SKILL.md`
+- Updated architecture docs/prompts/workflows/knowledge files with new global rules.

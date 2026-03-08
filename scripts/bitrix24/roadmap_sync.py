@@ -3,7 +3,6 @@
 
 Usage examples:
   python3 scripts/bitrix24/roadmap_sync.py create \
-    --webhook-url "https://portal.bitrix24.ru/rest/1/your_webhook/" \
     --project-id 42 \
     --source docs/ROADMAP_TASKS.json \
     --output .agent/context/bitrix-task-map.json \
@@ -11,16 +10,20 @@ Usage examples:
     --apply
 
   python3 scripts/bitrix24/roadmap_sync.py sync-status \
-    --webhook-url "https://portal.bitrix24.ru/rest/1/your_webhook/" \
     --map-file .agent/context/bitrix-task-map.json \
-    --status-file docs/ROADMAP_STATUS.example.json \
+    --status-file docs/ROADMAP_EXECUTION_STATUS.json \
+    --sync-kanban \
+    --kanban-entity-id 17 \
     --apply
+
+Webhook is resolved from --webhook-url or env B24_WEBHOOK_URL (.env/.env.webhooks).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
@@ -39,6 +42,16 @@ BITRIX_STATUS_ALIAS = {
     "COMPLETED": 5,
     "DEFERRED": 6,
     "DECLINED": 7,
+}
+
+STATUS_TO_STAGE_TYPES = {
+    1: ["NEW"],
+    2: ["PROGRESS", "WORK"],
+    3: ["WORK", "PROGRESS"],
+    4: ["REVIEW"],
+    5: ["FINISH"],
+    6: ["WORK", "PROGRESS"],
+    7: ["REVIEW", "WORK"],
 }
 
 STAGE_EPIC_MAP = {
@@ -102,6 +115,97 @@ class BitrixWebhookClient:
                 f"Bitrix error for {method}: {parsed.get('error')} - {parsed.get('error_description')}"
             )
         return parsed
+
+
+def load_local_env() -> None:
+    for env_path in [Path(".env"), Path(".env.webhooks")]:
+        if not env_path.exists():
+            continue
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("'").strip('"')
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+def resolve_webhook_url(webhook_arg: str | None) -> str:
+    if webhook_arg:
+        return webhook_arg
+    env_value = os.environ.get("B24_WEBHOOK_URL", "").strip()
+    if env_value:
+        return env_value
+    raise ValueError("Webhook URL is required: pass --webhook-url or set B24_WEBHOOK_URL in env")
+
+
+def get_stages(client: BitrixWebhookClient, entity_id: int) -> list[dict[str, Any]]:
+    response = client.call("task.stages.get", {"entityId": int(entity_id)})
+    result = response.get("result", {})
+    stages: list[dict[str, Any]] = []
+    if isinstance(result, dict):
+        for stage_id, stage_data in result.items():
+            stage = dict(stage_data or {})
+            if "ID" not in stage:
+                stage["ID"] = int(stage_id)
+            stages.append(stage)
+    elif isinstance(result, list):
+        stages = [dict(stage or {}) for stage in result]
+    stages.sort(key=lambda item: int(item.get("SORT", 0)))
+    return stages
+
+
+def build_stage_map(stages: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for stage in stages:
+        system_type = str(stage.get("SYSTEM_TYPE", "")).upper()
+        if not system_type:
+            continue
+        grouped.setdefault(system_type, []).append(stage)
+    return grouped
+
+
+def resolve_stage_id_for_status(stage_map: dict[str, list[dict[str, Any]]], status_code: int) -> int | None:
+    for system_type in STATUS_TO_STAGE_TYPES.get(status_code, []):
+        candidates = stage_map.get(system_type, [])
+        if candidates:
+            return int(candidates[0]["ID"])
+    return None
+
+
+def resolve_stage_id_by_title(stages: list[dict[str, Any]], status_code: int) -> int | None:
+    title_rules = {
+        1: ["нов", "new", "to do"],
+        2: ["выполн", "работ", "progress", "doing", "in work"],
+        3: ["выполн", "работ", "progress", "doing", "in work"],
+        4: ["тест", "review", "qa", "провер"],
+        5: ["сделан", "готов", "done", "finish", "completed"],
+    }
+    rules = title_rules.get(int(status_code), [])
+    if not rules:
+        return None
+    for stage in sorted(stages, key=lambda item: int(item.get("SORT", 0))):
+        title = str(stage.get("TITLE", "")).lower()
+        if any(rule in title for rule in rules):
+            return int(stage["ID"])
+    return None
+
+
+def save_stage_snapshot(output: Path, stages: list[dict[str, Any]], entity_id: int) -> None:
+    grouped = {
+        key: [int(item["ID"]) for item in values]
+        for key, values in build_stage_map(stages).items()
+    }
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "entity_id": int(entity_id),
+        "stages": stages,
+        "system_type_map": grouped,
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_roadmap(path: Path) -> list[RoadmapTask]:
@@ -245,6 +349,9 @@ def render_task_description(task: RoadmapTask) -> str:
         "- На тестировании -> STATUS=4 (SUPPOSEDLY_COMPLETED)",
         "- Сделаны -> STATUS=5 (COMPLETED)",
         "",
+        "Правило именования:",
+        "- Сначала человекопонятное название, затем служебная часть [RD-xxx][EPIC-xxx].",
+        "",
         "Источник истины: репозиторий (`docs/ROADMAP_TASKS.json`, `.agent/*`).",
     ]
     return "\n".join(parts)
@@ -253,7 +360,7 @@ def render_task_description(task: RoadmapTask) -> str:
 def render_task_title(task: RoadmapTask) -> str:
     epic = task.epic or STAGE_EPIC_MAP.get(task.stage, "EPIC-MISC")
     short_epic = epic.split(" ", 1)[0]
-    return f"[{task.key}][{short_epic}] {task.title}"
+    return f"{task.title} [{task.key}][{short_epic}]"
 
 
 def render_task_tags(task: RoadmapTask) -> list[str]:
@@ -309,7 +416,7 @@ def create_mode(args: argparse.Namespace) -> int:
 
     print(f"Loaded {len(ordered)} roadmap tasks from {source}")
 
-    client = BitrixWebhookClient(args.webhook_url)
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
     task_id_map: dict[str, int] = {}
 
     for task in ordered:
@@ -317,8 +424,8 @@ def create_mode(args: argparse.Namespace) -> int:
         responsible_id = task.responsible_id or args.default_responsible_id
 
         fields: dict[str, Any] = {
-            "TITLE": f"[{task.key}] {task.title}",
-            "DESCRIPTION": f"{task.description}\n\nStage: {task.stage}\nRoadmap key: {task.key}",
+            "TITLE": render_task_title(task),
+            "DESCRIPTION": render_task_description(task),
             "GROUP_ID": int(args.project_id),
             "TAGS": render_task_tags(task),
         }
@@ -382,7 +489,24 @@ def sync_status_mode(args: argparse.Namespace) -> int:
     task_ids: dict[str, int] = mapping.get("tasks", {})
     requested_statuses: dict[str, Any] = statuses.get("tasks", {})
 
-    client = BitrixWebhookClient(args.webhook_url)
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    stage_map: dict[str, list[dict[str, Any]]] = {}
+    stages: list[dict[str, Any]] = []
+    can_move = False
+    if args.sync_kanban:
+        if not args.kanban_entity_id:
+            raise ValueError("--kanban-entity-id is required when --sync-kanban is used")
+        stages = get_stages(client, int(args.kanban_entity_id))
+        stage_map = build_stage_map(stages)
+        can_move_response = client.call(
+            "task.stages.canmovetask",
+            {"entityId": int(args.kanban_entity_id), "entityType": args.kanban_entity_type},
+        )
+        can_move = bool(can_move_response.get("result", False))
+        if not can_move:
+            print("[WARN] Current webhook user cannot move tasks in this kanban entity")
+        if args.stage_output:
+            save_stage_snapshot(Path(args.stage_output), stages, int(args.kanban_entity_id))
 
     changed = 0
     for key, status_value in requested_statuses.items():
@@ -402,9 +526,24 @@ def sync_status_mode(args: argparse.Namespace) -> int:
         payload = {"taskId": int(task_id), "fields": {"STATUS": int(status_code)}}
         if not args.apply:
             print(f"[DRY-RUN] update {key}#{task_id} -> STATUS={status_code}")
+            if args.sync_kanban:
+                stage_id = resolve_stage_id_for_status(stage_map, int(status_code))
+                if stage_id is None:
+                    stage_id = resolve_stage_id_by_title(stages, int(status_code))
+                if stage_id is not None:
+                    print(f"[DRY-RUN] move {key}#{task_id} -> STAGE={stage_id}")
             continue
 
         client.call("tasks.task.update", payload)
+        if args.sync_kanban and can_move:
+            stage_id = resolve_stage_id_for_status(stage_map, int(status_code))
+            if stage_id is None:
+                stage_id = resolve_stage_id_by_title(stages, int(status_code))
+            if stage_id is not None:
+                client.call("task.stages.movetask", {"id": int(task_id), "stageId": int(stage_id)})
+                print(f"Moved {key}#{task_id} -> STAGE={stage_id}")
+            else:
+                print(f"[WARN] No kanban stage mapping for status {status_code} on task {key}")
         changed += 1
         print(f"Updated {key}#{task_id} -> STATUS={status_code}")
 
@@ -421,7 +560,7 @@ def sync_metadata_mode(args: argparse.Namespace) -> int:
     mapping = json.loads(map_file.read_text(encoding="utf-8"))
     task_ids: dict[str, int] = mapping.get("tasks", {})
 
-    client = BitrixWebhookClient(args.webhook_url)
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
     changed = 0
 
     for key, task_id in task_ids.items():
@@ -452,12 +591,24 @@ def sync_metadata_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def fetch_stages_mode(args: argparse.Namespace) -> int:
+    if not args.entity_id:
+        raise ValueError("--entity-id is required")
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    stages = get_stages(client, int(args.entity_id))
+    output = Path(args.output)
+    save_stage_snapshot(output, stages, int(args.entity_id))
+    print(f"Fetched {len(stages)} stages for entity {args.entity_id}")
+    print(f"Saved stages snapshot to {output}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Bitrix24 roadmap sync utility")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     create = subparsers.add_parser("create", help="Create roadmap tasks and dependencies")
-    create.add_argument("--webhook-url", required=True, help="Incoming webhook base URL")
+    create.add_argument("--webhook-url", help="Incoming webhook base URL")
     create.add_argument("--project-id", required=True, help="Bitrix24 project/group ID")
     create.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
     create.add_argument(
@@ -470,7 +621,7 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
     sync_status = subparsers.add_parser("sync-status", help="Update task statuses using key map")
-    sync_status.add_argument("--webhook-url", required=True, help="Incoming webhook base URL")
+    sync_status.add_argument("--webhook-url", help="Incoming webhook base URL")
     sync_status.add_argument(
         "--map-file",
         default=".agent/context/bitrix-task-map.json",
@@ -481,10 +632,23 @@ def build_parser() -> argparse.ArgumentParser:
         default="docs/ROADMAP_STATUS.example.json",
         help="Status source JSON file",
     )
+    sync_status.add_argument("--sync-kanban", action="store_true", help="Move cards across kanban stages")
+    sync_status.add_argument("--kanban-entity-id", type=int, help="Kanban entity ID (for group use GROUP_ID)")
+    sync_status.add_argument(
+        "--kanban-entity-type",
+        default="G",
+        choices=["G", "U"],
+        help="Kanban entity type: G=group, U=user plan",
+    )
+    sync_status.add_argument(
+        "--stage-output",
+        default=".agent/context/bitrix-kanban-stages.json",
+        help="Where to store fetched kanban stages snapshot",
+    )
     sync_status.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
     sync_meta = subparsers.add_parser("sync-metadata", help="Update titles/descriptions from roadmap source")
-    sync_meta.add_argument("--webhook-url", required=True, help="Incoming webhook base URL")
+    sync_meta.add_argument("--webhook-url", help="Incoming webhook base URL")
     sync_meta.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
     sync_meta.add_argument(
         "--map-file",
@@ -493,10 +657,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sync_meta.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
+    fetch_stages = subparsers.add_parser("fetch-stages", help="Fetch kanban stages for group/user plan")
+    fetch_stages.add_argument("--webhook-url", help="Incoming webhook base URL")
+    fetch_stages.add_argument("--entity-id", type=int, help="Entity ID (group ID or user ID)")
+    fetch_stages.add_argument(
+        "--output",
+        default=".agent/context/bitrix-kanban-stages.json",
+        help="Where to save fetched stages",
+    )
+
     return parser
 
 
 def main() -> int:
+    load_local_env()
     parser = build_parser()
     args = parser.parse_args()
 
@@ -507,6 +681,8 @@ def main() -> int:
             return sync_status_mode(args)
         if args.command == "sync-metadata":
             return sync_metadata_mode(args)
+        if args.command == "fetch-stages":
+            return fetch_stages_mode(args)
         parser.print_help()
         return 1
     except Exception as exc:  # pylint: disable=broad-except

@@ -25,11 +25,13 @@ node_modules
 # Local env files
 .env
 .env.*
+.env.webhooks
+.env.vps
 !.env.example
 !.env.dev.example
 !.env.prod.example
+!.env.webhooks.example
 !backends/php/.env*
 
 # dev/build outputs
 backend/php/vendor
-
