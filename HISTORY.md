@@ -177,3 +177,13 @@
 - Linked architecture into project entry points:
   - updated `instructions/knowledge.md`
   - updated `README.md` with unified agent architecture section.
+
+### 13) Backend Modularization for PMO Feature Blocks (March 8, 2026)
+- Refactored Python backend from monolithic endpoint layout to feature-oriented structure.
+- Added `backends/python/api/main/features/` with dedicated modules:
+  - `common`, `installer`, `strategy`, `delivery`, `resources`, `risks`, `budget`, `meetings`, `sync`, `rbac`
+- Moved endpoint logic into module-local `views.py` and business placeholders into `services.py`.
+- Kept compatibility for existing endpoints (`/api`, `/api/health`, `/api/install`, `/api/getToken`) via facade and route preservation.
+- Added PMO scaffold routes under `/api/pmo/*` to match product specification domains and support incremental implementation.
+- Added architecture doc: `docs/BACKEND_CODE_STRUCTURE.md`.
+- Updated agent memory artifacts (`.agent/context/*`, `.agent/plans/*`) with decisions and artifact index for this restructuring task.

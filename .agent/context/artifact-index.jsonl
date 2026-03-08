@@ -1,2 +1,5 @@
 {"timestamp":"2026-03-08T00:00:00Z","artifact":".agent/context/session-summary.md","type":"summary","note":"Session state"}
 {"timestamp":"2026-03-08T00:00:00Z","artifact":".agent/context/decision-log.jsonl","type":"decision-log","note":"Architecture decisions"}
+{"timestamp":"2026-03-08T09:25:57Z","artifact":"backends/python/api/main/features","type":"code-structure","note":"Feature-oriented module tree for PMO blocks"}
+{"timestamp":"2026-03-08T09:25:57Z","artifact":"backends/python/api/main/urls.py","type":"routing","note":"Unified route map with legacy + PMO scaffold endpoints"}
+{"timestamp":"2026-03-08T09:25:57Z","artifact":"docs/BACKEND_CODE_STRUCTURE.md","type":"documentation","note":"Backend modularization blueprint"}
