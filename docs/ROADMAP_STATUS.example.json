@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "RD-001": "5",
+    "RD-002": "3",
+    "RD-003": "3",
+    "RD-101": "2"
+  },
+  "notes": "Bitrix task status codes: 1=NEW, 2=PENDING, 3=IN_PROGRESS, 4=SUPPOSEDLY_COMPLETED, 5=COMPLETED, 6=DEFERRED, 7=DECLINED"
+}

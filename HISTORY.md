@@ -205,3 +205,37 @@
 - Linked main page to PMO Hub (`Open PMO Hub` action on `index.client.vue`).
 - Added architecture doc: `docs/FRONTEND_CODE_STRUCTURE.md`.
 - Updated `.agent` memory artifacts (plan, summary, decision log, artifact index) for this task.
+
+### 15) Delivery Roadmap + Bitrix24 Task Automation (March 8, 2026)
+- Added implementation roadmap document aligned with PMO Hub product specification:
+  - `docs/DELIVERY_ROADMAP.md`
+- Added machine-readable roadmap task graph for deterministic planning and task creation:
+  - `docs/ROADMAP_TASKS.json`
+- Added status sync template for roadmap execution tracking:
+  - `docs/ROADMAP_STATUS.example.json`
+- Implemented Bitrix24 webhook automation CLI:
+  - `scripts/bitrix24/roadmap_sync.py`
+  - supports dry-run and apply modes
+  - creates project tasks via `tasks.task.add`
+  - links dependencies via `task.dependence.add` (finish-start)
+  - updates task statuses via `tasks.task.update`
+- Updated operational script docs:
+  - `scripts/README.md`
+- Updated agent execution artifacts per architecture:
+  - `.agent/plans/current-plan.md`
+  - `.agent/context/session-summary.md`
+  - `.agent/context/decision-log.jsonl`
+  - `.agent/context/artifact-index.jsonl`
+
+### 16) Bitrix24 Roadmap Publication (March 8, 2026)
+- Received incoming webhook and project scope for operational tracking:
+  - webhook: `https://rgflow.bitrix24.ru/rest/1/68atla5m26tf9rc6/`
+  - `GROUP_ID=17`
+- Executed roadmap publication using automation script:
+  - `python3 scripts/bitrix24/roadmap_sync.py create --apply --project-id 17 --default-responsible-id 1`
+- Result:
+  - created all 24 roadmap tasks in Bitrix24 project
+  - initialized statuses as `NEW`
+  - created all dependency links (`finish-start`) from local roadmap graph
+- Persisted roadmap mapping artifact for future status sync:
+  - `.agent/context/bitrix-task-map.json`

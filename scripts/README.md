@@ -47,3 +47,29 @@ make queue-down
 ```
 
 Детали по интеграции воркеров: `instructions/queues/server.md`, `instructions/queues/python.md`.
+
+## Bitrix24 Roadmap Automation
+
+Для синхронизации roadmap в проект Bitrix24 добавлен CLI:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py create \
+  --webhook-url "https://<portal>/rest/<user>/<hook>/" \
+  --project-id <GROUP_ID> \
+  --source docs/ROADMAP_TASKS.json \
+  --output .agent/context/bitrix-task-map.json \
+  --default-responsible-id <USER_ID> \
+  --apply
+```
+
+Синхронизация статусов выполнения:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py sync-status \
+  --webhook-url "https://<portal>/rest/<user>/<hook>/" \
+  --map-file .agent/context/bitrix-task-map.json \
+  --status-file docs/ROADMAP_STATUS.example.json \
+  --apply
+```
+
+По умолчанию скрипт работает в dry-run режиме. Для реальной записи обязателен флаг `--apply`.

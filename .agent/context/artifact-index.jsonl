@@ -6,3 +6,8 @@
 {"timestamp":"2026-03-08T09:33:32Z","artifact":"frontend/app/features/pmo","type":"frontend-architecture","note":"Domain-driven PMO feature modules and reusable components"}
 {"timestamp":"2026-03-08T09:33:32Z","artifact":"frontend/app/stores/pmo.ts","type":"state-management","note":"PMO domain store orchestrating feature module loads"}
 {"timestamp":"2026-03-08T09:33:32Z","artifact":"docs/FRONTEND_CODE_STRUCTURE.md","type":"documentation","note":"Frontend modularization and backend binding map"}
+{"timestamp":"2026-03-08T10:04:58Z","artifact":"docs/DELIVERY_ROADMAP.md","type":"documentation","note":"Stage-by-stage delivery roadmap aligned with PMO spec"}
+{"timestamp":"2026-03-08T10:04:58Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Machine-readable roadmap task graph with dependencies"}
+{"timestamp":"2026-03-08T10:04:58Z","artifact":"docs/ROADMAP_STATUS.example.json","type":"template","note":"Status sync template for Bitrix24 task updates"}
+{"timestamp":"2026-03-08T10:04:58Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"CLI to create tasks/dependencies and sync statuses via webhook"}
+{"timestamp":"2026-03-08T10:16:12Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Roadmap key to Bitrix24 task ID mapping for GROUP_ID=17"}
