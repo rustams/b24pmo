@@ -116,3 +116,24 @@
 - `b24-webhook.service`: active
 - `https://russalp.ru`: HTTP 200
 - Webhook endpoint rejects unsigned requests and accepts signed `ping`/`push` payloads.
+
+### 10) Repository Scope Cleanup to PHP + Frontend (March 8, 2026)
+- Confirmed active development scope: `frontend + php` only.
+- Removed unused backend stacks from repository tree:
+  - `backends/node/*`
+  - `backends/python/*`
+- Removed non-relevant instructions to reduce context noise:
+  - `instructions/node/*`
+  - `instructions/python/*`
+  - `instructions/queues/node.md`
+  - `instructions/queues/python.md`
+- Removed Node/Python development skills from both agent profiles:
+  - `.cursor/skills/develop-b24-node`, `.cursor/skills/develop-b24-python`
+  - `.claude/skills/develop-b24-node`, `.claude/skills/develop-b24-python`
+- Updated remaining navigation/environment skills to explicitly reflect PHP + frontend only.
+- Rewrote `instructions/knowledge.md` as a narrowed source-of-truth for the current stack.
+- Removed non-essential duplicated/legacy context folders from working tree (`instructions/ai-hackathon-starter-full`, `versions/`) to keep local context focused.
+- Prepared local on-demand Bitrix24 docs index:
+  - cloned `https://github.com/bitrix24/b24restdocs` into local cache (`.cache/b24restdocs`)
+  - generated file index for quick lookup (`.cache/b24restdocs.index.txt`)
+  - usage model: consult only when needed for конкретный API/метод, not as default context preload.

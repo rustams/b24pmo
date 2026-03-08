@@ -1,68 +1,48 @@
 ---
 name: navigate-b24-project
-description: Understand the Bitrix24 Starter Kit project structure. Use this skill to find where specific code (frontend, backend, infrastructure) is located.
+description: Understand the PHP + frontend structure of this Bitrix24 project. Use this skill to quickly find where to implement UI, API, and integration logic.
 ---
 
-# Navigate Bitrix24 Project
+# Navigate Bitrix24 Project (PHP + Frontend)
 
 ## Project Structure
-
-The project is a monorepo containing frontend, multiple backend options, and infrastructure configuration.
 
 ```text
 b24-ai-starter/
 ├── frontend/                 # Nuxt 3 Frontend
-│   ├── app/                  # Application source code
-│   │   ├── pages/            # Pages (.client.vue)
-│   │   ├── components/       # UI Components
-│   │   ├── stores/           # Pinia Stores
-│   │   └── composables/      # Shared Logic
-│   └── nuxt.config.ts        # Nuxt Configuration
-│
-├── backends/                 # Backend Implementations
-│   ├── php/                  # Symfony 7 + PHP SDK
-│   │   ├── src/              # Source code
-│   │   └── docker/           # PHP-specific Docker config
-│   ├── python/               # Django + b24pysdk
-│   │   ├── api/              # Django project
-│   │   └── Dockerfile        # Python Docker config
-│   └── node/                 # Express + Node.js SDK
-│       ├── api/              # Express app
-│       └── Dockerfile        # Node Docker config
-│
-├── infrastructure/           # Shared Infrastructure
-│   └── database/             # SQL init scripts
-│
-├── instructions/             # AI Agent Instructions (Source of Truth)
-│   ├── knowledge.md          # Central Knowledge Base
-│   ├── [lang]/               # Language-specific guides
-│   └── bitrix24/             # Platform guides
-│
-├── scripts/                  # Helper scripts (dev-init, versioning)
-├── docker-compose.yml        # Main Docker Compose file
-├── makefile                  # Development commands
-└── README.md                 # Project Overview
+│   ├── app/pages/            # Pages (.client.vue)
+│   ├── app/components/       # UI Components
+│   ├── app/stores/           # Pinia Stores
+│   └── app/composables/      # Shared Logic
+├── backends/php/             # Symfony 7 + Bitrix24 PHP SDK
+│   ├── src/Controller/       # API endpoints
+│   ├── src/Service/          # Business logic
+│   └── src/Bitrix24Core/     # OAuth/events/integration core
+├── instructions/             # Active guidance
+│   ├── knowledge.md
+│   ├── front/
+│   ├── php/
+│   └── bitrix24/
+├── scripts/                  # dev-init, security, versioning
+├── docker-compose.yml
+└── makefile
 ```
 
 ## Key Locations by Task
 
 | Task | Location |
 |------|----------|
-| **Frontend UI** | `frontend/app/components/` (use B24UI) |
-| **Frontend Pages** | `frontend/app/pages/` (must be `.client.vue`) |
-| **Frontend API Logic** | `frontend/app/stores/` or `frontend/app/composables/` |
-| **PHP Endpoints** | `backends/php/src/Controller/` |
-| **PHP Logic** | `backends/php/src/Service/` |
-| **Python Endpoints** | `backends/python/api/main/views.py` |
-| **Python Models** | `backends/python/api/main/models.py` |
-| **Node.js Endpoints** | `backends/node/api/server.js` |
-| **Database Schema** | `infrastructure/database/init-mysql.sql` (or PostgreSQL) |
-| **Env Variables** | `.env` (copied from `.env.example`) |
+| Frontend pages | `frontend/app/pages/` |
+| Frontend components | `frontend/app/components/` |
+| Frontend API/state | `frontend/app/stores/`, `frontend/app/composables/` |
+| PHP endpoints | `backends/php/src/Controller/` |
+| PHP services | `backends/php/src/Service/` |
+| Bitrix24 core integration | `backends/php/src/Bitrix24Core/` |
+| Env/config | `.env`, `docker-compose.yml`, `makefile` |
 
 ## Documentation
 
-*   **General**: `instructions/knowledge.md`
-*   **Frontend**: `instructions/front/knowledge.md`
-*   **PHP**: `instructions/php/knowledge.md`
-*   **Python**: `instructions/python/knowledge.md`
-*   **Node.js**: `instructions/node/knowledge.md`
+- General: `instructions/knowledge.md`
+- Frontend: `instructions/front/knowledge.md`
+- PHP: `instructions/php/knowledge.md`
+- Widgets/Robots: `instructions/bitrix24/`

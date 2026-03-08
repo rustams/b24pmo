@@ -1,62 +1,49 @@
 ---
 name: manage-b24-environment
-description: Manage the Bitrix24 development environment using Docker, Makefile, and Cloudpub. Use this skill when you need to start/stop services, check logs, fix tunnel issues, or manage the database.
+description: Manage the PHP + frontend Bitrix24 development environment with Docker, Makefile, and Cloudpub.
 ---
 
-# Manage Bitrix24 Environment
+# Manage Bitrix24 Environment (PHP + Frontend)
 
-## Quick Start
-
-The project uses Docker Compose and Makefiles to manage the development environment.
-
-### Common Commands
+## Common Commands
 
 ```bash
-# Start the environment (choose one backend)
-make dev-php      # For PHP backend
-make dev-python   # For Python backend
-make dev-node     # For Node.js backend
+# Start
+make dev-init
+make dev-php
 
-# Stop all services
+# Stop and logs
 make down
+make logs
 
-# View logs
-make logs         # All logs
-docker logs api   # Backend logs
-docker logs frontend # Frontend logs
+# PHP tooling
+make composer-install
+make composer-update
+make php-cli-sh
 
-# Restart specific service
-docker compose restart api
-docker compose restart frontend
+# Security
+make security-scan
+make security-tests
 ```
 
-## Environment Setup
+## Queue (optional)
 
-1.  **Initial Setup**: Run `make dev-init` to interactively set up the project (select backend, configure `.env`, setup Cloudpub).
-2.  **Configuration**: All configuration is in `.env`.
-    *   `CLOUDPUB_TOKEN`: Required for public URL (get from cloudpub.ru).
-    *   `CLIENT_ID` / `CLIENT_SECRET`: Bitrix24 application credentials.
-    *   `SERVER_HOST`: Backend URL (e.g., `http://api-php:8000`).
+```bash
+make queue-up
+make queue-down
+```
 
-## Cloudpub & Tunnels
+Use RabbitMQ only when `ENABLE_RABBITMQ=1` is set in `.env`.
 
-The project uses Cloudpub to expose the local environment to Bitrix24.
+## Environment Notes
 
-*   **Public URL**: Found in `docker logs cloudpubFront` or `.env` (`VIRTUAL_HOST`).
-*   **Troubleshooting**:
-    *   If the tunnel is not working, check `CLOUDPUB_TOKEN` in `.env`.
-    *   On macOS (ARM64), ensure `platform: linux/amd64` is set for the cloudpub service in `docker-compose.yml`.
-
-## Database Management
-
-*   **PHP**: Run `make dev-php-init-database` to apply migrations.
-*   **Python/Node**: Database is initialized automatically on first run.
-*   **Access**:
-    *   PostgreSQL/MySQL runs in the `database` container.
-    *   Credentials in `.env` (`DB_USER`, `DB_PASSWORD`, `DB_NAME`).
+- Main config: `.env`
+- Frontend public URL: `VIRTUAL_HOST`
+- Backend target from frontend: `SERVER_HOST=http://api-php:8000`
+- OAuth credentials: `CLIENT_ID`, `CLIENT_SECRET`
 
 ## Troubleshooting
 
-*   **"Cloudpub not starting"**: Check token validity and architecture (amd64 vs arm64).
-*   **"Frontend not connecting"**: Check `SERVER_HOST` matches the running backend.
-*   **"JWT Error"**: Ensure `JWT_SECRET` is set and matches between services (if applicable).
+- Cloudpub issues: verify `CLOUDPUB_TOKEN`
+- JWT issues: verify `JWT_SECRET`
+- Backend connectivity: verify `SERVER_HOST` and running `api-php`
