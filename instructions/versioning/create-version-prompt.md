@@ -23,7 +23,7 @@
    - Добавляет/обновляет строку `APP_VERSION=<имя>` в `.env`
 4. **Пост-операции**
    - Перейди в созданную папку: `cd versions/<имя>`
-   - Запусти нужный стек (`make dev-php`, `make dev-python`, `make dev-node`)
+   - Запусти нужный стек (`make dev-python`)
    - Проверь `/api/health` и интерфейс, чтобы убедиться, что версия работает автономно
    - Если пользуешься `make dev-init`, скрипт сам предложит выбрать версию или можно запустить `DEV_INIT_VERSION=<имя> make dev-init` / `./scripts/dev-init.sh --version <имя>`
    - Для удобства можно использовать `make create-version VERSION=<имя>` и `make delete-version VERSION=<имя>` — они проксируют соответствующие скрипты (без `VERSION` включается интерактив)

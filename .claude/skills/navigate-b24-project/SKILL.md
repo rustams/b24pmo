@@ -1,9 +1,9 @@
 ---
 name: navigate-b24-project
-description: Understand the PHP + frontend structure of this Bitrix24 project. Use this skill to quickly find where to implement UI, API, and integration logic.
+description: Understand the Python + frontend structure of this Bitrix24 project. Use this skill to quickly find where to implement UI, API, and integration logic.
 ---
 
-# Navigate Bitrix24 Project (PHP + Frontend)
+# Navigate Bitrix24 Project (Python + Frontend)
 
 ## Project Structure
 
@@ -14,14 +14,14 @@ b24-ai-starter/
 │   ├── app/components/       # UI Components
 │   ├── app/stores/           # Pinia Stores
 │   └── app/composables/      # Shared Logic
-├── backends/php/             # Symfony 7 + Bitrix24 PHP SDK
-│   ├── src/Controller/       # API endpoints
-│   ├── src/Service/          # Business logic
-│   └── src/Bitrix24Core/     # OAuth/events/integration core
+├── backends/python/          # Django + b24pysdk
+│   ├── api/main/views.py     # API endpoints
+│   ├── api/main/models.py    # Data models
+│   └── api/main/utils/       # Auth/helpers/decorators
 ├── instructions/             # Active guidance
 │   ├── knowledge.md
 │   ├── front/
-│   ├── php/
+│   ├── python/
 │   └── bitrix24/
 ├── scripts/                  # dev-init, security, versioning
 ├── docker-compose.yml
@@ -35,14 +35,14 @@ b24-ai-starter/
 | Frontend pages | `frontend/app/pages/` |
 | Frontend components | `frontend/app/components/` |
 | Frontend API/state | `frontend/app/stores/`, `frontend/app/composables/` |
-| PHP endpoints | `backends/php/src/Controller/` |
-| PHP services | `backends/php/src/Service/` |
-| Bitrix24 core integration | `backends/php/src/Bitrix24Core/` |
+| Python endpoints | `backends/python/api/main/views.py` |
+| Python models | `backends/python/api/main/models.py` |
+| Python auth/helpers | `backends/python/api/main/utils/` |
 | Env/config | `.env`, `docker-compose.yml`, `makefile` |
 
 ## Documentation
 
 - General: `instructions/knowledge.md`
 - Frontend: `instructions/front/knowledge.md`
-- PHP: `instructions/php/knowledge.md`
+- Python: `instructions/python/knowledge.md`
 - Widgets/Robots: `instructions/bitrix24/`

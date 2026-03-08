@@ -137,3 +137,23 @@
   - cloned `https://github.com/bitrix24/b24restdocs` into local cache (`.cache/b24restdocs`)
   - generated file index for quick lookup (`.cache/b24restdocs.index.txt`)
   - usage model: consult only when needed for конкретный API/метод, not as default context preload.
+
+### 11) Product Spec + Backend Migration to Python (March 8, 2026)
+- Added product-level technical specification for PMO Hub:
+  - `docs/PMO_HUB_PRODUCT_SPEC.md`
+- Architecture decision updated:
+  - primary backend switched to `Python (Django + b24pysdk)`
+  - frontend remains `Nuxt 3`
+- Repository structure refactored to Python-focused layout:
+  - restored `backends/python/*`
+  - removed `backends/php/*`
+- Documentation and skills aligned to Python stack:
+  - updated `instructions/knowledge.md`
+  - restored/rewrote `instructions/python/*`
+  - updated queue prompt and kept `instructions/queues/python.md`
+  - switched skills to `develop-b24-python`, removed PHP skills
+- Runtime config updated for Python-only operation:
+  - rewritten `docker-compose.yml` to keep `api-python` and remove php/node services
+  - rewritten `makefile` to keep `dev-python`/`prod-python` as main commands
+  - removed `scripts/fix-php.sh` and refreshed `scripts/README.md`
+  - adjusted `.env.example` (`SERVER_HOST=http://api-python:8000`)
