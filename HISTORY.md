@@ -350,3 +350,8 @@
   - `build_task_numbering`
   - title renderer `render_task_title_for_bitrix`
 - Applied numbering to existing Bitrix24 board via `sync-epic-structure`.
+
+### 24) Epic Numbering in Bitrix24 Board (March 9, 2026)
+- Added explicit epic sequencing in epic task titles:
+  - `Эпик 1 ...` through `Эпик 6 ...`
+- Applied numbering via `sync-epic-structure` and verified titles in Bitrix24.

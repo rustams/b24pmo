@@ -72,6 +72,15 @@ EPIC_TITLES_RU = {
     "EPIC-V11": "Развитие версии v1.1",
 }
 
+EPIC_ORDER = {
+    "EPIC-FND": 1,
+    "EPIC-INS": 2,
+    "EPIC-CORE": 3,
+    "EPIC-OPS": 4,
+    "EPIC-SEC": 5,
+    "EPIC-V11": 6,
+}
+
 
 @dataclass
 class RoadmapTask:
@@ -485,7 +494,8 @@ def build_epics(tasks: list[RoadmapTask]) -> list[EpicTask]:
 
 
 def render_epic_title(epic: EpicTask) -> str:
-    return f"{epic.title} [{epic.code}]"
+    order = EPIC_ORDER.get(epic.code, 99)
+    return f"Эпик {order}. {epic.title} [{epic.code}]"
 
 
 def render_epic_description(code: str, title: str, stage: str, tasks: list[RoadmapTask]) -> str:
