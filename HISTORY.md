@@ -187,3 +187,21 @@
 - Added PMO scaffold routes under `/api/pmo/*` to match product specification domains and support incremental implementation.
 - Added architecture doc: `docs/BACKEND_CODE_STRUCTURE.md`.
 - Updated agent memory artifacts (`.agent/context/*`, `.agent/plans/*`) with decisions and artifact index for this restructuring task.
+
+### 14) Frontend Modularization Aligned with PMO Backend Domains (March 8, 2026)
+- Refactored frontend into feature-oriented PMO architecture.
+- Added `frontend/app/features/pmo/` with domain modules:
+  - `strategy`, `delivery`, `resources`, `risks`, `budget`, `meetings`, `sync`, `rbac`
+- Added module-level API adapters (`api.ts`) mapped to backend endpoints under `/api/pmo/*`.
+- Added reusable PMO components:
+  - `PmoModuleCard.vue`
+  - `PmoOverviewPanel.vue`
+- Added PMO domain store:
+  - `frontend/app/stores/pmo.ts`
+- Extended shared API transport in `frontend/app/stores/api.ts`:
+  - `authGet`, `authPost` for consistent authenticated backend calls.
+- Added new PMO pages:
+  - `/pmo`, `/pmo/strategy`, `/pmo/delivery`, `/pmo/resources`, `/pmo/risks`, `/pmo/budget`, `/pmo/meetings`, `/pmo/sync`, `/pmo/rbac`
+- Linked main page to PMO Hub (`Open PMO Hub` action on `index.client.vue`).
+- Added architecture doc: `docs/FRONTEND_CODE_STRUCTURE.md`.
+- Updated `.agent` memory artifacts (plan, summary, decision log, artifact index) for this task.

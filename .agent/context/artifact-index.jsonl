@@ -3,3 +3,6 @@
 {"timestamp":"2026-03-08T09:25:57Z","artifact":"backends/python/api/main/features","type":"code-structure","note":"Feature-oriented module tree for PMO blocks"}
 {"timestamp":"2026-03-08T09:25:57Z","artifact":"backends/python/api/main/urls.py","type":"routing","note":"Unified route map with legacy + PMO scaffold endpoints"}
 {"timestamp":"2026-03-08T09:25:57Z","artifact":"docs/BACKEND_CODE_STRUCTURE.md","type":"documentation","note":"Backend modularization blueprint"}
+{"timestamp":"2026-03-08T09:33:32Z","artifact":"frontend/app/features/pmo","type":"frontend-architecture","note":"Domain-driven PMO feature modules and reusable components"}
+{"timestamp":"2026-03-08T09:33:32Z","artifact":"frontend/app/stores/pmo.ts","type":"state-management","note":"PMO domain store orchestrating feature module loads"}
+{"timestamp":"2026-03-08T09:33:32Z","artifact":"docs/FRONTEND_CODE_STRUCTURE.md","type":"documentation","note":"Frontend modularization and backend binding map"}

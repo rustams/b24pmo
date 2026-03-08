@@ -1,10 +1,10 @@
 # Current Plan
 
-Task: Feature-oriented backend restructuring for PMO Hub.
+Task: Frontend modularization aligned with backend feature architecture.
 
-1. Review existing backend structure and identify monolithic files. [completed]
-2. Define feature module map aligned with PMO spec blocks. [completed]
-3. Implement module directories and split handlers/services by domain. [completed]
-4. Rewire URL routing while keeping legacy endpoints compatible. [completed]
-5. Validate Python syntax and update architecture docs. [completed]
-6. Update agent memory artifacts and finalize with git commit/push. [completed]
+1. Analyze current frontend entrypoints and API wiring. [completed]
+2. Create PMO feature-based frontend directories by business domain. [completed]
+3. Implement module API files aligned with backend `/api/pmo/*` routes. [completed]
+4. Introduce PMO pages and reusable feature components. [completed]
+5. Extend shared API store with authorized request helpers. [completed]
+6. Update docs, memory artifacts, and finalize with commit/push. [completed]

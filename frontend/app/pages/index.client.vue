@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import { onMounted, getCurrentInstance } from 'vue'
+import { onMounted } from 'vue'
 import { useDashboard } from '@bitrix24/b24ui-nuxt/utils/dashboard'
 
 const { t, locales: localesI18n, setLocale } = useI18n()
@@ -9,27 +9,21 @@ useHead({
   title: t('page.index.seo.title')
 })
 
-// region Init ////
 const { $logger, initApp, processErrorGlobal } = useAppInit('IndexPage')
 const { $initializeB24Frame } = useNuxtApp()
 let $b24: null | B24Frame = null
 
 const apiStore = useApiStore()
-// endregion ////
 
-// region Actions ////
 async function getEnums() {
   const enums = await apiStore.getEnum()
-
   $logger.info(enums)
 }
 
 async function getItems() {
   const items = await apiStore.getList()
-
   $logger.info(items)
 }
-// endregion ////
 
 const { contextId, isLoading: isLoadingState, load } = useDashboard({ isLoading: ref(false), load: () => {} })
 const isLoading = computed({
@@ -40,7 +34,6 @@ const isLoading = computed({
   }
 })
 
-// region Lifecycle Hooks ////
 const isInit = ref(false)
 onMounted(async () => {
   $logger.info('Hi from index page')
@@ -59,7 +52,6 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
-// endregion ////
 </script>
 
 <template>
@@ -80,6 +72,7 @@ onMounted(async () => {
       <template #footer>
         <B24Button label="getEnums" loading-auto @click="getEnums" />
         <B24Button label="getItems" loading-auto @click="getItems" />
+        <B24Button label="Open PMO Hub" color="air-primary" to="/pmo" />
       </template>
     </B24Card>
   </div>
