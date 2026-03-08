@@ -1,9 +1,9 @@
 # Current Plan
 
-Task: Execute RD-002 (CI quality baseline) using Bitrix24+repo synchronized workflow.
+Task: Complete preparatory roadmap block and deliver V1 installation flow.
 
-1. Move RD-002 to in-progress status in repository and Bitrix24 kanban. [completed]
-2. Implement minimal quality baseline tooling (script + make target + CI workflow). [completed]
-3. Run local validation checks and record outcomes. [completed]
-4. Move RD-002 to testing, then done after verification. [completed]
-5. Commit, push, run mandatory VPS sync verification, and report intermediate status. [in_progress]
+1. Add missing preparatory roadmap tasks and sync them to Bitrix24 with required templates/rules. [completed]
+2. Implement V1 installer persistence and installation context API in backend. [completed]
+3. Implement settings page in frontend with success message and DB installation payload output. [completed]
+4. Move tasks through Bitrix24 workflow states and sync kanban transitions. [completed]
+5. Record artifacts/history, commit, push, and verify VPS synchronization. [in_progress]

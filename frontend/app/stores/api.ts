@@ -49,6 +49,10 @@ export const useApiStore = defineStore('api', () => {
     return await authGet('/api/list')
   }
 
+  const getInstallationContext = async (): Promise<Record<string, any>> => {
+    return await authGet('/api/pmo/installation-context')
+  }
+
   const postInstall = async (data: Record<string, any>): Promise<Record<string, any>> => {
     return await $api('/api/install', {
       method: 'POST',
@@ -106,6 +110,7 @@ export const useApiStore = defineStore('api', () => {
     init,
     getEnum,
     getList,
+    getInstallationContext,
     postInstall,
     authGet,
     authPost

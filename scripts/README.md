@@ -68,6 +68,17 @@ python3 scripts/bitrix24/roadmap_sync.py create \
   --apply
 ```
 
+Создать только новые задачи, которых ещё нет в map-файле:
+
+```bash
+python3 scripts/bitrix24/roadmap_sync.py create-missing \
+  --project-id <GROUP_ID> \
+  --source docs/ROADMAP_TASKS.json \
+  --map-file .agent/context/bitrix-task-map.json \
+  --default-responsible-id <USER_ID> \
+  --apply
+```
+
 Синхронизация статусов выполнения:
 
 ```bash

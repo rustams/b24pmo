@@ -114,6 +114,39 @@
       "epic": "EPIC-INS Installer & Mapping"
     },
     {
+      "key": "RD-105",
+      "title": "V1 установка: сохранить инсталляцию и открыть страницу настроек",
+      "description": "После установки записать данные инсталляции в БД приложения и открыть страницу настроек с сообщением об успешной установке и выводом сохраненных данных.",
+      "stage": "Stage 1 - Installer",
+      "epic": "EPIC-INS Installer & Mapping",
+      "depends_on": [
+        "RD-003"
+      ],
+      "tags": [
+        "installer",
+        "backend",
+        "frontend",
+        "v1"
+      ],
+      "status": "NEW"
+    },
+    {
+      "key": "RD-106",
+      "title": "Создать V2 на базе успешного V1",
+      "description": "После подтверждения V1 создать новую версию V2 по versioning workflow и продолжить разработку функциональных блоков в ней.",
+      "stage": "Stage 1 - Installer",
+      "epic": "EPIC-INS Installer & Mapping",
+      "depends_on": [
+        "RD-105"
+      ],
+      "tags": [
+        "versioning",
+        "v2",
+        "workflow"
+      ],
+      "status": "NEW"
+    },
+    {
       "key": "RD-201",
       "title": "Реализовать API стратегического блока (Goals/Initiatives)",
       "description": "Сделать backend слой сервисов/эндпоинтов для жизненного цикла Goals и Initiatives.",

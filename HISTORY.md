@@ -293,3 +293,24 @@
 - Updated operational docs:
   - `scripts/README.md` with new quality baseline command and behavior.
 - Synced task metadata/statuses to Bitrix24 using updated automation workflow.
+
+### 20) Preparatory Block + V1 Installation Milestone (March 8, 2026)
+- Completed preparatory roadmap alignment and added missing tasks:
+  - `RD-105` — V1 installer persistence + settings page
+  - `RD-106` — create V2 after V1 approval
+- Synchronized new tasks into Bitrix24 project and updated task-id map:
+  - `RD-105` -> task `#235`
+  - `RD-106` -> task `#237`
+- Updated roadmap execution statuses and kanban transitions in Bitrix24:
+  - marked `RD-003` as done (preparatory automation completed)
+  - moved `RD-105` through `IN_PROGRESS -> TESTING -> DONE`
+- Implemented V1 backend installer milestone:
+  - enhanced install persistence in `features/installer/services.py`
+  - added installation context API (`/api/pmo/installation-context`)
+- Implemented V1 frontend settings milestone:
+  - added `frontend/app/pages/settings.client.vue`
+  - extended API store with `getInstallationContext`
+  - install flow opens settings page after install finish
+  - added index page shortcut to settings
+- Added milestone documentation:
+  - `docs/V1_INSTALLATION_DONE.md`

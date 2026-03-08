@@ -479,6 +479,61 @@ def create_mode(args: argparse.Namespace) -> int:
     return 0
 
 
+def create_missing_mode(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    map_file = Path(args.map_file)
+    tasks = load_roadmap(source)
+    ordered = topological_order(tasks)
+
+    mapping = {"tasks": {}}
+    if map_file.exists():
+        mapping = json.loads(map_file.read_text(encoding="utf-8"))
+    task_id_map: dict[str, int] = dict(mapping.get("tasks", {}))
+
+    client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    created = 0
+
+    for task in ordered:
+        existing_id = int(task_id_map.get(task.key, 0))
+        if existing_id > 0:
+            continue
+
+        responsible_id = task.responsible_id or args.default_responsible_id
+        fields: dict[str, Any] = {
+            "TITLE": render_task_title(task),
+            "DESCRIPTION": render_task_description(task),
+            "GROUP_ID": int(args.project_id),
+            "TAGS": render_task_tags(task),
+        }
+        if responsible_id:
+            fields["RESPONSIBLE_ID"] = int(responsible_id)
+        if args.created_by:
+            fields["CREATED_BY"] = int(args.created_by)
+
+        payload = {"fields": fields}
+        if not args.apply:
+            print(f"[DRY-RUN] create missing {task.key}: {json.dumps(payload, ensure_ascii=False)}")
+            continue
+
+        result = client.call("tasks.task.add", payload)
+        task_id = int(result["result"]["task"]["id"])
+        task_id_map[task.key] = task_id
+        created += 1
+        print(f"Created missing {task.key} -> task #{task_id}")
+
+    map_payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": str(source),
+        "project_id": int(args.project_id),
+        "dry_run": not args.apply,
+        "tasks": task_id_map,
+    }
+    map_file.parent.mkdir(parents=True, exist_ok=True)
+    map_file.write_text(json.dumps(map_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Saved mapping to {map_file}; created {created} tasks")
+    return 0
+
+
 def sync_status_mode(args: argparse.Namespace) -> int:
     map_file = Path(args.map_file)
     status_file = Path(args.status_file)
@@ -620,6 +675,19 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--created-by", type=int, help="Optional CREATED_BY user ID")
     create.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
 
+    create_missing = subparsers.add_parser("create-missing", help="Create only tasks missing in mapping file")
+    create_missing.add_argument("--webhook-url", help="Incoming webhook base URL")
+    create_missing.add_argument("--project-id", required=True, help="Bitrix24 project/group ID")
+    create_missing.add_argument("--source", default="docs/ROADMAP_TASKS.json", help="Roadmap JSON path")
+    create_missing.add_argument(
+        "--map-file",
+        default=".agent/context/bitrix-task-map.json",
+        help="Roadmap key -> task ID mapping file",
+    )
+    create_missing.add_argument("--default-responsible-id", type=int, help="Fallback RESPONSIBLE_ID")
+    create_missing.add_argument("--created-by", type=int, help="Optional CREATED_BY user ID")
+    create_missing.add_argument("--apply", action="store_true", help="Apply changes (without this flag runs dry-run)")
+
     sync_status = subparsers.add_parser("sync-status", help="Update task statuses using key map")
     sync_status.add_argument("--webhook-url", help="Incoming webhook base URL")
     sync_status.add_argument(
@@ -683,6 +751,8 @@ def main() -> int:
             return sync_metadata_mode(args)
         if args.command == "fetch-stages":
             return fetch_stages_mode(args)
+        if args.command == "create-missing":
+            return create_missing_mode(args)
         parser.print_help()
         return 1
     except Exception as exc:  # pylint: disable=broad-except

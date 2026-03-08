@@ -276,6 +276,7 @@ async function makeFinish(): Promise<void> {
   await sleepAction(3000)
 
   await $b24.installFinish()
+  await navigateTo('/settings')
 }
 
 const stepsData = computed(() => {

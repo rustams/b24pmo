@@ -1,11 +1,11 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from ...utils.decorators import auth_required, log_errors
 from ...utils import AuthorizedRequest
-from .services import issue_jwt, upsert_installation
+from .services import issue_jwt, upsert_installation, get_installation_context
 
 
 @xframe_options_exempt
@@ -24,3 +24,12 @@ def install(request: AuthorizedRequest):
 @auth_required
 def get_token(request: AuthorizedRequest):
     return JsonResponse(issue_jwt(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_GET
+@log_errors("installation_context")
+@auth_required
+def installation_context(request: AuthorizedRequest):
+    return JsonResponse(get_installation_context(request))

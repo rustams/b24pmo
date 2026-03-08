@@ -21,3 +21,6 @@
 {"timestamp":"2026-03-08T11:19:41Z","artifact":"scripts/quality-check.sh","type":"quality-tooling","note":"Unified baseline quality script for local and CI runs"}
 {"timestamp":"2026-03-08T11:19:41Z","artifact":".github/workflows/quality-baseline.yml","type":"ci-workflow","note":"GitHub Actions baseline quality pipeline for master push/PR"}
 {"timestamp":"2026-03-08T11:19:41Z","artifact":"docs/CI_QUALITY_BASELINE.md","type":"documentation","note":"RD-002 deliverable: quality baseline definition and usage"}
+{"timestamp":"2026-03-08T11:34:58Z","artifact":"docs/V1_INSTALLATION_DONE.md","type":"milestone-doc","note":"V1 installation milestone summary and acceptance criteria"}
+{"timestamp":"2026-03-08T11:34:58Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-feature","note":"Settings page with installation success message and DB payload output"}
+{"timestamp":"2026-03-08T11:34:58Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Extended installation persistence and installation context API response"}

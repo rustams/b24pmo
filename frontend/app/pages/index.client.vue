@@ -72,6 +72,7 @@ onMounted(async () => {
       <template #footer>
         <B24Button label="getEnums" loading-auto @click="getEnums" />
         <B24Button label="getItems" loading-auto @click="getItems" />
+        <B24Button label="Settings" color="air-primary" to="/settings" />
         <B24Button label="Open PMO Hub" color="air-primary" to="/pmo" />
       </template>
     </B24Card>
