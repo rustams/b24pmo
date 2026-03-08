@@ -157,3 +157,23 @@
   - rewritten `makefile` to keep `dev-python`/`prod-python` as main commands
   - removed `scripts/fix-php.sh` and refreshed `scripts/README.md`
   - adjusted `.env.example` (`SERVER_HOST=http://api-python:8000`)
+
+### 12) Agent Context-Engineering Architecture Integration (March 8, 2026)
+- Studied repository: `muratcankoylan/Agent-Skills-for-Context-Engineering` (skills + examples + docs).
+- Imported full skill set into both agent environments:
+  - `.cursor/skills/*`
+  - `.claude/skills/*`
+- Added top-level collection skill: `context-engineering-collection`.
+- Added unified operating architecture documents:
+  - `instructions/agents/knowledge.md`
+  - `instructions/agents/skill-activation-map.md`
+  - `instructions/agents/workflows.md`
+- Added operational agent artifacts and templates:
+  - `.agent/context/session-summary.md`
+  - `.agent/context/decision-log.jsonl`
+  - `.agent/context/artifact-index.jsonl`
+  - `.agent/plans/current-plan.md`
+  - `.agent/evaluation/rubric.md`
+- Linked architecture into project entry points:
+  - updated `instructions/knowledge.md`
+  - updated `README.md` with unified agent architecture section.

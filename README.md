@@ -778,3 +778,35 @@ const myMethod = async (): Promise<MyType> => {
 ## 📄 Лицензия
 
 Этот проект распространяется под лицензией MIT. См. файл [LICENSE](./LICENSE) для подробностей.
+
+## 🧠 Unified Agent Architecture
+
+В проект интегрирован полный набор context-engineering skills из репозитория `muratcankoylan/Agent-Skills-for-Context-Engineering`.
+
+### Где лежат skills
+- `.cursor/skills/`
+- `.claude/skills/`
+
+Помимо доменных skills Bitrix24/PMO Hub добавлены skills по:
+- context fundamentals/degradation/compression/optimization
+- memory systems, filesystem context
+- multi-agent patterns
+- tool design
+- evaluation и advanced-evaluation
+- project development
+- hosted agents
+- bdi mental states
+
+### Единая рабочая архитектура агентов
+- `instructions/agents/knowledge.md`
+- `instructions/agents/skill-activation-map.md`
+- `instructions/agents/workflows.md`
+
+### Операционные артефакты
+- `.agent/context/session-summary.md`
+- `.agent/context/decision-log.jsonl`
+- `.agent/context/artifact-index.jsonl`
+- `.agent/plans/current-plan.md`
+- `.agent/evaluation/rubric.md`
+
+Эти файлы используются как постоянный слой памяти и контроля качества агентных сессий.
