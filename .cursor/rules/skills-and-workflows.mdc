@@ -1,0 +1,29 @@
+---
+description: Активация скиллов и workflow по документации агентов
+globs: 
+alwaysApply: true
+---
+
+# Скиллы и workflow агента
+
+## Источники
+- Карта активации скиллов: `instructions/agents/skill-activation-map.md`
+- Workflow: `instructions/agents/workflows.md`
+- Архитектура: `instructions/agents/knowledge.md`
+- Центр знаний: `instructions/knowledge.md`
+
+## Правила
+1. **Скиллы** — активировать минимальный набор из `.cursor/skills/` по задаче:
+   - Продукт/стек: `navigate-b24-project`, `manage-b24-environment`, `develop-b24-frontend`, `develop-b24-python`, `implement-b24-features`, `bitrix24-static-local-app`, `bitrix24-project-ops`
+   - Context-engineering: при необходимости — `context-fundamentals`, `context-compression`, `filesystem-context`, `multi-agent-patterns`, `evaluation` и др. по карте
+2. **План и артефакты** — вести план в `.agent/plans/current-plan.md`, решения в `.agent/context/decision-log.jsonl`, обновлять `session-summary.md` и `artifact-index.jsonl`.
+3. **Bitrix24** — при задачах roadmap: синхронизация статусов/канбана через `scripts/bitrix24/roadmap_sync.py`; результат задачи + ссылка на commit; автозакрытие эпиков; после push — `./scripts/vps/verify-sync.sh`.
+4. **Оценка** — для нетривиальных фич использовать рубрику `.agent/evaluation/rubric.md`.
+
+## Контекст и память (не раздувать контекстное окно)
+
+5. **Прогрессивная загрузка** — не подгружать полные скиллы/документы «на всякий случай». Сначала имена и описания; полный контент — только при активации скилла под задачу.
+6. **Минимум в контексте** — держать в контексте только то, что нужно для текущего шага. Остальное — ссылки (пути, идентификаторы); при необходимости читать точечно (grep, read с offset/limit).
+7. **Память в файлах** — объёмное состояние, планы, решения, артефакты хранить в `.agent/context/` и `.agent/plans/`, не дублировать большими блоками в ответах. В чате — краткие отсылки («см. .agent/plans/current-plan.md») и выжимки.
+8. **Результаты инструментов** — большие выводы (поиск, логи, листинги) не вставлять целиком в историю; писать в файл и возвращать краткую сводку или путь к файлу.
+9. **Сжатие при длинных сессиях** — при росте истории использовать структурированные итоги (session-summary, decision-log, artifact-index) и при необходимости обновлять их вместо накопления сырого контекста.
