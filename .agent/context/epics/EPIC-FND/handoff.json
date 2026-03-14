@@ -1,8 +1,8 @@
 {
   "epic": "EPIC-FND",
-  "timestamp": "2026-03-15T00:30:00Z",
-  "status": "completed",
-  "active_task": null,
+  "timestamp": "2026-03-15T02:45:00Z",
+  "status": "in_progress",
+  "active_task": "RD-004",
   "dependency_gate": {
     "task": "RD-004",
     "depends_on": [
@@ -17,10 +17,11 @@
   "completed_tasks": [
     "RD-001",
     "RD-002",
-    "RD-003",
-    "RD-004"
+    "RD-003"
   ],
   "changed_files": [
+    "backends/python/api/requirements.txt",
+    "backends/python/api/settings.py",
     "backends/python/api/main/admin.py",
     ".agent/context/epics/EPIC-FND/summary.md",
     ".agent/context/epics/EPIC-FND/decisions.jsonl",
@@ -30,7 +31,7 @@
   "bitrix_sync": {
     "sync_epic_structure": "not_required",
     "sync_status": "applied",
-    "sync_epic_completion": "applied"
+    "sync_epic_completion": "reopened_manually"
   },
   "validation": {
     "compileall_admin_py": "passed",
@@ -40,10 +41,15 @@
     "vps_bitrix24account_list": "passed"
   },
   "open_risks": [
+    "Текущий UX Django admin устаревший и перегруженный; без redesign есть риск низкой продуктивности администраторов.",
+    "Нет согласованных приоритетов по плотности данных и визуальным акцентам в admin list/detail; есть риск переработки после реализации.",
     "Пароль суперпользователя был сброшен для восстановления доступа; требуется сменить после первого входа."
   ],
   "next_actions": [
-    "Подготовить commit по результатам RD-004 и контекстным артефактам.",
-    "Зафиксировать в Bitrix24 результат задачи RD-004 с commit URL после публикации commit."
+    "Установить новые зависимости в backend-окружении (pip install -r backends/python/api/requirements.txt) и перезапустить сервис.",
+    "Проверить визуально /api/admin/ после stage 2: badges, порядок колонок, карточка установки и аналитические блоки.",
+    "Подготовить merge из ветки epic-fnd-rd004-admin-unfold в основную ветку после ревью.",
+    "Собрать обратную связь по плотности данных/акцентам и выполнить stage 3 (финальная полировка list/detail).",
+    "Обновить epic-local и global контекст после каждого шага."
   ]
 }

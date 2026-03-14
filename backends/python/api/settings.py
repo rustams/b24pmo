@@ -29,6 +29,7 @@ else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "api-python"]
 
 INSTALLED_APPS = [
+    "unfold",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -93,3 +94,11 @@ STATIC_URL = "api/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+UNFOLD = {
+    "SITE_TITLE": "B24 PMO Admin",
+    "SITE_HEADER": "B24 PMO",
+    "SITE_SUBHEADER": "Installations Monitoring",
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": False,
+}

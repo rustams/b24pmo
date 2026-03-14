@@ -7,3 +7,12 @@
 {"timestamp":"2026-03-15T00:30:00Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Marked RD-004 as DONE and added it to completed_tasks"}
 {"timestamp":"2026-03-15T00:30:00Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-status --sync-kanban --apply","type":"bitrix-sync","note":"Applied RD-004 DONE status to Bitrix24 task and kanban board"}
 {"timestamp":"2026-03-15T00:30:00Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-epic-completion --apply","type":"bitrix-sync","note":"Marked EPIC-FND complete and ensured epic auto-close settings"}
+{"timestamp":"2026-03-15T02:00:00Z","artifact":"docs/ROADMAP_TASKS.json","type":"dependency-gate-input","note":"Confirmed RD-004 depends_on RD-003 and EPIC-FND scope for reopened iteration"}
+{"timestamp":"2026-03-15T02:00:00Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"dependency-gate-input","note":"Validated RD-003=5 and RD-004=3 (IN_PROGRESS), active_task=RD-004"}
+{"timestamp":"2026-03-15T02:00:00Z","artifact":".agent/context/epics/EPIC-FND/handoff.json","type":"epic-handoff","note":"Updated handoff for reopened RD-004 context-sync step and pending UX clarification"}
+{"timestamp":"2026-03-15T02:15:00Z","artifact":"backends/python/api/requirements.txt","type":"dependency-update","note":"Added django-unfold package for first-stage Django admin modernization"}
+{"timestamp":"2026-03-15T02:15:00Z","artifact":"backends/python/api/settings.py","type":"backend-config","note":"Enabled unfold app and added minimal UNFOLD admin branding configuration"}
+{"timestamp":"2026-03-15T02:15:00Z","artifact":"backends/python/api/main/admin.py","type":"backend-admin","note":"Switched admin classes to unfold ModelAdmin while preserving RD-004 diagnostics fields"}
+{"timestamp":"2026-03-15T02:30:00Z","artifact":"backends/python/api/main/admin.py","type":"backend-admin-ux","note":"Added badge-based statuses, token TTL, portal tiering, and richer installation/account analytics layout for stage 2"}
+{"timestamp":"2026-03-15T02:45:00Z","artifact":"git branch epic-fnd-rd004-admin-unfold","type":"branching","note":"Created dedicated branch for EPIC-FND RD-004 to avoid conflicts with parallel EPIC-2 work"}
+{"timestamp":"2026-03-15T02:45:00Z","artifact":"git commit 2f13db6","type":"version-control","note":"Recorded stage 1+2 RD-004 admin modernization changes in isolated branch"}
