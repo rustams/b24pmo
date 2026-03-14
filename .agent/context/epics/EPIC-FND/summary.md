@@ -61,3 +61,47 @@
   - `sync-status --sync-kanban --apply`
   - `sync-epic-completion --apply` (EPIC-FND marked complete, auto-close enabled).
 - Epic status: **EPIC-FND completed**.
+
+## Reopen Iteration (2026-03-15)
+- `RD-004` reopened and moved back to `IN_PROGRESS` for a new admin UX iteration.
+- Context synchronization completed from mandatory sources:
+  - `instructions/*` agent architecture/workflow docs
+  - roadmap files (`docs/ROADMAP_TASKS.json`, `docs/ROADMAP_EXECUTION_STATUS.json`)
+  - global memory (`session-summary`, `decision-log`, `artifact-index`, `current-plan`, rubric)
+  - epic-local memory (`EPIC-FND/handoff|summary|decisions|artifacts`)
+- Dependency gate re-check:
+  - `RD-004 depends_on RD-003`
+  - `RD-003=5 (DONE)` in repo status file
+  - cross-epic blockers: none
+  - result: **unblocked**
+- Implementation hold rule applied:
+  - no final UI decisions before user clarifies desired information blocks and visual style for admin list + card.
+
+## Stage 1 (Unfold Base Integration)
+- Applied first-stage modern admin skin integration with `django-unfold`:
+  - dependency added to `backends/python/api/requirements.txt`
+  - `unfold` enabled in `INSTALLED_APPS` in `backends/python/api/settings.py`
+  - minimal `UNFOLD` branding config added (`SITE_TITLE`, `SITE_HEADER`, `SITE_SUBHEADER`)
+  - existing admin classes switched to `unfold.admin.ModelAdmin` in `backends/python/api/main/admin.py`
+- Current step intentionally avoids final layout decisions for list/detail content density.
+- Validation:
+  - `python3 -m compileall backends/python/api/settings.py backends/python/api/main/admin.py` passed
+  - `ReadLints` for changed files: no issues
+
+## Stage 2 (Admin UX Information Architecture)
+- Upgraded list/detail information hierarchy for installations and accounts in `backends/python/api/main/admin.py`.
+- Added compact visual status indicators (badge-style rendering) for:
+  - installation status
+  - account status
+  - auth health
+- Increased operational readability in list view:
+  - added token TTL metric (`token_ttl_hours`)
+  - added portal segmentation (`portal_size_tier`)
+  - reordered list columns to show high-priority health indicators first
+- Expanded installation card blocks with operator-focused summaries:
+  - `portal_overview`
+  - `auth_timeline`
+  - status/token metrics grouped in analytics section
+- Validation:
+  - `python3 -m compileall backends/python/api/main/admin.py` passed
+  - `ReadLints` for `admin.py`: no issues
