@@ -56,7 +56,7 @@ onMounted(async () => {
       <template #header>
         <ProseH2>{{ $t('page.index.message.title') }}</ProseH2>
         <ProseP>{{ $t('page.index.message.line1') }}</ProseP>
-        <B24Badge v-if="apiStore.isDemoMode" label="Demo mode" color="air-primary-warning" />
+        <B24Badge v-if="apiStore.isDemoMode" label="Демо-режим" color="air-primary-warning" />
       </template>
 
       <ProseP accent="less">

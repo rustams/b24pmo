@@ -97,7 +97,7 @@ const scopeHint = computed(() => {
   if (missingScopes.value.length === 0) {
     return ''
   }
-  return `Не хватает scope: ${missingScopes.value.join(', ')}`
+  return `Не хватает разрешений: ${missingScopes.value.join(', ')}`
 })
 
 const buildWorkplaceLink = (id: number): string => {
@@ -126,7 +126,7 @@ const refreshInstallerData = async () => {
 
   payload.value = installationResult.status === 'fulfilled'
     ? installationResult.value
-    : { message: 'Не удалось загрузить данные установки. Используйте demo mode для продолжения.' }
+    : { message: 'Не удалось загрузить данные установки. Используйте демо-режим для продолжения.' }
 
   installerContract.value = contractResult.status === 'fulfilled'
     ? contractResult.value
@@ -155,7 +155,7 @@ const createWorkplace = async () => {
       workplaceId.value = demoId
       workplaceLink.value = buildWorkplaceLink(demoId)
       workplaceProgress.value = 100
-      setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}" (demo mode)`
+      setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}" (демо-режим)`
       return
     }
 
@@ -207,7 +207,7 @@ const createGoalsProcess = async () => {
       goalsTypeId.value = demoEntityTypeId
       goalsLink.value = buildGoalsLink(demoEntityTypeId)
       goalsProgress.value = 100
-      setupInfo.value = 'Смарт-процесс "Цели" создан (demo mode)'
+      setupInfo.value = 'Смарт-процесс "Цели" создан (демо-режим)'
       return
     }
 
@@ -284,7 +284,7 @@ onMounted(async () => {
         <ProseP v-if="payload?.message" accent="less">
           {{ payload?.message }}
         </ProseP>
-        <B24Badge v-if="isDemoMode" class="mt-2" label="Demo mode" color="air-primary-warning" />
+        <B24Badge v-if="isDemoMode" class="mt-2" label="Демо-режим" color="air-primary-warning" />
 
         <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
           <div class="flex flex-wrap items-center gap-2">
@@ -293,7 +293,7 @@ onMounted(async () => {
             <B24Badge v-else label="Требует действий" color="air-primary-alert" />
           </div>
           <ProseP v-if="!isScopeReady" accent="warning" class="mt-2">
-            Не хватает scope: {{ missingScopes.join(', ') || 'неизвестно' }}
+            Не хватает разрешений: {{ missingScopes.join(', ') || 'неизвестно' }}
           </ProseP>
           <ProseP v-else accent="less" class="mt-2">
             Все необходимые права присутствуют.
@@ -370,14 +370,14 @@ onMounted(async () => {
         </div>
 
         <details class="mt-5">
-          <summary class="cursor-pointer text-sm opacity-80">Технические данные (debug)</summary>
+          <summary class="cursor-pointer text-sm opacity-80">Технические данные</summary>
           <ProseH4 class="mt-3">Данные установки</ProseH4>
           <ProsePre class="mt-2">{{ payload }}</ProsePre>
-          <ProseH4 class="mt-3">Scope check</ProseH4>
+          <ProseH4 class="mt-3">Проверка разрешений</ProseH4>
           <ProsePre class="mt-2">{{ scopeCheck }}</ProsePre>
-          <ProseH4 class="mt-3">Contract snapshot</ProseH4>
+          <ProseH4 class="mt-3">Снимок контракта</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
-          <ProseH4 class="mt-3">Setup runtime</ProseH4>
+          <ProseH4 class="mt-3">Технический статус сценария</ProseH4>
           <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, isDemoMode } }}</ProsePre>
         </details>
       </div>

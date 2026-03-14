@@ -9,7 +9,7 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
   '/api/enum': ['demo-option-1', 'demo-option-2', 'demo-option-3'],
   '/api/list': ['demo-item-1', 'demo-item-2', 'demo-item-3'],
   '/api/pmo/installation-context': {
-    message: 'Demo mode: mocked installation context (B24 frame unavailable).',
+    message: 'Демо-режим: используется тестовый контекст установки (фрейм Bitrix24 недоступен).',
     status: 'installed',
     domain: 'demo.bitrix24.local',
     member_id: 'demo-member',
