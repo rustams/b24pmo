@@ -1,0 +1,146 @@
+#cloud-config
+# PMO Hub (b24pmo) — подготовка VPS за один запуск (Timeweb Cloud и др.).
+#
+# Где подставлять свои значения (менять в ТЕКСТЕ файла, не в комментариях):
+#
+#   YOUR_SSH_KEY  — полная строка публичного ключа (ssh-ed25519 AAAA... или ssh-rsa AAAA...):
+#     строка 24   (ssh_authorized_keys для root)
+#     строка 39   (content в deploy_key.pub для пользователя deploy)
+#
+#   YOUR_DOMAIN   — домен приложения (например app.example.ru):
+#     строка 62   (server_name в Nginx)
+#     строка 83   (HEALTH_URL в b24-deploy)
+#     строка 110  (B24_HEALTH_URL в b24-status)
+#     строка 133  (VIRTUAL_HOST в .env при клонировании)
+#
+#   REPO_URL      — URL репозитория (без кавычек):
+#     строка 131  (git clone в runcmd)
+#
+# Документация Timeweb: https://timeweb.cloud/docs/cloud-servers/manage-servers/cloud-init
+
+users: []
+
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICypvpw/jAwvdPkDbQcgmh3SzB9VF91Aecq+A4WCD6/A salpagaroff@gmail.com
+
+package_update: true
+packages:
+  - git
+  - make
+  - docker.io
+  - docker-compose-plugin
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - ufw
+
+write_files:
+  - path: /root/deploy_key.pub
+    content: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICypvpw/jAwvdPkDbQcgmh3SzB9VF91Aecq+A4WCD6/A salpagaroff@gmail.com\n"
+  - path: /etc/systemd/system/b24-ai-starter.service
+    content: |
+      [Unit]
+      Description=PMO Hub (b24pmo) Docker Compose
+      After=docker.service network-online.target
+      Requires=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/b24-ai-starter
+      ExecStart=/usr/bin/docker compose --env-file .env -f docker-compose.yml -f docker-compose.override.yml --profile frontend --profile python --profile db-postgres up -d --build
+      ExecStop=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.override.yml --profile frontend --profile python --profile db-postgres down
+      TimeoutStartSec=600
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/nginx/sites-available/b24pmo
+    content: |
+      server {
+          listen 80;
+          server_name russalp.ru;
+          location / {
+              proxy_pass http://127.0.0.1:3000;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_cache_bypass $http_upgrade;
+          }
+      }
+
+  - path: /usr/local/bin/b24-deploy
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -e
+      BRANCH="${1:-master}"
+      APP_PATH="/opt/b24-ai-starter"
+      HEALTH_URL="${B24_HEALTH_URL:-https://russalp.ru}"
+      cd "$APP_PATH"
+      git fetch origin --quiet
+      git checkout "$BRANCH" --quiet
+      git pull --ff-only origin "$BRANCH" --quiet
+      systemctl restart b24-ai-starter
+      echo "Waiting for health..."
+      for i in $(seq 1 30); do
+        code=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" 2>/dev/null || true)
+        [ "$code" = "200" ] && echo "OK: $HEALTH_URL => $code" && exit 0
+        sleep 2
+      done
+      echo "WARN: health check did not return 200" >&2
+      exit 1
+
+  - path: /usr/local/bin/b24-status
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      APP_PATH="/opt/b24-ai-starter"
+      echo "=== Git ==="
+      (cd "$APP_PATH" && git status -sb && git log -1 --oneline)
+      echo "=== Service ==="
+      systemctl is-active b24-ai-starter || true
+      echo "=== Containers ==="
+      (cd "$APP_PATH" && docker compose ps 2>/dev/null || true)
+      echo "=== Health ==="
+      curl -s -o /dev/null -w "HTTP %{http_code}\n" "${B24_HEALTH_URL:-https://russalp.ru}" 2>/dev/null || true
+
+  - path: /usr/local/bin/b24-logs
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      LINES="${1:-100}"
+      cd /opt/b24-ai-starter
+      docker compose logs --tail="$LINES" -f 2>/dev/null || journalctl -u b24-ai-starter -n "$LINES" -f
+
+runcmd:
+  - adduser --disabled-password --gecos "" deploy
+  - mkdir -p /home/deploy/.ssh
+  - cat /root/deploy_key.pub >> /home/deploy/.ssh/authorized_keys
+  - rm -f /root/deploy_key.pub
+  - chown -R deploy:deploy /home/deploy/.ssh
+  - chmod 700 /home/deploy/.ssh
+  - chmod 600 /home/deploy/.ssh/authorized_keys
+  - usermod -aG docker deploy
+  - |
+    if [ ! -d /opt/b24-ai-starter ]; then
+      git clone --depth 1 -b master https://github.com/rustams/b24pmo.git /opt/b24-ai-starter
+      cp /opt/b24-ai-starter/.env.example /opt/b24-ai-starter/.env
+      sed -i "s|VIRTUAL_HOST=.*|VIRTUAL_HOST=https://russalp.ru|" /opt/b24-ai-starter/.env
+      chown -R deploy:deploy /opt/b24-ai-starter
+    fi
+  - ln -sf /etc/nginx/sites-available/b24pmo /etc/nginx/sites-enabled/b24pmo
+  - rm -f /etc/nginx/sites-enabled/default
+  - nginx -t && systemctl reload nginx
+  - ufw allow 22
+  - ufw allow 80
+  - ufw allow 443
+  - ufw --force enable
+  - systemctl enable docker
+  - systemctl start docker
+  - systemctl enable b24-ai-starter
+  - systemctl start b24-ai-starter

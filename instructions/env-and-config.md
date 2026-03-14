@@ -52,3 +52,21 @@ Docker Compose подхватывает `.env` через `env_file: .env` и п
 2. Для Bitrix24 sync достаточно корректного `B24_WEBHOOK_URL` (и при необходимости `B24_PROJECT_GROUP_ID`); удобно держать их в `.env.webhooks`.
 3. Для VPS verify нужны `VPS_DEPLOY_HOST` и `VPS_HEALTH_URL` в `.env` или `.env.webhooks`; при проблемах с парсингом `.env` использовать `.env.webhooks` и `cp .env.webhooks.example .env.webhooks`.
 4. План и артефакты агента — `.agent/plans/current-plan.md`, `.agent/context/session-summary.md`, `.agent/context/decision-log.jsonl`, `.agent/context/artifact-index.jsonl`; при задачах roadmap обновлять `ROADMAP_EXECUTION_STATUS.json` и при наличии webhook — синхронизировать Bitrix24, после push — запускать verify-sync при наличии VPS-переменных.
+
+## Чеклист: агент сам проверяет деплой после push
+
+Чтобы после каждого push агент мог выполнить `./scripts/vps/verify-sync.sh` и получить статус «деплой успешен», на **машине, где запускается терминал** (где открыт Cursor/проект) должно быть:
+
+1. **Переменные VPS** — в корне проекта файл `.env.webhooks` (или `.env`) с хотя бы:
+   - `VPS_DEPLOY_HOST=85.239.54.74`
+   - `VPS_HEALTH_URL=https://russalp.ru`
+   При необходимости создать: `cp .env.webhooks.example .env.webhooks` (значения по проекту уже в примере).
+
+2. **SSH-доступ по ключу** — без пароля к пользователю `deploy` на VPS. То есть:
+   - Приватный ключ лежит на этой же машине (например в `~/.ssh/`).
+   - Публичный ключ добавлен на VPS в `~deploy/.ssh/authorized_keys`.
+   - В терминале команда `ssh deploy@85.239.54.74` выполняется без запроса пароля.
+
+   Ключ **не нужно никуда присылать** (ни в чат, ни агенту): он должен быть только на вашем компьютере и на VPS. Агент просто запускает скрипт в вашем же терминале; если SSH с этой машины работает, сработает и verify-sync.
+
+3. **Проверка**: в терминале выполнить `ssh deploy@85.239.54.74 'echo OK'`. Если выводится `OK` — агент сможет выполнять проверку деплоя после push.

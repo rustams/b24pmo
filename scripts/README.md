@@ -171,7 +171,7 @@ python3 scripts/bitrix24/roadmap_sync.py fetch-stages \
    - `VPS_DEPLOY_HOST` — IP или хост VPS (например `85.239.54.74`),
    - `VPS_HEALTH_URL` — URL для проверки (например `https://russalp.ru`),
    - при необходимости `VPS_DEPLOY_USER` (по умолчанию `deploy`) и `VPS_APP_PATH` (по умолчанию `/opt/b24-ai-starter`).
-3. Для проверки по SSH нужен доступ по ключу: `ssh deploy@<VPS_DEPLOY_HOST>` без пароля.
+3. Для проверки по SSH нужен доступ по ключу: `ssh deploy@<VPS_DEPLOY_HOST>` без пароля. Ключ должен быть на той же машине, где запускается Cursor/терминал, и добавлен на VPS в `~deploy/.ssh/authorized_keys`. Проверка: `ssh deploy@85.239.54.74 'echo OK'` — должно вывести `OK` без запроса пароля.
 
 ### Запуск
 

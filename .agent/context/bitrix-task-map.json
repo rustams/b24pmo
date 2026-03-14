@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-08T22:07:34.890738+00:00",
+  "generated_at": "2026-03-14T14:06:17.827377+00:00",
   "source": "docs/ROADMAP_TASKS.json",
   "project_id": 17,
   "dry_run": false,
@@ -29,14 +29,19 @@
     "RD-503": 231,
     "RD-502": 233,
     "RD-105": 235,
-    "RD-106": 237
+    "RD-106": 237,
+    "RD-601": 251,
+    "RD-602": 253,
+    "RD-603": 255,
+    "RD-604": 257,
+    "RD-605": 259
   },
   "epics": {
-    "EPIC-CORE": 239,
-    "EPIC-FND": 241,
-    "EPIC-INS": 243,
-    "EPIC-OPS": 245,
-    "EPIC-SEC": 247,
-    "EPIC-V11": 249
+    "EPIC-CORE": 261,
+    "EPIC-FND": 263,
+    "EPIC-INS": 265,
+    "EPIC-OPS": 267,
+    "EPIC-SEC": 269,
+    "EPIC-V11": 271
   }
 }

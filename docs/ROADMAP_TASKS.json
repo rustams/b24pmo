@@ -7,7 +7,8 @@
     "Stage 2 - Strategy & Delivery",
     "Stage 3 - Operations Domains",
     "Stage 4 - RBAC & Hardening",
-    "Stage 5 - v1.1"
+    "Stage 5 - v1.1",
+    "Stage VPS - Post-setup"
   ],
   "tasks": [
     {
@@ -425,6 +426,59 @@
       "status": "NEW",
       "epic": "EPIC-V11 Product Extensions",
       "parent": "RD-501"
+    },
+    {
+      "key": "RD-601",
+      "title": "Проверить доступ по SSH и работу приложения на новом VPS",
+      "description": "Проверить ssh deploy@IP и ssh root@IP. Убедиться, что приложение отвечает по http (порт 80). Проверить сервис b24-ai-starter и контейнеры.",
+      "stage": "Stage VPS - Post-setup",
+      "tags": ["vps", "ops"],
+      "status": "NEW",
+      "epic": "EPIC-OPS Operations & Deploy"
+    },
+    {
+      "key": "RD-602",
+      "title": "Прописать секреты в .env на VPS",
+      "description": "На сервере в /opt/b24-ai-starter/.env прописать JWT_SECRET, CLIENT_ID, CLIENT_SECRET, VIRTUAL_HOST=https://russalp.ru. Перезапустить сервис: sudo systemctl restart b24-ai-starter.",
+      "stage": "Stage VPS - Post-setup",
+      "depends_on": ["RD-601"],
+      "tags": ["vps", "ops", "security"],
+      "status": "NEW",
+      "epic": "EPIC-OPS Operations & Deploy",
+      "parent": "RD-601"
+    },
+    {
+      "key": "RD-603",
+      "title": "Выпустить TLS (Let's Encrypt) для russalp.ru",
+      "description": "На VPS выполнить: sudo certbot --nginx -d russalp.ru. Убедиться в редиректе HTTP→HTTPS и ответе 200 по https://russalp.ru.",
+      "stage": "Stage VPS - Post-setup",
+      "depends_on": ["RD-602"],
+      "tags": ["vps", "ops", "tls"],
+      "status": "NEW",
+      "epic": "EPIC-OPS Operations & Deploy",
+      "parent": "RD-601"
+    },
+    {
+      "key": "RD-604",
+      "title": "Обновить .env.webhooks в репозитории под новый VPS",
+      "description": "В корне репозитория в .env.webhooks задать VPS_DEPLOY_HOST=<IP нового сервера>, VPS_HEALTH_URL=https://russalp.ru. Закоммитить не нужно (.env.webhooks в .gitignore).",
+      "stage": "Stage VPS - Post-setup",
+      "depends_on": ["RD-603"],
+      "tags": ["vps", "ops", "repo"],
+      "status": "NEW",
+      "epic": "EPIC-OPS Operations & Deploy",
+      "parent": "RD-601"
+    },
+    {
+      "key": "RD-605",
+      "title": "Прогнать verify-sync.sh и зафиксировать статус деплоя",
+      "description": "Локально выполнить ./scripts/vps/verify-sync.sh. Убедиться в OK: VPS deploy is synchronized. При необходимости зафиксировать в session-summary и артефактах.",
+      "stage": "Stage VPS - Post-setup",
+      "depends_on": ["RD-604"],
+      "tags": ["vps", "ops", "ci"],
+      "status": "NEW",
+      "epic": "EPIC-OPS Operations & Deploy",
+      "parent": "RD-601"
     }
   ]
 }
