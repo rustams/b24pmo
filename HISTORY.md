@@ -423,3 +423,24 @@
 - Verification:
   - `python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure --project-id 17 --source docs/ROADMAP_TASKS.json --map-file .agent/context/bitrix-task-map.json --apply`
   - Result: existing epics updated in place (`EPIC-CORE/FND/INS/OPS/SEC/V11`), no new duplicate epic roots created.
+
+### 27) Mandatory Context Skills + Epic-Aware Hierarchical Numbering (March 14, 2026)
+- Project governance updated:
+  - mandatory baseline skills for every task:
+    - `context-engineering-collection`
+    - `context-fundamentals`
+    - `context-optimization`
+  - reflected in project rules and agent guides (`.cursor/rules/*`, `instructions/agents/*`, `instructions/knowledge.md`, `docs/CHAT_START_TEMPLATE.md`, `CLAUDE.md`).
+- Naming convention standardized and documented across workflows and Bitrix24 ops skills:
+  - epic title: `Эпик N. ... [EPIC-XXX]`
+  - first-level task in epic `N`: `Задача N.1 ...`
+  - nested tasks: `Задача N.1.1 ...` and deeper.
+- Automation updated:
+  - `scripts/bitrix24/roadmap_sync.py` now generates epic-aware numbering prefixes in task titles.
+- Applied to live Bitrix24 board:
+  - `sync-epic-structure --apply` executed for `GROUP_ID=17`.
+  - verified examples:
+    - `RD-001`: `Задача 1.1...`
+    - `RD-002`: `Задача 1.1.1...`
+    - `RD-101`: `Задача 2.1...`
+    - `RD-102`: `Задача 2.1.1...`

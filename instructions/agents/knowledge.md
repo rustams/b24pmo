@@ -30,11 +30,15 @@ Combines:
 
 ## Standard Execution Loop
 1. Clarify scope and target outcome.
-2. Activate minimal relevant skills.
-3. Build/update plan in `.agent/plans/current-plan.md`.
-4. Execute in small iterations with artifact logging.
-5. Validate behavior and record decisions.
-6. Compress context for next iteration.
+2. Activate mandatory baseline context skills:
+   - `context-engineering-collection`
+   - `context-fundamentals`
+   - `context-optimization`
+3. Activate minimal additional relevant skills.
+4. Build/update plan in `.agent/plans/current-plan.md`.
+5. Execute in small iterations with artifact logging.
+6. Validate behavior and record decisions.
+7. Compress context for next iteration.
 
 ## Mandatory Artifacts
 - `.agent/context/session-summary.md`
@@ -50,6 +54,10 @@ Combines:
 - Bitrix24 project task operations run via webhook from env (`B24_WEBHOOK_URL`, `B24_PROJECT_GROUP_ID`).
 - Task board conventions:
   - title format: human-readable title first, then `[RD-xxx][EPIC-xxx]`
+  - hierarchy numbering is mandatory:
+    - epic: `Эпик N. ...`
+    - first-level tasks under epic N: `Задача N.1 ...`, `Задача N.2 ...`
+    - nested tasks: `Задача N.1.1 ...`, `Задача N.1.2 ...` and deeper
   - descriptions in Russian
   - epic is a top-level task; roadmap tasks are epics' subtasks; nested subtasks use `parent`
   - kanban movement synced with task status transitions

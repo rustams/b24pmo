@@ -460,6 +460,7 @@ def build_task_numbering(tasks: list[RoadmapTask]) -> dict[str, str]:
         epics.setdefault(epic_code, []).append(task)
 
     for epic_code, epic_tasks in epics.items():
+        epic_order = EPIC_ORDER.get(epic_code, 99)
         epic_keys = {task.key for task in epic_tasks}
         children: dict[str, list[str]] = {}
         roots: list[str] = []
@@ -481,7 +482,8 @@ def build_task_numbering(tasks: list[RoadmapTask]) -> dict[str, str]:
                 visit(child_key, f"{prefix}.{idx}")
 
         for idx, root_key in enumerate(roots, start=1):
-            visit(root_key, str(idx))
+            # Numbering must be epic-aware: 1.1, 1.2 ... / 1.1.1 ...
+            visit(root_key, f"{epic_order}.{idx}")
 
         # Fallback: include orphaned/cyclic nodes not reached by DFS
         for task in epic_tasks:

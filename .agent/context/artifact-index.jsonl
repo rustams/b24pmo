@@ -55,3 +55,6 @@
 {"timestamp":"2026-03-14T20:50:00Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Added idempotent anti-duplicate logic for create/create-missing/sync-epic-structure with live Bitrix project discovery"}
 {"timestamp":"2026-03-14T20:50:00Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added bitrix_ids.epics/tasks source-of-truth to prevent duplicate creation during roadmap sync"}
 {"timestamp":"2026-03-14T20:50:00Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Refreshed by sync-epic-structure --apply after anti-duplicate logic rollout"}
+{"timestamp":"2026-03-14T21:05:00Z","artifact":".cursor/rules/skills-and-workflows.mdc","type":"project-rule","note":"Made three context skills mandatory baseline and fixed hierarchical naming policy"}
+{"timestamp":"2026-03-14T21:05:00Z","artifact":"instructions/agents/workflows.md","type":"workflow-doc","note":"Embedded mandatory baseline skills and epic-aware numbering convention"}
+{"timestamp":"2026-03-14T21:05:00Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Task numbering changed to epic-aware format: N.1 / N.1.1"}

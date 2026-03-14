@@ -14,12 +14,20 @@ alwaysApply: true
 - Окружение и конфиг (env, VPS, Bitrix24 sync): `instructions/env-and-config.md`
 
 ## Правила
-1. **Скиллы** — активировать минимальный набор из `.cursor/skills/` по задаче:
+1. **Скиллы (обязательная база)** — для каждой задачи обязательно активировать:
+   - `context-engineering-collection`
+   - `context-fundamentals`
+   - `context-optimization`
+2. **Скиллы (по задаче)** — дополнительно активировать минимальный набор из `.cursor/skills/`:
    - Продукт/стек: `navigate-b24-project`, `manage-b24-environment`, `develop-b24-frontend`, `develop-b24-python`, `implement-b24-features`, `bitrix24-static-local-app`, `bitrix24-project-ops`
-   - Context-engineering: при необходимости — `context-fundamentals`, `context-compression`, `filesystem-context`, `multi-agent-patterns`, `evaluation` и др. по карте
-2. **План и артефакты** — вести план в `.agent/plans/current-plan.md`, решения в `.agent/context/decision-log.jsonl`, обновлять `session-summary.md` и `artifact-index.jsonl`.
-3. **Bitrix24** — при задачах roadmap: синхронизация статусов/канбана через `scripts/bitrix24/roadmap_sync.py`; результат задачи + ссылка на commit; автозакрытие эпиков; после push — `./scripts/vps/verify-sync.sh`.
-4. **Оценка** — для нетривиальных фич использовать рубрику `.agent/evaluation/rubric.md`.
+   - Context-engineering (дополнительно): `context-compression`, `filesystem-context`, `multi-agent-patterns`, `evaluation` и др. по карте
+3. **План и артефакты** — вести план в `.agent/plans/current-plan.md`, решения в `.agent/context/decision-log.jsonl`, обновлять `session-summary.md` и `artifact-index.jsonl`.
+4. **Bitrix24** — при задачах roadmap: синхронизация статусов/канбана через `scripts/bitrix24/roadmap_sync.py`; результат задачи + ссылка на commit; автозакрытие эпиков; после push — `./scripts/vps/verify-sync.sh`.
+5. **Оценка** — для нетривиальных фич использовать рубрику `.agent/evaluation/rubric.md`.
+6. **Нейминг эпиков/задач Bitrix24 (обязательно)**:
+   - Эпики: `Эпик N. <название> [EPIC-XXX]`.
+   - Подзадачи эпика N: `Задача N.1 ...`, `Задача N.2 ...`.
+   - Вложенные уровни: `Задача N.1.1 ...`, `Задача N.1.2 ...` и т.д.
 
 ## Контекст и память (не раздувать контекстное окно)
 

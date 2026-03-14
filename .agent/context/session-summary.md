@@ -65,6 +65,24 @@
 ## Next Steps
 - Стартовать следующую продуктовую задачу (RD-101 или приоритетную) с сохранением текущего deploy workflow.
 
+## Active Skills (current task)
+- context-engineering-collection
+- context-fundamentals
+- context-optimization
+- bitrix24-project-ops
+- navigate-b24-project
+
+## Intermediate Status (current task)
+- **Готово**
+  - Обновлены обязательные правила проекта и гайды: три context-skills закреплены как baseline для каждой задачи.
+  - В workflow/skills добавлено обязательное правило нумерации: эпик `N`, задачи `N.1`, вложенные `N.1.1`.
+  - Логика `scripts/bitrix24/roadmap_sync.py` обновлена: нумерация задач теперь epic-aware.
+  - Применен `sync-epic-structure --apply`; названия задач в Bitrix24 обновлены в новом формате.
+- **Осталось**
+  - Финальная фиксация артефактов (decision-log, artifact-index, history) и публикация commit/push.
+- **Риски**
+  - Для части задач Bitrix24 не позволяет сохранить одновременно `parent` и зависимость (циклы/конфликт), поэтому есть fallback со снятием `PARENT_ID`; это влияет на глубину дерева в отдельных ветках, но нумерация и зависимости сохраняются.
+
 ## Self-Check (rubric)
 - Correctness: 5/5
 - Integration Safety: 5/5

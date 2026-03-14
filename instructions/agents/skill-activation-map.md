@@ -25,7 +25,11 @@
 - `bdi-mental-states`: for cognitive-state modeling (optional, R&D).
 
 ## Activation Policy
-1. Always activate the smallest set of skills that can solve the task.
-2. Prefer stack/product skills first.
-3. Add context-engineering skills only when task complexity requires them.
-4. Persist decisions and artifacts after each significant step.
+1. Always activate baseline context skills for every task:
+   - `context-engineering-collection`
+   - `context-fundamentals`
+   - `context-optimization`
+2. Then activate the smallest additional set of skills that can solve the task.
+3. Prefer stack/product skills first for implementation work.
+4. Add extra context-engineering skills when task complexity requires them.
+5. Persist decisions and artifacts after each significant step.
