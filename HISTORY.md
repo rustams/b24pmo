@@ -491,3 +491,21 @@
   - epic-local memory updates,
   - supervisor merge into shared context.
 - Goal: minimize ambiguity and reduce time-to-first-correct-action in new chats.
+
+### 31) EPIC-FND / RD-004 Closure: Django Admin Stabilized in Production (March 15, 2026)
+- Completed RD-004 acceptance flow on VPS (`https://pmo.russaldi.com`):
+  - login in Django admin works via `/api/admin/`,
+  - installations list opens,
+  - installation detail card opens with analytics.
+- Fixed production admin failures:
+  - `/admin/*` path confusion resolved by enforcing `/api/admin/*` as canonical admin route.
+  - Fixed 500 in `ApplicationInstallation` changelist caused by JSONField conversion mismatch on legacy data (`status_code`): used safe preview loading via SQL text cast.
+  - Fixed 500 in installation detail:
+    - marked non-editable timestamps as readonly in admin fieldsets,
+    - normalized naive/aware datetime handling for installation age.
+  - Fixed 500 in `Bitrix24Account` changelist:
+    - replaced deprecated/absent `django.utils.timezone.utc` usage with `datetime.timezone.utc` (Django 5.2 compatibility).
+- Synced closure to execution systems:
+  - `docs/ROADMAP_EXECUTION_STATUS.json`: `RD-004 -> DONE`.
+  - `python3 scripts/bitrix24/roadmap_sync.py sync-status --sync-kanban --apply`.
+  - `python3 scripts/bitrix24/roadmap_sync.py sync-epic-completion --apply` -> `EPIC-FND` completed.

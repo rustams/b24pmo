@@ -1,0 +1,15 @@
+{"timestamp":"2026-03-14T21:48:22Z","artifact":"backends/python/api/main/features/installer/services.py","type":"code","note":"Introduced installer contract version, payload normalization, idempotency fingerprint, and mapping storage envelope"}
+{"timestamp":"2026-03-14T21:48:22Z","artifact":"backends/python/api/main/features/installer/views.py","type":"code","note":"Added installer_contract view with auth_required"}
+{"timestamp":"2026-03-14T21:48:22Z","artifact":"backends/python/api/main/urls.py","type":"routing","note":"Registered GET /api/pmo/installer/contract"}
+{"timestamp":"2026-03-14T21:48:22Z","artifact":"docs/RD-101_INSTALLER_CONTRACT.md","type":"documentation","note":"Documented installer contract, idempotency semantics, and mapping model"}
+{"timestamp":"2026-03-14T21:48:22Z","artifact":".agent/context/epics/EPIC-INS/summary.md","type":"epic-summary","note":"Recorded RD-101 progress, dependency gate result, and validation"}
+{"timestamp":"2026-03-14T21:48:22Z","artifact":".agent/context/epics/EPIC-INS/decisions.jsonl","type":"epic-decisions","note":"Captured RD-101 implementation decisions"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Set RD-101=DONE; RD-102/RD-103=IN_PROGRESS; active_task=RD-102"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Added mapping read/save and scope-check services for RD-102/RD-103"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"backends/python/api/main/features/installer/views.py","type":"backend-endpoint","note":"Added installer mapping and scope-check endpoints"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"backends/python/api/main/urls.py","type":"routing","note":"Registered /api/pmo/installer/mapping, /api/pmo/installer/mapping/save, /api/pmo/installer/scope-check"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Added installer mapping/scope/contract API methods and demo responses"}
+{"timestamp":"2026-03-14T22:02:43Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Added mapping editor and scope-check visualization for installer flow"}
+{"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/pages/index.client.vue","type":"frontend-ui","note":"Removed backend error block and replaced with single 'Настроить приложение' CTA"}
+{"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Added network-failure fallback to demo responses even when JWT exists"}
+{"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Switched settings data load to Promise.allSettled with graceful fallbacks to avoid stuck loading"}

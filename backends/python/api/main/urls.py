@@ -1,7 +1,15 @@
 from django.urls import path
 
 from .features.common.views import root, health, get_enum, get_list
-from .features.installer.views import install, get_token, installation_context
+from .features.installer.views import (
+    install,
+    get_token,
+    installation_context,
+    installer_contract,
+    installer_mapping_get,
+    installer_mapping_save,
+    installer_scope_check,
+)
 from .features.strategy.views import goals_overview, initiatives_overview
 from .features.delivery.views import (
     portfolios_overview,
@@ -25,6 +33,10 @@ urlpatterns = [
     path("api/install", install, name="install"),
     path("api/getToken", get_token, name="get_token"),
     path("api/pmo/installation-context", installation_context, name="installation_context"),
+    path("api/pmo/installer/contract", installer_contract, name="installer_contract"),
+    path("api/pmo/installer/mapping", installer_mapping_get, name="installer_mapping_get"),
+    path("api/pmo/installer/mapping/save", installer_mapping_save, name="installer_mapping_save"),
+    path("api/pmo/installer/scope-check", installer_scope_check, name="installer_scope_check"),
 
     # PMO feature endpoints (scaffold)
     path("api/pmo/goals", goals_overview, name="pmo_goals"),

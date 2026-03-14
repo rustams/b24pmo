@@ -1,13 +1,49 @@
 {
   "epic": "EPIC-FND",
-  "timestamp": "",
-  "status": "new",
-  "completed_tasks": [],
-  "changed_files": [],
-  "bitrix_sync": {
-    "sync_epic_structure": "not_run",
-    "sync_status": "not_run"
+  "timestamp": "2026-03-15T00:30:00Z",
+  "status": "completed",
+  "active_task": null,
+  "dependency_gate": {
+    "task": "RD-004",
+    "depends_on": [
+      "RD-003"
+    ],
+    "depends_on_status": {
+      "RD-003": "5"
+    },
+    "cross_epic_blockers": [],
+    "result": "unblocked"
   },
-  "open_risks": [],
-  "next_actions": []
+  "completed_tasks": [
+    "RD-001",
+    "RD-002",
+    "RD-003",
+    "RD-004"
+  ],
+  "changed_files": [
+    "backends/python/api/main/admin.py",
+    ".agent/context/epics/EPIC-FND/summary.md",
+    ".agent/context/epics/EPIC-FND/decisions.jsonl",
+    ".agent/context/epics/EPIC-FND/artifacts.jsonl",
+    ".agent/context/epics/EPIC-FND/handoff.json"
+  ],
+  "bitrix_sync": {
+    "sync_epic_structure": "not_required",
+    "sync_status": "applied",
+    "sync_epic_completion": "applied"
+  },
+  "validation": {
+    "compileall_admin_py": "passed",
+    "vps_admin_login": "passed",
+    "vps_installations_list": "passed",
+    "vps_installation_detail_with_analytics": "passed",
+    "vps_bitrix24account_list": "passed"
+  },
+  "open_risks": [
+    "Пароль суперпользователя был сброшен для восстановления доступа; требуется сменить после первого входа."
+  ],
+  "next_actions": [
+    "Подготовить commit по результатам RD-004 и контекстным артефактам.",
+    "Зафиксировать в Bitrix24 результат задачи RD-004 с commit URL после публикации commit."
+  ]
 }

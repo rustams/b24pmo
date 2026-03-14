@@ -1,34 +1,124 @@
 from datetime import datetime
+from hashlib import sha256
+import json
 from uuid import UUID
 
 from ...models import ApplicationInstallation
 from ...utils import AuthorizedRequest
 
+INSTALLER_CONTRACT_VERSION = "2026-03-15"
+INSTALLER_MAPPING_MODEL_VERSION = "1.0"
+REQUIRED_INSTALLER_SCOPES = (
+    "crm",
+    "lists",
+    "tasks",
+    "user",
+    "placement",
+    "userfieldconfig",
+)
+
+
+def get_installer_contract() -> dict:
+    return {
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "endpoints": {
+            "install": {
+                "method": "POST",
+                "path": "/api/install",
+                "description": "Create/update installation record with idempotent behavior",
+            },
+            "installation_context": {
+                "method": "GET",
+                "path": "/api/pmo/installation-context",
+                "description": "Read current installation and account context",
+            },
+            "installer_contract": {
+                "method": "GET",
+                "path": "/api/pmo/installer/contract",
+                "description": "Read active installer contract and mapping storage model",
+            },
+            "installer_mapping_get": {
+                "method": "GET",
+                "path": "/api/pmo/installer/mapping",
+                "description": "Read current Smart Processes/Lists mapping state",
+            },
+            "installer_mapping_save": {
+                "method": "POST",
+                "path": "/api/pmo/installer/mapping/save",
+                "description": "Update Smart Processes/Lists mapping state",
+            },
+            "installer_scope_check": {
+                "method": "GET",
+                "path": "/api/pmo/installer/scope-check",
+                "description": "Check required scopes and admin rights for installer",
+            },
+        },
+        "idempotency": {
+            "strategy": "domain+member+normalized_payload_fingerprint",
+            "replay_behavior": "returns existing record and idempotent_replay=true",
+            "conflict_rule": "new fingerprint updates existing installation in-place",
+        },
+        "mapping_storage_model": {
+            "version": INSTALLER_MAPPING_MODEL_VERSION,
+            "state_container": "application_installation.status_code.mapping",
+            "shape": {
+                "smart_processes": {},
+                "lists": {},
+                "meta": {
+                    "state": "not_configured",
+                    "updated_at_utc": "ISO-8601",
+                },
+            },
+            "note": "RD-102/RD-103 can evolve fields while preserving versioned container",
+        },
+        "required_scopes": list(REQUIRED_INSTALLER_SCOPES),
+    }
+
 
 def upsert_installation(request: AuthorizedRequest) -> dict:
     bitrix24_account = request.bitrix24_account
     payload = request.data or {}
+    normalized_payload = _normalize_installation_payload(payload, bitrix24_account)
+    idempotency_fingerprint = _build_fingerprint(
+        domain_url=bitrix24_account.domain_url,
+        member_id=bitrix24_account.member_id,
+        normalized_payload=normalized_payload,
+    )
+
+    existing_installation = ApplicationInstallation.objects.filter(bitrix_24_account=bitrix24_account).first()
+    if existing_installation is not None:
+        existing_fingerprint = _extract_fingerprint(existing_installation.status_code)
+        if existing_fingerprint == idempotency_fingerprint:
+            return {
+                "message": "Установка уже сохранена, повторная запись не требуется",
+                "contract_version": INSTALLER_CONTRACT_VERSION,
+                "idempotent_replay": True,
+                "installation": _serialize_installation(existing_installation),
+            }
+
+    status_payload = _build_status_payload(
+        raw_payload=payload,
+        normalized_payload=normalized_payload,
+        idempotency_fingerprint=idempotency_fingerprint,
+    )
 
     installation, _ = ApplicationInstallation.objects.update_or_create(
         bitrix_24_account=bitrix24_account,
         defaults={
-            "status": str(payload.get("status") or bitrix24_account.status or "installed"),
-            "portal_license_family": str(payload.get("LICENSE_FAMILY") or payload.get("license_family") or "unknown"),
-            "portal_users_count": _to_int(payload.get("portal_users_count")),
-            "application_token": str(
-                payload.get("APP_SID")
-                or payload.get("application_token")
-                or bitrix24_account.application_token
-                or ""
-            ),
-            "external_id": _to_text(payload.get("member_id")),
-            "comment": _to_text(payload.get("comment")),
-            "status_code": payload,
+            "status": normalized_payload["status"],
+            "portal_license_family": normalized_payload["portal_license_family"],
+            "portal_users_count": normalized_payload["portal_users_count"],
+            "application_token": normalized_payload["application_token"],
+            "external_id": normalized_payload["external_id"],
+            "comment": normalized_payload["comment"],
+            "status_code": status_payload,
         },
     )
 
     return {
         "message": "Установка успешно сохранена",
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "idempotent_replay": False,
         "installation": _serialize_installation(installation),
     }
 
@@ -48,6 +138,7 @@ def get_installation_context(request: AuthorizedRequest) -> dict:
     return {
         "installed": True,
         "message": "Поздравляю, установка прошла успешно. Это страница настройки приложения.",
+        "contract_version": INSTALLER_CONTRACT_VERSION,
         "account": _serialize_account(bitrix24_account),
         "installation": _serialize_installation(installation),
     }
@@ -55,6 +146,63 @@ def get_installation_context(request: AuthorizedRequest) -> dict:
 
 def issue_jwt(request: AuthorizedRequest) -> dict:
     return {"token": request.bitrix24_account.create_jwt_token()}
+
+
+def get_installer_mapping(request: AuthorizedRequest) -> dict:
+    installation = _get_or_create_installation(request)
+    return {
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "mapping": _extract_mapping(installation.status_code),
+    }
+
+
+def save_installer_mapping(request: AuthorizedRequest) -> dict:
+    installation = _get_or_create_installation(request)
+    payload = request.data or {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    current_status_code = installation.status_code if isinstance(installation.status_code, dict) else {}
+    mapping_payload = payload.get("mapping")
+    if not isinstance(mapping_payload, dict):
+        mapping_payload = payload
+
+    normalized_mapping = _normalize_mapping_payload(mapping_payload)
+    current_status_code["mapping"] = normalized_mapping
+    installation.status_code = current_status_code
+    installation.save(update_fields=["status_code", "update_at_utc"])
+
+    return {
+        "message": "Маппинг успешно сохранен",
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "mapping": normalized_mapping,
+    }
+
+
+def get_scope_check(request: AuthorizedRequest) -> dict:
+    account = request.bitrix24_account
+    current_scope_raw = account.current_scope
+    if isinstance(current_scope_raw, list):
+        current_scopes = [str(item) for item in current_scope_raw if item]
+    elif isinstance(current_scope_raw, str):
+        current_scopes = [part.strip() for part in current_scope_raw.split(",") if part.strip()]
+    else:
+        current_scopes = []
+
+    current_scope_set = set(current_scopes)
+    required_scope_set = set(REQUIRED_INSTALLER_SCOPES)
+    missing_scopes = sorted(required_scope_set - current_scope_set)
+    has_required_scopes = len(missing_scopes) == 0
+    is_admin = bool(account.is_b24_user_admin)
+
+    return {
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "required_scopes": list(REQUIRED_INSTALLER_SCOPES),
+        "current_scopes": sorted(current_scope_set),
+        "missing_scopes": missing_scopes,
+        "is_admin": is_admin,
+        "is_ready": bool(is_admin and has_required_scopes),
+    }
 
 
 def _to_iso(value):
@@ -117,4 +265,95 @@ def _serialize_installation(installation) -> dict:
         "status_code": installation.status_code,
         "created_at_utc": _to_iso(installation.created_at_utc),
         "update_at_utc": _to_iso(installation.update_at_utc),
+    }
+
+
+def _get_or_create_installation(request: AuthorizedRequest) -> ApplicationInstallation:
+    account = request.bitrix24_account
+    installation, _ = ApplicationInstallation.objects.get_or_create(
+        bitrix_24_account=account,
+        defaults={
+            "status": account.status or "installed",
+            "portal_license_family": "unknown",
+            "application_token": account.application_token or "",
+            "external_id": account.member_id or None,
+            "status_code": {},
+        },
+    )
+    return installation
+
+
+def _normalize_installation_payload(payload: dict, bitrix24_account) -> dict:
+    return {
+        "status": str(payload.get("status") or bitrix24_account.status or "installed"),
+        "portal_license_family": str(payload.get("LICENSE_FAMILY") or payload.get("license_family") or "unknown"),
+        "portal_users_count": _to_int(payload.get("portal_users_count")),
+        "application_token": str(
+            payload.get("APP_SID")
+            or payload.get("application_token")
+            or bitrix24_account.application_token
+            or ""
+        ),
+        "external_id": _to_text(payload.get("member_id")),
+        "comment": _to_text(payload.get("comment")),
+    }
+
+
+def _build_status_payload(raw_payload: dict, normalized_payload: dict, idempotency_fingerprint: str) -> dict:
+    now_iso = datetime.utcnow().isoformat() + "Z"
+    status_payload = dict(raw_payload)
+    mapping = status_payload.get("mapping")
+    if not isinstance(mapping, dict):
+        mapping = {}
+
+    status_payload["mapping"] = _normalize_mapping_payload(mapping, now_iso=now_iso)
+    status_payload["_contract"] = {
+        "version": INSTALLER_CONTRACT_VERSION,
+        "idempotency_fingerprint": idempotency_fingerprint,
+        "saved_at_utc": now_iso,
+    }
+    status_payload["_normalized_payload"] = normalized_payload
+    return status_payload
+
+
+def _build_fingerprint(domain_url: str, member_id: str | None, normalized_payload: dict) -> str:
+    source = {
+        "domain_url": domain_url,
+        "member_id": member_id,
+        "normalized_payload": normalized_payload,
+    }
+    encoded = json.dumps(source, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _extract_fingerprint(status_code) -> str | None:
+    if not isinstance(status_code, dict):
+        return None
+    contract = status_code.get("_contract")
+    if not isinstance(contract, dict):
+        return None
+    value = contract.get("idempotency_fingerprint")
+    if not value:
+        return None
+    return str(value)
+
+
+def _extract_mapping(status_code) -> dict:
+    if not isinstance(status_code, dict):
+        return _normalize_mapping_payload({})
+    mapping = status_code.get("mapping")
+    return _normalize_mapping_payload(mapping if isinstance(mapping, dict) else {})
+
+
+def _normalize_mapping_payload(mapping: dict, now_iso: str | None = None) -> dict:
+    current_now_iso = now_iso or (datetime.utcnow().isoformat() + "Z")
+    meta = mapping.get("meta") if isinstance(mapping.get("meta"), dict) else {}
+    return {
+        "smart_processes": mapping.get("smart_processes") if isinstance(mapping.get("smart_processes"), dict) else {},
+        "lists": mapping.get("lists") if isinstance(mapping.get("lists"), dict) else {},
+        "meta": {
+            "version": INSTALLER_MAPPING_MODEL_VERSION,
+            "state": _to_text(meta.get("state")) or "not_configured",
+            "updated_at_utc": current_now_iso,
+        },
     }

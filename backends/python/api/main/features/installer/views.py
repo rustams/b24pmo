@@ -5,7 +5,15 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 from ...utils.decorators import auth_required, log_errors
 from ...utils import AuthorizedRequest
-from .services import issue_jwt, upsert_installation, get_installation_context
+from .services import (
+    issue_jwt,
+    upsert_installation,
+    get_installation_context,
+    get_installer_contract,
+    get_installer_mapping,
+    save_installer_mapping,
+    get_scope_check,
+)
 
 
 @xframe_options_exempt
@@ -33,3 +41,39 @@ def get_token(request: AuthorizedRequest):
 @auth_required
 def installation_context(request: AuthorizedRequest):
     return JsonResponse(get_installation_context(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_GET
+@log_errors("installer_contract")
+@auth_required
+def installer_contract(request: AuthorizedRequest):
+    return JsonResponse(get_installer_contract())
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_GET
+@log_errors("installer_mapping_get")
+@auth_required
+def installer_mapping_get(request: AuthorizedRequest):
+    return JsonResponse(get_installer_mapping(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_POST
+@log_errors("installer_mapping_save")
+@auth_required
+def installer_mapping_save(request: AuthorizedRequest):
+    return JsonResponse(save_installer_mapping(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_GET
+@log_errors("installer_scope_check")
+@auth_required
+def installer_scope_check(request: AuthorizedRequest):
+    return JsonResponse(get_scope_check(request))

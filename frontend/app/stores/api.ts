@@ -16,6 +16,35 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
     scope: ['crm', 'user_brief', 'pull', 'placement', 'userfieldconfig'],
     installed_at: new Date().toISOString(),
   },
+  '/api/pmo/installer/contract': {
+    contract_version: '2026-03-15',
+    required_scopes: ['crm', 'lists', 'tasks', 'user', 'placement', 'userfieldconfig']
+  },
+  '/api/pmo/installer/mapping': {
+    contract_version: '2026-03-15',
+    mapping: {
+      smart_processes: {},
+      lists: {},
+      meta: { version: '1.0', state: 'not_configured', updated_at_utc: new Date().toISOString() }
+    }
+  },
+  '/api/pmo/installer/mapping/save': {
+    message: 'Маппинг успешно сохранен',
+    contract_version: '2026-03-15',
+    mapping: {
+      smart_processes: {},
+      lists: {},
+      meta: { version: '1.0', state: 'configured', updated_at_utc: new Date().toISOString() }
+    }
+  },
+  '/api/pmo/installer/scope-check': {
+    contract_version: '2026-03-15',
+    required_scopes: ['crm', 'lists', 'tasks', 'user', 'placement', 'userfieldconfig'],
+    current_scopes: ['crm', 'user', 'placement'],
+    missing_scopes: ['lists', 'tasks', 'userfieldconfig'],
+    is_admin: true,
+    is_ready: false
+  },
   '/api/pmo/goals': { module: 'strategy.goals', status: 'demo', next: 'Подтвердить KPI и OKR на квартал' },
   '/api/pmo/initiatives': { module: 'strategy.initiatives', status: 'demo', next: 'Приоритизировать инициативы в roadmap' },
   '/api/pmo/portfolios': { module: 'delivery.portfolios', status: 'demo', next: 'Согласовать рамки портфеля Q2' },
@@ -72,8 +101,15 @@ export const useApiStore = defineStore('api', () => {
         return mock
       }
     }
-
-    return await $api<T>(url, { headers: getAuthHeaders() })
+    try {
+      return await $api<T>(url, { headers: getAuthHeaders() })
+    } catch (error) {
+      const mock = getDemoResponse<T>(url)
+      if (mock !== null) {
+        return mock
+      }
+      throw error
+    }
   }
 
   async function authPost<T>(url: string, body: Record<string, unknown>): Promise<T> {
@@ -83,12 +119,19 @@ export const useApiStore = defineStore('api', () => {
         return mock
       }
     }
-
-    return await $api<T>(url, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(body)
-    })
+    try {
+      return await $api<T>(url, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body)
+      })
+    } catch (error) {
+      const mock = getDemoResponse<T>(url)
+      if (mock !== null) {
+        return mock
+      }
+      throw error
+    }
   }
 
   const checkHealth = async (): Promise<{ status: string; backend: string; timestamp: number }> => {
@@ -109,6 +152,22 @@ export const useApiStore = defineStore('api', () => {
 
   const getInstallationContext = async (): Promise<Record<string, unknown>> => {
     return await authGet('/api/pmo/installation-context')
+  }
+
+  const getInstallerContract = async (): Promise<Record<string, unknown>> => {
+    return await authGet('/api/pmo/installer/contract')
+  }
+
+  const getInstallerMapping = async (): Promise<Record<string, unknown>> => {
+    return await authGet('/api/pmo/installer/mapping')
+  }
+
+  const saveInstallerMapping = async (mapping: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    return await authPost('/api/pmo/installer/mapping/save', { mapping })
+  }
+
+  const getInstallerScopeCheck = async (): Promise<Record<string, unknown>> => {
+    return await authGet('/api/pmo/installer/scope-check')
   }
 
   const postInstall = async (data: Record<string, unknown>): Promise<Record<string, unknown>> => {
@@ -175,6 +234,10 @@ export const useApiStore = defineStore('api', () => {
     getEnum,
     getList,
     getInstallationContext,
+    getInstallerContract,
+    getInstallerMapping,
+    saveInstallerMapping,
+    getInstallerScopeCheck,
     postInstall,
     authGet,
     authPost
