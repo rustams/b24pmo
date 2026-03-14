@@ -1,14 +1,14 @@
 # Current Plan
 
 ## Активная задача
-**Выполняется:** внедрение модели `supervisor + epic agents` с epic-local памятью и синхронизацией результатов в общий контекст.
+**Выполняется:** усиление модели `supervisor + epic agents` правилами dependency gate и профессиональной последовательной разработки.
 
 ## План выполнения текущей задачи
-1. Обновить workflow/rules/chat-template под режим `1 epic = 1 agent`.
-2. Добавить операционный документ модели и файловый контракт handoff.
-3. Создать структуру `.agent/context/epics/<EPIC-XXX>/handoff.json` для всех эпиков.
-4. Зафиксировать решение и артефакты в `.agent/context/*`.
-5. Сделать административный commit без `verify-sync`.
+1. Добавить обязательный dependency gate в project rules/workflows/skills.
+2. Зафиксировать blocked-state протокол для cross-epic зависимостей.
+3. Добавить guardrails профессиональной последовательной разработки.
+4. Обновить shared context artifacts (`session-summary`, `decision-log`, `artifact-index`).
+5. Подготовить изменения к административному коммиту (по запросу).
 
 ## Цепочка задач VPS post-setup (последовательно)
 1. **RD-601** — Проверить SSH (deploy@IP, root@IP) и доступность сервера ✅

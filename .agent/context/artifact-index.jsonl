@@ -61,3 +61,6 @@
 {"timestamp":"2026-03-14T21:25:00Z","artifact":"docs/EPIC_AGENT_OPERATING_MODEL.md","type":"process-doc","note":"Defined supervisor + epic-agent execution model, handoff schema, and commit policy"}
 {"timestamp":"2026-03-14T21:25:00Z","artifact":"instructions/agents/workflows.md","type":"workflow-doc","note":"Added Workflow D for epic-agent orchestration and supervisor merge responsibilities"}
 {"timestamp":"2026-03-14T21:25:00Z","artifact":".agent/context/epics/","type":"context-structure","note":"Added epic-local memory workspace with per-epic handoff.json templates"}
+{"timestamp":"2026-03-14T21:40:00Z","artifact":".cursor/rules/skills-and-workflows.mdc","type":"project-rule","note":"Added mandatory dependency gate and professional sequential delivery rules"}
+{"timestamp":"2026-03-14T21:40:00Z","artifact":"instructions/agents/workflows.md","type":"workflow-doc","note":"Integrated blocked-state dependency gate into feature and supervisor workflows"}
+{"timestamp":"2026-03-14T21:40:00Z","artifact":"docs/EPIC_AGENT_OPERATING_MODEL.md","type":"process-doc","note":"Added cross-epic dependency gate and professional delivery guardrails"}

@@ -56,8 +56,15 @@ Combines:
   - `handoff.json`
 - Supervisor responsibilities:
   - orchestrate epic execution order
+  - enforce dependency gate for cross-epic/task prerequisites
   - merge epic-local outcomes into global context files
   - keep roadmap/Bitrix24 state aligned with repository source-of-truth.
+
+## Execution Discipline
+- Do not start implementation while any declared dependency is unresolved.
+- Use explicit `blocked` state for waiting tasks and record unblock conditions.
+- Resume work only after dependency completion is confirmed and context is refreshed.
+- Maintain traceability chain: requirement -> plan -> decision -> artifact -> commit.
 
 ## PMO Hub-Specific Defaults
 - Backend: Python (Django + b24pysdk)

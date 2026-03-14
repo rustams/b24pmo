@@ -28,6 +28,19 @@ Supervisor updates shared memory:
 - `.agent/context/artifact-index.jsonl`
 - `.agent/plans/current-plan.md`
 
+## Cross-Epic Dependency Gate (Mandatory)
+- Epic agent must not start implementation if its task has unresolved dependencies from another epic.
+- Block condition:
+  - any dependency in `docs/ROADMAP_TASKS.json` is incomplete, or
+  - dependency status in `docs/ROADMAP_EXECUTION_STATUS.json` / Bitrix24 is not `COMPLETED` (`5`).
+- In blocked state, agent must:
+  - set handoff status to `blocked`,
+  - record blocker task key + owner epic + unblock condition,
+  - stop code implementation until dependency completion is confirmed.
+- After unblock:
+  - refresh local and global context artifacts,
+  - continue execution only from updated context snapshot.
+
 ## Handoff JSON Schema
 ```json
 {
@@ -50,6 +63,16 @@ Supervisor updates shared memory:
 - `./scripts/vps/verify-sync.sh` is required only for:
   - large integration commits, or
   - functional milestone completion.
+
+## Professional Delivery Guardrails
+- Enforce sequence: contract/design -> implementation -> integration -> validation.
+- No hidden work: each change must map to roadmap task and be reflected in artifacts.
+- Every task must have explicit DoD and test criteria before implementation starts.
+- Risk-first behavior: unresolved ambiguity is logged to decision log before coding continues.
+- Quality gate before "done":
+  - code/tests checked,
+  - Bitrix24 and repository statuses synchronized,
+  - handoff prepared for supervisor merge.
 
 ## Recommended Supervisor Loop
 1. Pick next epic by dependency and risk.

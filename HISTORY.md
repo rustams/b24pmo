@@ -458,3 +458,24 @@
   - `.agent/context/epics/EPIC-*/handoff.json` templates for all roadmap epics.
 - Operational impact:
   - epic-level context is isolated, while supervisor guarantees synchronization into shared project memory (`session-summary`, `decision-log`, `artifact-index`, `current-plan`).
+
+### 29) Dependency Gate and Professional Sequential Delivery Rules (March 14, 2026)
+- Introduced mandatory dependency gate for all roadmap execution:
+  - agent must verify `depends_on` and cross-epic prerequisites before implementation starts;
+  - if any dependency is not completed, task is marked `blocked` and implementation is paused.
+- Added blocked-state operational protocol:
+  - record blocker task, owner epic, and unblock condition in context artifacts/handoff;
+  - resume only after dependency completion is confirmed and context is refreshed.
+- Added professional delivery guardrails:
+  - strict sequence `contract/design -> implementation -> integration -> validation`,
+  - explicit DoD/test criteria required before coding,
+  - end-to-end traceability `task -> decision -> artifact -> commit`,
+  - unresolved risk/ambiguity must be logged before continuing implementation.
+- Rules synchronized across project governance and skills:
+  - `.cursor/rules/skills-and-workflows.mdc`
+  - `instructions/agents/workflows.md`
+  - `instructions/agents/knowledge.md`
+  - `docs/EPIC_AGENT_OPERATING_MODEL.md`
+  - `docs/CHAT_START_TEMPLATE.md`
+  - `.cursor/skills/bitrix24-project-ops/SKILL.md`
+  - `.claude/skills/bitrix24-project-ops/SKILL.md`
