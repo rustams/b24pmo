@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -99,6 +100,7 @@ class RoadmapTask:
     technical_test: list[str] = field(default_factory=list)
     ui_test: list[str] = field(default_factory=list)
     done_definition: list[str] = field(default_factory=list)
+    bitrix_task_id: int | None = None
 
 
 @dataclass
@@ -109,6 +111,7 @@ class EpicTask:
     description: str
     stage: str
     tags: list[str] = field(default_factory=list)
+    bitrix_task_id: int | None = None
 
 
 class BitrixWebhookClient:
@@ -269,6 +272,7 @@ def save_stage_snapshot(output: Path, stages: list[dict[str, Any]], entity_id: i
 
 def load_roadmap(path: Path) -> list[RoadmapTask]:
     raw = json.loads(path.read_text(encoding="utf-8"))
+    task_ids_from_source = raw.get("bitrix_ids", {}).get("tasks", {})
     tasks: list[RoadmapTask] = []
     keys: set[str] = set()
     for item in raw.get("tasks", []):
@@ -287,6 +291,7 @@ def load_roadmap(path: Path) -> list[RoadmapTask]:
             technical_test=item.get("technical_test", []),
             ui_test=item.get("ui_test", []),
             done_definition=item.get("done_definition", []),
+            bitrix_task_id=item.get("bitrix_task_id", task_ids_from_source.get(item["key"])),
         )
         if task.key in keys:
             raise ValueError(f"Duplicate task key: {task.key}")
@@ -300,6 +305,22 @@ def load_roadmap(path: Path) -> list[RoadmapTask]:
         if task.parent and task.parent not in keys:
             raise ValueError(f"Task {task.key} has unknown parent: {task.parent}")
     return tasks
+
+
+def load_epic_ids(path: Path) -> dict[str, int]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    epic_ids: dict[str, int] = {}
+    for code, task_id_raw in raw.get("bitrix_ids", {}).get("epics", {}).items():
+        code_str = str(code).strip()
+        task_id = int(task_id_raw or 0)
+        if code_str and task_id > 0:
+            epic_ids[code_str] = task_id
+    for item in raw.get("epics", []):
+        code = str(item.get("code", "")).strip()
+        task_id = int(item.get("bitrix_task_id", 0) or 0)
+        if code and task_id > 0:
+            epic_ids[code] = task_id
+    return epic_ids
 
 
 def normalize_status(value: str | int | None) -> int | None:
@@ -496,6 +517,71 @@ def _epic_code(epic_value: str) -> str:
     return epic_value.split(" ", 1)[0].strip()
 
 
+RD_KEY_PATTERN = re.compile(r"\[(RD-\d+)\]")
+EPIC_CODE_PATTERN = re.compile(r"\[(EPIC-[^\]]+)\]")
+
+
+def list_project_tasks(
+    client: BitrixWebhookClient,
+    project_id: int,
+    select_fields: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    fields = select_fields or ["ID", "TITLE", "STATUS", "PARENT_ID"]
+    start = 0
+    tasks: list[dict[str, Any]] = []
+    while True:
+        response = client.call(
+            "tasks.task.list",
+            {
+                "filter": {"GROUP_ID": int(project_id)},
+                "order": {"ID": "asc"},
+                "select": fields,
+                "start": int(start),
+            },
+        )
+        batch = response.get("result", {}).get("tasks", [])
+        tasks.extend(batch)
+        next_offset = response.get("next")
+        if next_offset is None:
+            break
+        start = int(next_offset)
+    return tasks
+
+
+def find_existing_task_ids_by_key(tasks: list[dict[str, Any]]) -> dict[str, int]:
+    found: dict[str, int] = {}
+    for task in tasks:
+        title = str(task.get("title", ""))
+        match = RD_KEY_PATTERN.search(title)
+        if not match:
+            continue
+        key = match.group(1)
+        task_id = int(task.get("id", 0) or 0)
+        if task_id <= 0:
+            continue
+        # Keep latest by id if multiple records accidentally exist.
+        if key not in found or task_id > found[key]:
+            found[key] = task_id
+    return found
+
+
+def find_existing_epic_root_ids(tasks: list[dict[str, Any]]) -> dict[str, int]:
+    found: dict[str, int] = {}
+    for task in tasks:
+        title = str(task.get("title", ""))
+        epic_match = EPIC_CODE_PATTERN.search(title)
+        rd_match = RD_KEY_PATTERN.search(title)
+        if not epic_match or rd_match:
+            continue
+        epic_code = epic_match.group(1)
+        task_id = int(task.get("id", 0) or 0)
+        if task_id <= 0:
+            continue
+        if epic_code not in found or task_id > found[epic_code]:
+            found[epic_code] = task_id
+    return found
+
+
 def build_epics(tasks: list[RoadmapTask]) -> list[EpicTask]:
     grouped: dict[str, list[RoadmapTask]] = {}
     for task in tasks:
@@ -605,9 +691,22 @@ def create_mode(args: argparse.Namespace) -> int:
     print(f"Loaded {len(ordered)} roadmap tasks from {source}")
 
     client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
-    task_id_map: dict[str, int] = {}
+    task_id_map: dict[str, int] = {
+        task.key: int(task.bitrix_task_id)
+        for task in ordered
+        if task.bitrix_task_id and int(task.bitrix_task_id) > 0
+    }
+    existing_project_tasks = list_project_tasks(client, int(args.project_id), ["ID", "TITLE"])
+    discovered_ids = find_existing_task_ids_by_key(existing_project_tasks)
+    for key, task_id in discovered_ids.items():
+        if int(task_id_map.get(key, 0)) <= 0:
+            task_id_map[key] = int(task_id)
 
     for task in ordered:
+        existing_id = int(task_id_map.get(task.key, 0))
+        if existing_id > 0:
+            print(f"Skip create {task.key}: already exists as task #{existing_id}")
+            continue
         parent_id = task_id_map.get(task.parent) if task.parent else None
         responsible_id = task.responsible_id or args.default_responsible_id
 
@@ -678,8 +777,16 @@ def create_missing_mode(args: argparse.Namespace) -> int:
     if map_file.exists():
         mapping = json.loads(map_file.read_text(encoding="utf-8"))
     task_id_map: dict[str, int] = dict(mapping.get("tasks", {}))
+    for task in tasks:
+        if task.bitrix_task_id and int(task.bitrix_task_id) > 0 and int(task_id_map.get(task.key, 0)) <= 0:
+            task_id_map[task.key] = int(task.bitrix_task_id)
 
     client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
+    existing_project_tasks = list_project_tasks(client, int(args.project_id), ["ID", "TITLE"])
+    discovered_ids = find_existing_task_ids_by_key(existing_project_tasks)
+    for key, task_id in discovered_ids.items():
+        if int(task_id_map.get(key, 0)) <= 0:
+            task_id_map[key] = int(task_id)
     created = 0
 
     for task in ordered:
@@ -733,6 +840,14 @@ def _link_dependency_safe(client: BitrixWebhookClient, from_id: int, to_id: int)
         raise
 
 
+def _task_exists(client: BitrixWebhookClient, task_id: int) -> bool:
+    try:
+        client.call("tasks.task.get", {"taskId": int(task_id)})
+        return True
+    except RuntimeError:
+        return False
+
+
 def sync_epic_structure_mode(args: argparse.Namespace) -> int:
     source = Path(args.source)
     map_file = Path(args.map_file)
@@ -741,18 +856,44 @@ def sync_epic_structure_mode(args: argparse.Namespace) -> int:
     task_numbering = build_task_numbering(tasks)
     epics = build_epics(tasks)
 
+    source_epic_ids = load_epic_ids(source)
     mapping = {"tasks": {}, "epics": {}}
     if map_file.exists():
         mapping = json.loads(map_file.read_text(encoding="utf-8"))
     task_id_map: dict[str, int] = dict(mapping.get("tasks", {}))
+    for task in tasks:
+        if task.bitrix_task_id and int(task.bitrix_task_id) > 0 and int(task_id_map.get(task.key, 0)) <= 0:
+            task_id_map[task.key] = int(task.bitrix_task_id)
     epic_id_map: dict[str, int] = dict(mapping.get("epics", {}))
+    for code, epic_id in source_epic_ids.items():
+        if int(epic_id_map.get(code, 0)) <= 0:
+            epic_id_map[code] = int(epic_id)
 
     client = BitrixWebhookClient(resolve_webhook_url(args.webhook_url))
     changed = 0
+    project_tasks = list_project_tasks(client, int(args.project_id), ["ID", "TITLE", "STATUS", "PARENT_ID"])
+    discovered_task_ids = find_existing_task_ids_by_key(project_tasks)
+    for key, task_id in discovered_task_ids.items():
+        if int(task_id_map.get(key, 0)) <= 0:
+            task_id_map[key] = int(task_id)
+    discovered_epic_ids = find_existing_epic_root_ids(project_tasks)
+    for code, task_id in discovered_epic_ids.items():
+        if int(epic_id_map.get(code, 0)) <= 0:
+            epic_id_map[code] = int(task_id)
 
     # Ensure epic root tasks
     for epic in epics:
         epic_id = int(epic_id_map.get(epic.code, 0))
+        if epic_id > 0 and not _task_exists(client, epic_id):
+            fallback_id = int(discovered_epic_ids.get(epic.code, 0))
+            if fallback_id > 0 and fallback_id != epic_id:
+                print(f"[WARN] Epic {epic.code} mapping #{epic_id} is stale, switch to discovered #{fallback_id}")
+                epic_id = fallback_id
+                epic_id_map[epic.code] = fallback_id
+            else:
+                print(f"[WARN] Epic {epic.code} mapping #{epic_id} is stale, will create or discover")
+                epic_id = 0
+                epic_id_map[epic.code] = 0
         fields = {
             "TITLE": render_epic_title(epic),
             "DESCRIPTION": epic.description,
@@ -784,6 +925,16 @@ def sync_epic_structure_mode(args: argparse.Namespace) -> int:
     # Update task parent links and metadata
     for task in tasks:
         task_id = int(task_id_map.get(task.key, 0))
+        if task_id > 0 and not _task_exists(client, task_id):
+            fallback_id = int(discovered_task_ids.get(task.key, 0))
+            if fallback_id > 0 and fallback_id != task_id:
+                print(f"[WARN] Task {task.key} mapping #{task_id} is stale, switch to discovered #{fallback_id}")
+                task_id = fallback_id
+                task_id_map[task.key] = fallback_id
+            else:
+                print(f"[WARN] Task {task.key} mapping #{task_id} is stale, skip parent sync")
+                task_id = 0
+                task_id_map[task.key] = 0
         if task_id <= 0:
             print(f"[WARN] Task {task.key} missing in mapping, skip parent sync")
             continue

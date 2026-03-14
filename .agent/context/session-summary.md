@@ -44,6 +44,10 @@
 - Деплой после фиксов подтвержден:
   - push commit `dcb77f2`
   - `verify-sync` => `OK` (`LOCAL_HEAD=VPS_HEAD=dcb77f2`, `HEALTH=200`)
+- Исправлена повторная генерация дублей эпиков в Bitrix24:
+  - `scripts/bitrix24/roadmap_sync.py` переведен в idempotent-режим с автообнаружением существующих задач/эпиков по ключам в заголовках
+  - `docs/ROADMAP_TASKS.json` расширен секцией `bitrix_ids` (`epics` + `tasks`) как source-of-truth для проверки существования перед созданием
+  - `sync-epic-structure --apply` отработал без создания новых эпиков (только обновления существующих ID)
 
 ## Intermediate Status
 - **Готово**

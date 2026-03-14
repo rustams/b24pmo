@@ -410,3 +410,16 @@
   - `./scripts/vps/verify-sync.sh` reports synchronized deploy (`HEALTH=200`, services active)
 - Pending by design:
   - update VPS `.env` with final Bitrix24 `CLIENT_ID` and `CLIENT_SECRET` after new app registration for `https://pmo.russaldi.com`.
+
+### 26) Idempotent Bitrix24 Roadmap Sync (No Duplicate Epics) (March 14, 2026)
+- Fixed recurring duplicate epic creation during repeated `sync-epic-structure` runs.
+- Introduced stable Bitrix identifiers in roadmap source-of-truth:
+  - `docs/ROADMAP_TASKS.json` now contains `bitrix_ids.epics` and `bitrix_ids.tasks`.
+- Hardened `scripts/bitrix24/roadmap_sync.py`:
+  - `create` and `create-missing` now preload IDs from roadmap and discover existing project tasks by `[RD-xxx]` title keys before attempting create.
+  - `sync-epic-structure` now preloads epic/task IDs from roadmap + map file + live Bitrix project scan.
+  - stale mapping IDs are validated via `tasks.task.get`; when stale, script switches to discovered IDs or recreates only when truly missing.
+  - epic root detection is constrained to titles with `[EPIC-xxx]` and without `[RD-xxx]`, reducing false positives.
+- Verification:
+  - `python3 scripts/bitrix24/roadmap_sync.py sync-epic-structure --project-id 17 --source docs/ROADMAP_TASKS.json --map-file .agent/context/bitrix-task-map.json --apply`
+  - Result: existing epics updated in place (`EPIC-CORE/FND/INS/OPS/SEC/V11`), no new duplicate epic roots created.

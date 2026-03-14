@@ -1,6 +1,50 @@
 {
   "version": "1.0",
   "generated_at": "2026-03-08",
+  "bitrix_ids": {
+    "epics": {
+      "EPIC-CORE": 275,
+      "EPIC-FND": 277,
+      "EPIC-INS": 279,
+      "EPIC-OPS": 281,
+      "EPIC-SEC": 283,
+      "EPIC-V11": 285
+    },
+    "tasks": {
+      "RD-001": 187,
+      "RD-002": 189,
+      "RD-003": 191,
+      "RD-004": 273,
+      "RD-101": 193,
+      "RD-102": 195,
+      "RD-103": 197,
+      "RD-104": 199,
+      "RD-105": 235,
+      "RD-106": 237,
+      "RD-201": 201,
+      "RD-202": 205,
+      "RD-203": 203,
+      "RD-204": 207,
+      "RD-205": 209,
+      "RD-301": 211,
+      "RD-302": 219,
+      "RD-303": 213,
+      "RD-304": 215,
+      "RD-305": 217,
+      "RD-401": 221,
+      "RD-402": 225,
+      "RD-403": 223,
+      "RD-404": 227,
+      "RD-501": 229,
+      "RD-502": 233,
+      "RD-503": 231,
+      "RD-601": 251,
+      "RD-602": 253,
+      "RD-603": 255,
+      "RD-604": 257,
+      "RD-605": 259
+    }
+  },
   "stages": [
     "Stage 0 - Foundation",
     "Stage 1 - Installer",
@@ -50,6 +94,24 @@
       "tags": [
         "automation",
         "bitrix24"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-FND Foundation & Delivery Ops",
+      "parent": "RD-001"
+    },
+    {
+      "key": "RD-004",
+      "title": "Настроить административную панель установок в Django admin",
+      "description": "Добавить в Django admin (api/admin) рабочий инструмент мониторинга установок приложения: список установок, ключевые поля записей БД, текущий статус приложения и индикаторы ошибок/проблем авторизации для оперативной диагностики.",
+      "stage": "Stage 0 - Foundation",
+      "depends_on": [
+        "RD-003"
+      ],
+      "tags": [
+        "admin",
+        "django",
+        "installer",
+        "ops"
       ],
       "status": "NEW",
       "epic": "EPIC-FND Foundation & Delivery Ops",

@@ -52,3 +52,6 @@
 {"timestamp": "2026-03-14T20:24:34Z", "artifact": "frontend/app/pages/settings.client.vue", "type": "frontend-fix", "note": "Added demo payload fallback and demo badge"}
 {"timestamp": "2026-03-14T20:24:34Z", "artifact": ".agent/context/session-summary.md", "type": "summary", "note": "Recorded ready/remaining/risks and rubric self-check"}
 {"timestamp": "2026-03-14T20:24:34Z", "artifact": ".agent/plans/current-plan.md", "type": "plan", "note": "Marked VPS+install stabilization task as completed"}
+{"timestamp":"2026-03-14T20:50:00Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Added idempotent anti-duplicate logic for create/create-missing/sync-epic-structure with live Bitrix project discovery"}
+{"timestamp":"2026-03-14T20:50:00Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added bitrix_ids.epics/tasks source-of-truth to prevent duplicate creation during roadmap sync"}
+{"timestamp":"2026-03-14T20:50:00Z","artifact":".agent/context/bitrix-task-map.json","type":"integration-state","note":"Refreshed by sync-epic-structure --apply after anti-duplicate logic rollout"}
