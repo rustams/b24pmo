@@ -14,3 +14,6 @@
 {"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Added network-failure fallback to demo responses even when JWT exists"}
 {"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Switched settings data load to Promise.allSettled with graceful fallbacks to avoid stuck loading"}
 {"timestamp":"2026-03-14T22:36:25Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Implemented structured RD-102 mapping form with row controls, numeric validation, and save/reload actions"}
+{"timestamp":"2026-03-14T23:06:30Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Reworked RD-102 into guided creation flow: automated solution + Goals smart process with progress and links"}
+{"timestamp":"2026-03-14T23:06:30Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Updated RD-102 title and description to reflect guided entity-creation scenario"}
+{"timestamp":"2026-03-14T23:06:30Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-metadata --apply","type":"bitrix-sync","note":"Applied RD-102 metadata update to Bitrix24 task card"}

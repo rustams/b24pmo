@@ -12,13 +12,10 @@ const isLoading = ref(true)
 const payload = ref<Record<string, unknown> | null>(null)
 const installerContract = ref<Record<string, unknown> | null>(null)
 const scopeCheck = ref<Record<string, unknown> | null>(null)
-const mappingPayload = ref<Record<string, unknown> | null>(null)
-const smartProcessRows = ref<Array<{ key: string; entityTypeId: string }>>([])
-const listRows = ref<Array<{ key: string; iblockId: string }>>([])
-const isSavingMapping = ref(false)
-const mappingSaveError = ref('')
-const mappingSaveSuccess = ref('')
+const setupError = ref('')
+const setupInfo = ref('')
 const isDemoMode = computed(() => apiStore.isDemoMode)
+const b24Frame = ref<B24Frame | null>(null)
 
 const isScopeReady = computed(() => Boolean(scopeCheck.value?.is_ready))
 const missingScopes = computed<string[]>(() => {
@@ -26,102 +23,73 @@ const missingScopes = computed<string[]>(() => {
   return Array.isArray(raw) ? raw.map(scope => String(scope)) : []
 })
 
-const parseSmartProcessRows = (mapping: Record<string, unknown>) => {
-  const raw = mapping.smart_processes
-  if (!raw || typeof raw !== 'object') {
-    return []
+const workplaceTitle = ref('PMO Hub')
+const workplaceId = ref<number | null>(null)
+const workplaceLink = ref('')
+const goalsTypeId = ref<number | null>(null)
+const goalsLink = ref('')
+
+const workplaceProgress = ref(0)
+const goalsProgress = ref(0)
+const isCreatingWorkplace = ref(false)
+const isCreatingGoals = ref(false)
+
+const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1 && !isCreatingWorkplace.value)
+const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const toPlainObject = (value: unknown): Record<string, any> => {
+  if (!value || typeof value !== 'object') {
+    return {}
   }
-  return Object.entries(raw as Record<string, any>).map(([key, value]) => ({
-    key,
-    entityTypeId: String(value?.entityTypeId ?? '')
-  }))
+  return value as Record<string, any>
 }
 
-const parseListRows = (mapping: Record<string, unknown>) => {
-  const raw = mapping.lists
-  if (!raw || typeof raw !== 'object') {
-    return []
-  }
-  return Object.entries(raw as Record<string, any>).map(([key, value]) => ({
-    key,
-    iblockId: String(value?.iblockId ?? '')
-  }))
+const extractResultData = (raw: unknown): Record<string, any> => {
+  const root = toPlainObject(raw)
+  const result = toPlainObject(root.result)
+  return Object.keys(result).length > 0 ? result : root
 }
 
-const applyMappingToForm = (mapping: Record<string, unknown> | null) => {
-  const safeMapping = mapping ?? {}
-  smartProcessRows.value = parseSmartProcessRows(safeMapping)
-  listRows.value = parseListRows(safeMapping)
-
-  if (smartProcessRows.value.length === 0) {
-    smartProcessRows.value = [{ key: 'goals', entityTypeId: '' }]
+const normalizeDomain = (domain: string): string => {
+  if (!domain) {
+    return ''
   }
-  if (listRows.value.length === 0) {
-    listRows.value = [{ key: 'risks', iblockId: '' }]
+  if (domain.startsWith('http://') || domain.startsWith('https://')) {
+    return domain.replace(/\/$/, '')
   }
+  return `https://${domain}`.replace(/\/$/, '')
 }
 
-const serializeMappingFromForm = () => {
-  const smart_processes: Record<string, { entityTypeId: number }> = {}
-  const lists: Record<string, { iblockId: number }> = {}
-
-  for (const row of smartProcessRows.value) {
-    const key = row.key.trim()
-    if (!key || !row.entityTypeId.trim()) {
-      continue
+const resolvePortalBaseUrl = (): string => {
+  const frame = b24Frame.value
+  if (frame) {
+    const authData = frame.auth.getAuthData()
+    if (authData && authData !== false && typeof authData.domain === 'string') {
+      return normalizeDomain(authData.domain)
     }
-    smart_processes[key] = { entityTypeId: Number(row.entityTypeId) }
   }
 
-  for (const row of listRows.value) {
-    const key = row.key.trim()
-    if (!key || !row.iblockId.trim()) {
-      continue
-    }
-    lists[key] = { iblockId: Number(row.iblockId) }
-  }
-
-  return { smart_processes, lists }
+  const account = toPlainObject(payload.value?.account)
+  const domainFromPayload = String(account.domain_url || payload.value?.domain || '').trim()
+  return normalizeDomain(domainFromPayload)
 }
 
-const validateRows = (): string | null => {
-  const invalidSmart = smartProcessRows.value.find(
-    row => row.entityTypeId.trim() !== '' && !/^\d+$/.test(row.entityTypeId.trim())
-  )
-  if (invalidSmart) {
-    return `Поле Entity Type ID должно быть числом (строка: ${invalidSmart.key || 'без имени'})`
+const buildWorkplaceLink = (id: number): string => {
+  const base = resolvePortalBaseUrl()
+  if (!base) {
+    return ''
   }
-
-  const invalidList = listRows.value.find(
-    row => row.iblockId.trim() !== '' && !/^\d+$/.test(row.iblockId.trim())
-  )
-  if (invalidList) {
-    return `Поле IBlock ID должно быть числом (строка: ${invalidList.key || 'без имени'})`
-  }
-
-  return null
+  return `${base}/crm/type/list/${id}/`
 }
 
-const addSmartProcessRow = () => {
-  smartProcessRows.value.push({ key: '', entityTypeId: '' })
-}
-
-const addListRow = () => {
-  listRows.value.push({ key: '', iblockId: '' })
-}
-
-const removeSmartProcessRow = (index: number) => {
-  smartProcessRows.value.splice(index, 1)
-  if (smartProcessRows.value.length === 0) {
-    addSmartProcessRow()
+const buildGoalsLink = (entityTypeId: number): string => {
+  const base = resolvePortalBaseUrl()
+  if (!base) {
+    return ''
   }
-}
-
-const removeListRow = (index: number) => {
-  listRows.value.splice(index, 1)
-  if (listRows.value.length === 0) {
-    addListRow()
-  }
+  return `${base}/crm/type/${entityTypeId}/list/`
 }
 
 const refreshInstallerData = async () => {
@@ -144,40 +112,117 @@ const refreshInstallerData = async () => {
     ? scopeResult.value
     : { is_ready: false, note: 'Проверка прав временно недоступна' }
 
-  const mappingResponse = mappingResult.status === 'fulfilled'
-    ? mappingResult.value
-    : { mapping: {} }
-  mappingPayload.value = (mappingResponse.mapping as Record<string, unknown> | undefined) ?? {}
-  applyMappingToForm(mappingPayload.value)
+  void mappingResult
 }
 
-const saveMapping = async () => {
-  mappingSaveError.value = ''
-  mappingSaveSuccess.value = ''
+const createWorkplace = async () => {
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingWorkplace.value = true
+  workplaceProgress.value = 10
 
-  const validationError = validateRows()
-  if (validationError) {
-    mappingSaveError.value = validationError
+  try {
+    await sleep(250)
+    workplaceProgress.value = 30
+
+    if (!b24Frame.value) {
+      await sleep(450)
+      const demoId = Math.floor(Date.now() / 1000)
+      workplaceId.value = demoId
+      workplaceLink.value = buildWorkplaceLink(demoId)
+      workplaceProgress.value = 100
+      setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}"`
+      return
+    }
+
+    const response = await b24Frame.value.callMethod('crm.automatedsolution.add', {
+      fields: { title: workplaceTitle.value.trim() }
+    })
+    workplaceProgress.value = 75
+
+    const data = extractResultData(response?.getData ? response.getData() : response)
+    const automatedSolution = toPlainObject(data.automatedSolution)
+    const createdId = Number(automatedSolution.id || data.id || 0)
+    if (!createdId) {
+      throw new Error('Не удалось получить ID цифрового рабочего места')
+    }
+
+    workplaceId.value = createdId
+    workplaceLink.value = buildWorkplaceLink(createdId)
+    workplaceProgress.value = 100
+    setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}"`
+  } catch (error) {
+    workplaceProgress.value = 0
+    setupError.value = 'Ошибка создания цифрового рабочего места. Проверьте права CRM и тариф портала.'
+    $logger.error('Failed to create automated solution', error)
+  } finally {
+    isCreatingWorkplace.value = false
+  }
+}
+
+const createGoalsProcess = async () => {
+  if (!workplaceId.value) {
+    setupError.value = 'Сначала создайте цифровое рабочее место.'
     return
   }
 
-  isSavingMapping.value = true
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingGoals.value = true
+  goalsProgress.value = 10
+
   try {
-    const response = await apiStore.saveInstallerMapping(serializeMappingFromForm())
-    mappingPayload.value = (response.mapping as Record<string, unknown> | undefined) ?? {}
-    applyMappingToForm(mappingPayload.value)
-    mappingSaveSuccess.value = String(response.message ?? 'Сохранено')
+    await sleep(250)
+    goalsProgress.value = 35
+
+    if (!b24Frame.value) {
+      await sleep(450)
+      const demoEntityTypeId = 1030
+      goalsTypeId.value = demoEntityTypeId
+      goalsLink.value = buildGoalsLink(demoEntityTypeId)
+      goalsProgress.value = 100
+      setupInfo.value = 'Смарт-процесс "Цели" создан'
+      return
+    }
+
+    const response = await b24Frame.value.callMethod('crm.type.add', {
+      fields: {
+        title: 'Цели',
+        customSectionId: workplaceId.value,
+        customSections: [workplaceId.value],
+        isAutomationEnabled: 'Y',
+        isStagesEnabled: 'Y',
+        isBizProcEnabled: 'Y'
+      }
+    })
+    goalsProgress.value = 80
+
+    const data = extractResultData(response?.getData ? response.getData() : response)
+    const type = toPlainObject(data.type)
+    const entityTypeId = Number(type.entityTypeId || type.ENTITY_TYPE_ID || 0)
+    const fallbackTypeId = Number(type.id || data.id || 0)
+    const resolvedTypeId = entityTypeId || fallbackTypeId
+    if (!resolvedTypeId) {
+      throw new Error('Не удалось получить ID смарт-процесса')
+    }
+
+    goalsTypeId.value = resolvedTypeId
+    goalsLink.value = buildGoalsLink(resolvedTypeId)
+    goalsProgress.value = 100
+    setupInfo.value = 'Смарт-процесс "Цели" создан'
   } catch (error) {
-    mappingSaveError.value = 'Не удалось сохранить маппинг. Проверьте соединение и доступы.'
-    $logger.warn('Failed to save installer mapping', error)
+    goalsProgress.value = 0
+    setupError.value = 'Ошибка создания смарт-процесса "Цели". Проверьте права CRM и доступность метода crm.type.add.'
+    $logger.error('Failed to create Goals smart process', error)
   } finally {
-    isSavingMapping.value = false
+    isCreatingGoals.value = false
   }
 }
 
 onMounted(async () => {
   try {
     const $b24: B24Frame = await $initializeB24Frame()
+    b24Frame.value = $b24
     await initApp($b24, localesI18n, setLocale)
     await $b24.parent.setTitle('Настройки PMO Hub')
     await refreshInstallerData()
@@ -200,7 +245,7 @@ onMounted(async () => {
     <B24Card>
       <template #header>
         <ProseH2>Настроить приложение</ProseH2>
-        <ProseP>Проверьте права портала и заполните маппинг сущностей для запуска PMO Hub.</ProseP>
+        <ProseP>Новый сценарий RD-102: создаем цифровое рабочее место и смарт-процесс "Цели".</ProseP>
       </template>
 
       <div v-if="isLoading" class="py-4">
@@ -228,78 +273,72 @@ onMounted(async () => {
         </div>
 
         <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <div class="flex items-center justify-between gap-2">
-            <ProseH4 class="!m-0">Шаг 2. Маппинг Smart Processes (RD-102)</ProseH4>
-            <B24Button size="sm" color="air-secondary-accent-1" @click="addSmartProcessRow">
-              + Добавить строку
+          <ProseH4 class="!m-0">Шаг 2. Создать цифровое рабочее место (crm.automatedsolution.add)</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Введите название цифрового рабочего места и нажмите "Продолжить".
+          </ProseP>
+          <div class="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+            <input
+              v-model="workplaceTitle"
+              type="text"
+              placeholder="Название цифрового рабочего места"
+              class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
+            >
+            <B24Button :loading="isCreatingWorkplace" :disabled="!canCreateWorkplace" color="air-primary" @click="createWorkplace">
+              Продолжить
             </B24Button>
           </div>
-          <div class="mt-3 grid gap-2">
-            <div
-              v-for="(row, index) in smartProcessRows"
-              :key="`sp-${index}`"
-              class="grid gap-2 md:grid-cols-[1fr_180px_auto]"
-            >
-              <input
-                v-model="row.key"
-                type="text"
-                placeholder="Ключ (например goals)"
-                class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
-              >
-              <input
-                v-model="row.entityTypeId"
-                type="text"
-                placeholder="Entity Type ID"
-                class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
-              >
-              <B24Button size="sm" color="air-primary-alert" @click="removeSmartProcessRow(index)">
-                Удалить
-              </B24Button>
-            </div>
+
+          <div v-if="isCreatingWorkplace || workplaceProgress > 0" class="mt-3">
+            <B24Progress v-model="workplaceProgress" animation="elastic" />
           </div>
+          <ProseP v-if="workplaceId" class="mt-2" accent="less">
+            Создано цифровое рабочее место "{{ workplaceTitle.trim() }}"
+            <a
+              v-if="workplaceLink"
+              :href="workplaceLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline"
+            >
+              Перейти
+            </a>
+          </ProseP>
         </div>
 
         <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <div class="flex items-center justify-between gap-2">
-            <ProseH4 class="!m-0">Шаг 3. Маппинг Lists (RD-102)</ProseH4>
-            <B24Button size="sm" color="air-secondary-accent-1" @click="addListRow">
-              + Добавить строку
+          <ProseH4 class="!m-0">Шаг 3. Создать смарт-процесс "Цели" (crm.type.add)</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            После создания цифрового рабочего места нажмите "Продолжить".
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isCreatingGoals" :disabled="!canCreateGoals" color="air-primary" @click="createGoalsProcess">
+              Продолжить
             </B24Button>
           </div>
-          <div class="mt-3 grid gap-2">
-            <div
-              v-for="(row, index) in listRows"
-              :key="`list-${index}`"
-              class="grid gap-2 md:grid-cols-[1fr_180px_auto]"
-            >
-              <input
-                v-model="row.key"
-                type="text"
-                placeholder="Ключ (например risks)"
-                class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
-              >
-              <input
-                v-model="row.iblockId"
-                type="text"
-                placeholder="IBlock ID"
-                class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
-              >
-              <B24Button size="sm" color="air-primary-alert" @click="removeListRow(index)">
-                Удалить
-              </B24Button>
-            </div>
+          <div v-if="isCreatingGoals || goalsProgress > 0" class="mt-3">
+            <B24Progress v-model="goalsProgress" animation="elastic" />
           </div>
+          <ProseP v-if="goalsTypeId" class="mt-2" accent="less">
+            Смарт-процесс "Цели" создан
+            <a
+              v-if="goalsLink"
+              :href="goalsLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline"
+            >
+              Перейти
+            </a>
+          </ProseP>
         </div>
 
         <div class="mt-5 flex flex-wrap items-center gap-2">
-          <B24Button :loading="isSavingMapping" color="air-primary" @click="saveMapping">
-            Сохранить настройки
-          </B24Button>
           <B24Button color="air-secondary-accent-1" @click="refreshInstallerData">
             Обновить данные
           </B24Button>
-          <ProseP v-if="mappingSaveSuccess" accent="less">{{ mappingSaveSuccess }}</ProseP>
-          <ProseP v-if="mappingSaveError" accent="warning">{{ mappingSaveError }}</ProseP>
+          <ProseP v-if="setupInfo" accent="less">{{ setupInfo }}</ProseP>
+          <ProseP v-if="setupError" accent="warning">{{ setupError }}</ProseP>
         </div>
 
         <details class="mt-5">
@@ -310,8 +349,8 @@ onMounted(async () => {
           <ProsePre class="mt-2">{{ scopeCheck }}</ProsePre>
           <ProseH4 class="mt-3">Contract snapshot</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
-          <ProseH4 class="mt-3">Mapping payload</ProseH4>
-          <ProsePre class="mt-2">{{ mappingPayload }}</ProsePre>
+          <ProseH4 class="mt-3">Setup runtime</ProseH4>
+          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, isDemoMode } }}</ProsePre>
         </details>
       </div>
     </B24Card>

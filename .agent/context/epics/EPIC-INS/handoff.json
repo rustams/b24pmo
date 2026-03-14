@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-INS",
-  "timestamp": "2026-03-14T22:36:25Z",
+  "timestamp": "2026-03-14T23:06:30Z",
   "status": "in_progress",
   "completed_tasks": [
     "RD-101"
@@ -13,6 +13,7 @@
     "docs/ROADMAP_EXECUTION_STATUS.json",
     "frontend/app/stores/api.ts",
     "frontend/app/pages/settings.client.vue",
+    "docs/ROADMAP_TASKS.json",
     "frontend/app/pages/index.client.vue",
     "frontend/app/pages/settings.client.vue",
     ".agent/context/epics/EPIC-INS/summary.md",
@@ -29,11 +30,11 @@
     "sync_status": "applied"
   },
   "open_risks": [
-    "Нужна пользовательская приемка нового формового интерфейса RD-102 в реальном портале (не только demo).",
+    "Нужна пользовательская приемка нового сценария RD-102 в реальном портале: создание DWS и SP 'Цели' с проверкой ссылок.",
     "RD-103 показывает диагностику scope/прав, но еще нужны UX-инструкции по исправлению недостающих scope."
   ],
   "next_actions": [
-    "Провести пользовательскую проверку нового интерфейса RD-102 (добавление/удаление строк, сохранение, reload).",
+    "Провести пользовательскую проверку нового сценария RD-102 (DWS add -> Goals add).",
     "Продолжить реализацию RD-103: пользовательские подсказки по недостающим scope и правам администратора.",
     "RD-104 не запускать до завершения RD-102 и RD-103."
   ]
