@@ -65,15 +65,28 @@ const normalizeDomain = (domain: string): string => {
 const resolvePortalBaseUrl = (): string => {
   const frame = b24Frame.value
   if (frame) {
-    const authData = frame.auth.getAuthData()
-    if (authData && authData !== false && typeof authData.domain === 'string') {
-      return normalizeDomain(authData.domain)
+    try {
+      const authData = frame.auth.getAuthData()
+      if (authData && authData !== false && typeof authData.domain === 'string') {
+        return normalizeDomain(authData.domain)
+      }
+    } catch (error) {
+      $logger.warn('Unable to read auth data from B24 frame, fallback to payload domain', error)
     }
   }
 
   const account = toPlainObject(payload.value?.account)
   const domainFromPayload = String(account.domain_url || payload.value?.domain || '').trim()
-  return normalizeDomain(domainFromPayload)
+  const normalizedFromPayload = normalizeDomain(domainFromPayload)
+  if (normalizedFromPayload) {
+    return normalizedFromPayload
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return normalizeDomain(window.location.origin)
+  }
+
+  return ''
 }
 
 const getErrorMessage = (error: unknown): string => {
