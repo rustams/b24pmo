@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-FND",
-  "timestamp": "2026-03-15T02:30:00Z",
+  "timestamp": "2026-03-15T02:45:00Z",
   "status": "in_progress",
   "active_task": "RD-004",
   "dependency_gate": {
@@ -48,6 +48,7 @@
   "next_actions": [
     "Установить новые зависимости в backend-окружении (pip install -r backends/python/api/requirements.txt) и перезапустить сервис.",
     "Проверить визуально /api/admin/ после stage 2: badges, порядок колонок, карточка установки и аналитические блоки.",
+    "Подготовить merge из ветки epic-fnd-rd004-admin-unfold в основную ветку после ревью.",
     "Собрать обратную связь по плотности данных/акцентам и выполнить stage 3 (финальная полировка list/detail).",
     "Обновить epic-local и global контекст после каждого шага."
   ]

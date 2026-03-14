@@ -105,3 +105,9 @@
 - Validation:
   - `python3 -m compileall backends/python/api/main/admin.py` passed
   - `ReadLints` for `admin.py`: no issues
+
+## Branch Isolation
+- To avoid conflicts with the parallel EPIC-2 agent, all RD-004 stage 1+2 changes were isolated in branch:
+  - `epic-fnd-rd004-admin-unfold`
+- Commit created in that branch:
+  - `2f13db6` (`feat(admin): modernize RD-004 with Unfold and richer diagnostics UX`)

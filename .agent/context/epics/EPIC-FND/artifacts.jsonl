@@ -14,3 +14,5 @@
 {"timestamp":"2026-03-15T02:15:00Z","artifact":"backends/python/api/settings.py","type":"backend-config","note":"Enabled unfold app and added minimal UNFOLD admin branding configuration"}
 {"timestamp":"2026-03-15T02:15:00Z","artifact":"backends/python/api/main/admin.py","type":"backend-admin","note":"Switched admin classes to unfold ModelAdmin while preserving RD-004 diagnostics fields"}
 {"timestamp":"2026-03-15T02:30:00Z","artifact":"backends/python/api/main/admin.py","type":"backend-admin-ux","note":"Added badge-based statuses, token TTL, portal tiering, and richer installation/account analytics layout for stage 2"}
+{"timestamp":"2026-03-15T02:45:00Z","artifact":"git branch epic-fnd-rd004-admin-unfold","type":"branching","note":"Created dedicated branch for EPIC-FND RD-004 to avoid conflicts with parallel EPIC-2 work"}
+{"timestamp":"2026-03-15T02:45:00Z","artifact":"git commit 2f13db6","type":"version-control","note":"Recorded stage 1+2 RD-004 admin modernization changes in isolated branch"}
