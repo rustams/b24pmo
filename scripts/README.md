@@ -159,6 +159,22 @@ python3 scripts/bitrix24/roadmap_sync.py fetch-stages \
 
 ## Проверка синхронизации деплоя на VPS (обязательно после push)
 
+### Настройка переменных
+
+Скрипту нужны `VPS_DEPLOY_HOST` и `VPS_HEALTH_URL` (и при необходимости `VPS_DEPLOY_USER`, `VPS_APP_PATH`). Их можно задать в `.env` или в отдельном файле `.env.webhooks` (рекомендуется, если в `.env` есть символы, мешающие парсингу).
+
+1. Скопировать пример и при необходимости подставить свои значения:
+   ```bash
+   cp .env.webhooks.example .env.webhooks
+   ```
+2. В `.env.webhooks` задать (для текущего проекта значения уже указаны в примере):
+   - `VPS_DEPLOY_HOST` — IP или хост VPS (например `85.239.54.74`),
+   - `VPS_HEALTH_URL` — URL для проверки (например `https://russalp.ru`),
+   - при необходимости `VPS_DEPLOY_USER` (по умолчанию `deploy`) и `VPS_APP_PATH` (по умолчанию `/opt/b24-ai-starter`).
+3. Для проверки по SSH нужен доступ по ключу: `ssh deploy@<VPS_DEPLOY_HOST>` без пароля.
+
+### Запуск
+
 ```bash
 ./scripts/vps/verify-sync.sh
 ```

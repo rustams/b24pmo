@@ -11,6 +11,7 @@ alwaysApply: true
 - Workflow: `instructions/agents/workflows.md`
 - Архитектура: `instructions/agents/knowledge.md`
 - Центр знаний: `instructions/knowledge.md`
+- Окружение и конфиг (env, VPS, Bitrix24 sync): `instructions/env-and-config.md`
 
 ## Правила
 1. **Скиллы** — активировать минимальный набор из `.cursor/skills/` по задаче:

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Load env: .env (optional, may have parse issues) then .env.webhooks (VPS_* and B24_*)
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
-  source .env
+  source .env 2>/dev/null || true
   set +a
 fi
 if [[ -f .env.webhooks ]]; then
@@ -14,10 +15,11 @@ if [[ -f .env.webhooks ]]; then
   set +a
 fi
 
+# Required for sync check. Set in .env or .env.webhooks (see .env.webhooks.example).
 VPS_DEPLOY_USER="${VPS_DEPLOY_USER:-deploy}"
-VPS_DEPLOY_HOST="${VPS_DEPLOY_HOST:?Set VPS_DEPLOY_HOST in env}"
+VPS_DEPLOY_HOST="${VPS_DEPLOY_HOST:?Set VPS_DEPLOY_HOST in .env or .env.webhooks (see .env.webhooks.example)}"
 VPS_APP_PATH="${VPS_APP_PATH:-/opt/b24-ai-starter}"
-VPS_HEALTH_URL="${VPS_HEALTH_URL:?Set VPS_HEALTH_URL in env}"
+VPS_HEALTH_URL="${VPS_HEALTH_URL:?Set VPS_HEALTH_URL in .env or .env.webhooks (see .env.webhooks.example)}"
 
 REMOTE="${VPS_DEPLOY_USER}@${VPS_DEPLOY_HOST}"
 LOCAL_COMMIT="$(git rev-parse --short HEAD)"

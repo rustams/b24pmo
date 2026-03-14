@@ -56,3 +56,4 @@ Combines:
   - on completion, fill Bitrix24 task result with summary + commit link
   - epic root tasks must have auto-close enabled; closed epic title includes `Завершена`
 - Post-push deployment guardrail: verify VPS sync and health with `./scripts/vps/verify-sync.sh`.
+- Config and env: single source of truth for env files, VPS/B24 variables, and script behaviour is `instructions/env-and-config.md`. Use it for any config, deploy, or script question (no `env/` folder — all env in repo root).
