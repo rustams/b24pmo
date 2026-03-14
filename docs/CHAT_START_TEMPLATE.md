@@ -74,6 +74,56 @@ Definition of Done: <критерии готовности>.
 - .agent/plans/current-plan.md
 ```
 
+## Как запускать Supervisor
+
+```text
+Роль: Supervisor (оркестратор эпиков).
+Цель: выбрать следующую задачу roadmap и назначить epic-agent.
+Действия:
+1) Проверь зависимости задачи (`depends_on` + cross-epic) в `docs/ROADMAP_TASKS.json` и `docs/ROADMAP_EXECUTION_STATUS.json`.
+2) Если есть незавершенная зависимость — переведи задачу в `blocked`, обнови:
+   - `.agent/context/epics/<EPIC-XXX>/handoff.json`
+   - `.agent/context/session-summary.md`
+   - `.agent/plans/current-plan.md`
+3) Если блокеров нет — назначь epic-agent на `<EPIC-XXX>` с явным DoD и тест-критериями.
+4) После шага epic-agent синхронизируй общий контекст:
+   - `.agent/context/session-summary.md`
+   - `.agent/context/decision-log.jsonl`
+   - `.agent/context/artifact-index.jsonl`
+   - `.agent/plans/current-plan.md`
+5) При необходимости запусти Bitrix24 sync:
+   - `sync-epic-structure --apply`
+   - `sync-status --sync-kanban --apply`
+```
+
+## Как запускать Epic-Agent
+
+```text
+Роль: Epic-Agent для <EPIC-XXX>.
+Ограничение: работай только в рамках задач этого эпика.
+Порядок:
+1) Подтверди dependency gate (нет незавершенных блокеров).
+2) Выполни реализацию по шагам и фиксируй изменения.
+3) Обновляй epic-local память:
+   - `.agent/context/epics/<EPIC-XXX>/summary.md`
+   - `.agent/context/epics/<EPIC-XXX>/decisions.jsonl`
+   - `.agent/context/epics/<EPIC-XXX>/artifacts.jsonl`
+   - `.agent/context/epics/<EPIC-XXX>/handoff.json`
+4) В handoff.json передай:
+   - `completed_tasks`, `changed_files`, `open_risks`, `next_actions`, `bitrix_sync`.
+5) Передай результат Supervisor-агенту для merge в общий контекст.
+```
+
+## Готовые команды запуска
+
+```text
+Запусти supervisor-цикл для EPIC-INS по модели из docs/EPIC_AGENT_OPERATING_MODEL.md.
+```
+
+```text
+Запусти epic-agent для EPIC-INS, соблюдай dependency gate и обновляй `.agent/context/epics/EPIC-INS/*`.
+```
+
 ## Быстрый шаблон задачи (рекомендуется)
 
 ```text

@@ -479,3 +479,15 @@
   - `docs/CHAT_START_TEMPLATE.md`
   - `.cursor/skills/bitrix24-project-ops/SKILL.md`
   - `.claude/skills/bitrix24-project-ops/SKILL.md`
+
+### 30) Chat Bootstrap for Supervisor and Epic-Agent Launch (March 14, 2026)
+- Updated `docs/CHAT_START_TEMPLATE.md` to support immediate multi-agent startup:
+  - dedicated section "How to launch Supervisor",
+  - dedicated section "How to launch Epic-Agent",
+  - ready-to-use startup commands for first epic cycle.
+- Added explicit startup flow for:
+  - dependency gate check,
+  - blocked-state handling,
+  - epic-local memory updates,
+  - supervisor merge into shared context.
+- Goal: minimize ambiguity and reduce time-to-first-correct-action in new chats.

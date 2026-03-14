@@ -109,3 +109,35 @@
   - последовательность delivery: контракт -> реализация -> интеграция -> валидация;
   - обязательная трассируемость: задача -> решение -> артефакт -> commit;
   - обязательное обновление контекста перед возобновлением после `blocked`.
+
+## Task Update: CHAT_START_TEMPLATE for Supervisor/Epic-Agent launch
+- `docs/CHAT_START_TEMPLATE.md` расширен практическими блоками:
+  - как запускать Supervisor (оркестратор) по шагам;
+  - как запускать Epic-Agent по шагам;
+  - готовые команды запуска для первого цикла.
+- Добавлены явные действия для dependency gate, blocked flow и merge в shared context.
+
+## Active Skills (this task)
+- context-engineering-collection
+- context-fundamentals
+- context-optimization
+- filesystem-context
+- multi-agent-patterns
+- bitrix24-project-ops
+
+## Intermediate Status (this task)
+- **Готово**
+  - Обновлен chat template с инструкциями запуска supervisor и epic-agent.
+  - Добавлены готовые команды для старта цикла по эпику.
+  - Синхронизирован план и контекстные артефакты.
+- **Осталось**
+  - Commit + push изменений.
+- **Риски**
+  - Риск неправильного ручного запуска снижен шаблонами, но зависит от дисциплины соблюдения dependency gate при каждом цикле.
+
+## Self-Check (this task)
+- Correctness: 5/5
+- Integration Safety: 5/5
+- Context Integrity: 5/5
+- Maintainability: 5/5
+- Operational Readiness: 5/5

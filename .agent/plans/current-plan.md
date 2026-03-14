@@ -1,14 +1,14 @@
 # Current Plan
 
 ## Активная задача
-**Выполняется:** усиление модели `supervisor + epic agents` правилами dependency gate и профессиональной последовательной разработки.
+**Выполняется:** обновление `docs/CHAT_START_TEMPLATE.md` с явным сценарием запуска Supervisor и Epic-Agent.
 
 ## План выполнения текущей задачи
-1. Добавить обязательный dependency gate в project rules/workflows/skills.
-2. Зафиксировать blocked-state протокол для cross-epic зависимостей.
-3. Добавить guardrails профессиональной последовательной разработки.
-4. Обновить shared context artifacts (`session-summary`, `decision-log`, `artifact-index`).
-5. Подготовить изменения к административному коммиту (по запросу).
+1. Добавить в chat template отдельные блоки: запуск Supervisor и запуск Epic-Agent.
+2. Добавить готовые шаблоны команд запуска под текущую операционную модель.
+3. Синхронизировать shared context (`session-summary`, `decision-log`, `artifact-index`).
+4. Сделать промежуточный статус и self-check по rubric.
+5. Выполнить commit + push.
 
 ## Цепочка задач VPS post-setup (последовательно)
 1. **RD-601** — Проверить SSH (deploy@IP, root@IP) и доступность сервера ✅
@@ -34,7 +34,7 @@
 - Белые экраны на фронтенде устранены: добавлен demo-fallback режим для страниц/модулей вне B24 iframe.
 
 ## Следующий шаг
-Запустить первый epic-agent цикл (например, `EPIC-INS`) по новому шаблону handoff.
+Запустить первый supervisor-цикл для `EPIC-INS` по обновленному `docs/CHAT_START_TEMPLATE.md`.
 
 ## Дисциплина контекста
 - План и решения в `.agent/`; в чате — краткие отсылки.
