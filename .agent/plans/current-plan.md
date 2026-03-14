@@ -1,7 +1,7 @@
 # Current Plan
 
 ## Активная задача
-**EPIC-INS / RD-102 + RD-103:** старт реализации UI маппинга Smart Processes/Lists и проверки scope/прав.
+**Dual-track:** `EPIC-FND / RD-004` возвращена в `IN_PROGRESS` для UX+analytics доработки Django admin; `EPIC-INS / RD-102 + RD-103` продолжаются в рамках dependency gate.
 
 ## Dependency Gate
 1. `RD-101` зависит от `RD-002`; `RD-002=5`, задача завершена.
@@ -32,3 +32,10 @@
 2. Выполнен `sync-status --sync-kanban --apply` для фиксации статуса в Bitrix24. ✅
 3. Выполнен `sync-epic-completion --apply`; `EPIC-FND` закрыт в Bitrix24. ✅
 4. Epic-local артефакты `EPIC-FND` обновлены (`summary/decisions/artifacts/handoff`). ✅
+
+## EPIC-FND Reopen Rollout (RD-004)
+1. Выполнить изоляцию изменений RD-004 в отдельной ветке `epic-fnd-rd004-admin-unfold`. ✅
+2. Завершить stage 1+2 (Unfold integration + admin UX information architecture). ✅
+3. Обновить глобальные и epic-local артефакты после реализации. ✅
+4. Выполнить merge ветки в `master`, push и перезапуск backend для пользовательской проверки. ⏳
+5. Держать `RD-004` в `TESTING` до подтверждения UI-проверки пользователем. ⏳

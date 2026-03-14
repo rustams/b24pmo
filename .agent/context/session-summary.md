@@ -241,6 +241,15 @@
 - Debug-панели перенесены в раскрываемый технический блок, чтобы основной UX оставался чистым.
 - Проверка: `ReadLints` для `frontend/app/pages/settings.client.vue` — ошибок нет.
 
+## Supervisor Update: RD-004 reopened
+- По запросу пользователя `RD-004` переведена обратно в `IN_PROGRESS` для доработки карточки приложения и модернизации UX Django admin.
+- Синхронизация выполнена:
+  - `docs/ROADMAP_EXECUTION_STATUS.json`: `RD-004 -> 3`, `active_task -> RD-004`;
+  - `sync-status --sync-kanban --apply` применен, `RD-004#273` в Bitrix24 = `STATUS=3`.
+- Для консистентности Epic-статуса:
+  - `EPIC-FND#277` вручную возвращен из `DONE` в `STATUS=3`,
+  - суффикс `(Завершена)` удален из названия эпика.
+
 ## RD-102 Scenario Update (guided creation)
 - По запросу изменен сценарий задачи:
   - убран выбор смарт-процессов из логики;
@@ -252,3 +261,13 @@
   4. Progress bar + сообщение об успехе + ссылка на созданный смарт-процесс.
 - Перед реализацией проверены методы через MCP docs (`bitrix-method-details`).
 - Обновлено описание `RD-102` в `docs/ROADMAP_TASKS.json` и выполнен `sync-metadata --apply` в Bitrix24.
+
+## EPIC-FND RD-004: Branch-isolated rollout
+- Для безопасной параллельной работы с EPIC-2 изменения RD-004 вынесены в отдельную ветку:
+  - `epic-fnd-rd004-admin-unfold`
+- В ветке выполнены 2 этапа:
+  - stage 1: подключение `django-unfold` как modern skin для Django admin;
+  - stage 2: UX-компоновка list/detail (badge-индикаторы, TTL, portal tier, аналитические блоки).
+- Статус репозитория обновлен:
+  - `docs/ROADMAP_EXECUTION_STATUS.json`: `RD-004 -> TESTING (4)`, `active_task=RD-004`.
+- Дальнейший шаг: merge в `master`, push и перезапуск backend для пользовательской проверки UI.
