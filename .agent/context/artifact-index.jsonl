@@ -46,3 +46,9 @@
 {"timestamp": "2026-03-14T19:24:03Z", "artifact": "/usr/local/bin/b24-deploy (VPS)", "type": "runtime-script", "note": "Idempotent deploy script with reset/clean and health wait"}
 {"timestamp": "2026-03-14T19:24:03Z", "artifact": ".env.webhooks", "type": "local-config", "note": "Updated to new VPS host and HTTPS health URL"}
 {"timestamp": "2026-03-14T19:24:03Z", "artifact": ".agent/context/session-summary.md", "type": "summary", "note": "Recorded full VPS + webhook setup and consistency checks"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": "frontend/app/stores/api.ts", "type": "frontend-fix", "note": "Added demo responses and auth fallback for API calls"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": "frontend/app/middleware/01.app.page.or.slider.global.ts", "type": "frontend-fix", "note": "Switched middleware failure path to non-fatal demo/local mode"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": "frontend/app/pages/index.client.vue", "type": "frontend-fix", "note": "Added demo mode visibility and graceful init fallback"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": "frontend/app/pages/settings.client.vue", "type": "frontend-fix", "note": "Added demo payload fallback and demo badge"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": ".agent/context/session-summary.md", "type": "summary", "note": "Recorded ready/remaining/risks and rubric self-check"}
+{"timestamp": "2026-03-14T20:24:34Z", "artifact": ".agent/plans/current-plan.md", "type": "plan", "note": "Marked VPS+install stabilization task as completed"}
