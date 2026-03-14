@@ -13,3 +13,4 @@
 {"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/pages/index.client.vue","type":"frontend-ui","note":"Removed backend error block and replaced with single 'Настроить приложение' CTA"}
 {"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Added network-failure fallback to demo responses even when JWT exists"}
 {"timestamp":"2026-03-14T22:21:04Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Switched settings data load to Promise.allSettled with graceful fallbacks to avoid stuck loading"}
+{"timestamp":"2026-03-14T22:36:25Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Implemented structured RD-102 mapping form with row controls, numeric validation, and save/reload actions"}

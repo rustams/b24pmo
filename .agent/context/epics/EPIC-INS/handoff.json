@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-INS",
-  "timestamp": "2026-03-14T22:21:04Z",
+  "timestamp": "2026-03-14T22:36:25Z",
   "status": "in_progress",
   "completed_tasks": [
     "RD-101"
@@ -14,6 +14,7 @@
     "frontend/app/stores/api.ts",
     "frontend/app/pages/settings.client.vue",
     "frontend/app/pages/index.client.vue",
+    "frontend/app/pages/settings.client.vue",
     ".agent/context/epics/EPIC-INS/summary.md",
     ".agent/context/epics/EPIC-INS/decisions.jsonl",
     ".agent/context/epics/EPIC-INS/artifacts.jsonl",
@@ -28,11 +29,11 @@
     "sync_status": "applied"
   },
   "open_risks": [
-    "RD-102 использует JSON-редактор для маппинга; требуется UX-упрощение и полевые валидации до финальной приемки.",
+    "Нужна пользовательская приемка нового формового интерфейса RD-102 в реальном портале (не только demo).",
     "RD-103 показывает диагностику scope/прав, но еще нужны UX-инструкции по исправлению недостающих scope."
   ],
   "next_actions": [
-    "Продолжить реализацию RD-102: типизированная модель маппинга и валидация ввода.",
+    "Провести пользовательскую проверку нового интерфейса RD-102 (добавление/удаление строк, сохранение, reload).",
     "Продолжить реализацию RD-103: пользовательские подсказки по недостающим scope и правам администратора.",
     "RD-104 не запускать до завершения RD-102 и RD-103."
   ]
