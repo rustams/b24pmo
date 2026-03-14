@@ -378,3 +378,35 @@
 - Added explicit epic sequencing in epic task titles:
   - `Эпик 1 ...` through `Эпик 6 ...`
 - Applied numbering via `sync-epic-structure` and verified titles in Bitrix24.
+
+### 25) New VPS Recreated + Webhook Auto-Deploy Revalidated (March 14, 2026)
+- Recreated infrastructure on a new server:
+  - VPS: `5.42.119.99`
+  - Domain: `pmo.russaldi.com`
+- Bootstrap completed on VPS:
+  - installed base packages (`docker.io`, `docker-compose-v2`, `nginx`, `certbot`, `ufw`, `git`, `make`)
+  - created/validated `deploy` SSH user and key-based access
+  - deployed app to `/opt/b24-ai-starter`
+- Runtime and ops services configured:
+  - `b24-ai-starter.service` (systemd)
+  - `b24-webhook.service` (GitHub deploy webhook receiver)
+  - helper commands: `b24-deploy`, `b24-status`, `b24-logs`
+- TLS issued and enabled:
+  - `https://pmo.russaldi.com` (Let's Encrypt + HTTP->HTTPS redirect)
+- Deploy reliability hardening:
+  - `b24-deploy` switched to deterministic flow (`fetch + reset --hard origin/master + clean -fd`)
+  - python image source patched to `mirror.gcr.io/library/python:3.11-slim` to avoid Docker Hub `429` during rebuilds
+- GitHub webhook endpoint validated end-to-end on new server:
+  - route: `POST /deploy-webhook`
+  - security: HMAC `X-Hub-Signature-256` + repo/ref filtering (`rustams/b24pmo`, `refs/heads/master`)
+  - behavior: unsigned requests rejected; signed `ping` and signed `push` processed successfully
+  - webhook-triggered deploy observed in server logs (`deploy success: OK: app https health => 200`)
+- Repository/Bitrix24 task consistency check:
+  - `docs/ROADMAP_TASKS.json` = 31 tasks
+  - `docs/ROADMAP_EXECUTION_STATUS.json` = 31 status entries
+  - `.agent/context/bitrix-task-map.json` = 31 mapped tasks, no missing keys
+  - `sync-status --sync-kanban --apply` executed to align working group board with repository source-of-truth
+- Final infra validation:
+  - `./scripts/vps/verify-sync.sh` reports synchronized deploy (`HEALTH=200`, services active)
+- Pending by design:
+  - update VPS `.env` with final Bitrix24 `CLIENT_ID` and `CLIENT_SECRET` after new app registration for `https://pmo.russaldi.com`.

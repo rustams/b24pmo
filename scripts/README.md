@@ -182,5 +182,5 @@ python3 scripts/bitrix24/roadmap_sync.py fetch-stages \
 Скрипт проверяет:
 - совпадение локального commit и commit на VPS,
 - совпадение commit на VPS с `origin/master`,
-- активность сервисов `b24-ai-starter` и `b24-webhook`,
+- активность required-сервисов из `VPS_REQUIRED_SERVICES` (по умолчанию `b24-ai-starter`),
 - health-check `200` на `VPS_HEALTH_URL`.

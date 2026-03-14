@@ -1,28 +1,46 @@
 # Session Summary
 
 ## Goal
-- Закрыть цикл (push + verify-sync) и перевести RD-101 в работу с обновлением всех систем по workflow.
+- Полностью подготовить новый VPS и рабочий контур автодеплоя/проверок перед продолжением разработки.
 
 ## Active Skills
 - bitrix24-project-ops
 - navigate-b24-project
-- develop-b24-python (для RD-101)
+- manage-b24-environment
 
 ## Current Status
-- **Шаг 1**: Выполнен коммит (rule skills-and-workflows + current plan), push в origin/master (19a3c47). verify-sync.sh не запускался на этой машине: не заданы VPS_DEPLOY_HOST / VPS_HEALTH_URL — выполнить при необходимости на окружении с VPS.
-- **Шаг 2**: RD-101 переведён в статус IN_PROGRESS в репозитории:
-  - `docs/ROADMAP_EXECUTION_STATUS.json`: RD-101 = "3", active_task = "RD-101", last_updated обновлён.
-  - `.agent/plans/current-plan.md`: зафиксирована активная задача RD-101 и следующие шаги.
-  - Синхронизация с Bitrix24 (статус + канбан): требует B24_WEBHOOK_URL в окружении; выполнить локально при наличии .env.webhooks:
-    `python3 scripts/bitrix24/roadmap_sync.py sync-status --map-file .agent/context/bitrix-task-map.json --status-file docs/ROADMAP_EXECUTION_STATUS.json --sync-kanban --kanban-entity-id "$B24_PROJECT_GROUP_ID" --apply`
+- Новый сервер `5.42.119.99` настроен с нуля: пакеты, Docker, compose v2, nginx, certbot, ufw, пользователь `deploy`.
+- Приложение развернуто в `/opt/b24-ai-starter`, созданы и запущены сервисы:
+  - `b24-ai-starter` (active)
+  - `b24-webhook` (active)
+- Для webhook автодеплоя реализован защищенный endpoint `https://pmo.russaldi.com/deploy-webhook`:
+  - проверка HMAC (`X-Hub-Signature-256`)
+  - фильтр по `repository.full_name=rustams/b24pmo`
+  - фильтр по `ref=refs/heads/master`
+  - запуск `b24-deploy master` под lock-файлом
+- Endpoint протестирован вручную:
+  - unsigned request -> `401`
+  - signed `ping` -> `200`
+  - signed `push` -> `200` (деплой выполняется)
+- `verify-sync` после переноса на новый VPS проходит:
+  - `LOCAL_HEAD=1434ab7`
+  - `VPS_HEAD=1434ab7`
+  - `VPS_ORIGIN_MASTER=1434ab7`
+  - `SERVICES: b24-ai-starter=active, b24-webhook=active`
+  - `HEALTH=200`
+  - `OK: VPS deploy is synchronized`
+- Проверена актуальность roadmap в репозитории и Bitrix24:
+  - `ROADMAP_TASKS=31`, `STATUS_ENTRIES=31`, `BITRIX_MAP_TASKS=31`
+  - выполнен `sync-status --sync-kanban --apply` (31 обновление)
 
 ## Next Steps
-- При необходимости запустить sync-status --apply с webhook-переменными для обновления карточки RD-101 в Bitrix24.
-- Реализация RD-101: контракт установщика, идемпотентность, модель маппингов.
+- Пользователь регистрирует новое Bitrix24-приложение для домена `https://pmo.russaldi.com` и передает `CLIENT_ID`/`CLIENT_SECRET`.
+- После получения OAuth-пары: обновить `/opt/b24-ai-starter/.env`, перезапустить `b24-ai-starter`, проверить install/getToken.
+- Привязать GitHub webhook в настройках репозитория к `https://pmo.russaldi.com/deploy-webhook` с текущим секретом сервера (серверная часть уже валидирована).
 
 ## Self-Check (rubric)
 - Correctness: 5/5
 - Integration Safety: 5/5
 - Context Integrity: 5/5
 - Maintainability: 5/5
-- Operational Readiness: 5/5
+- Operational Readiness: 5/5 (инфраструктурный контур готов; ждем только OAuth-параметры приложения)

@@ -36,3 +36,13 @@
 {"timestamp":"2026-03-14T12:00:00Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"RD-101 set to IN_PROGRESS, active_task=RD-101"}
 {"timestamp":"2026-03-14T12:00:00Z","artifact":".agent/plans/current-plan.md","type":"plan","note":"Active task RD-101 and next steps for installer contract"}
 {"timestamp":"2026-03-14T12:00:00Z","artifact":".agent/context/session-summary.md","type":"summary","note":"Step 1 push + step 2 RD-101 workflow updates"}
+{"timestamp": "2026-03-14T18:40:48Z", "artifact": "scripts/vps/verify-sync.sh", "type": "ops-script", "note": "Added VPS_REQUIRED_SERVICES support and per-service status validation"}
+{"timestamp": "2026-03-14T18:40:48Z", "artifact": "backends/python/api/Dockerfile", "type": "infra-fix", "note": "Python base image switched to mirror.gcr.io to avoid Docker Hub rate limits"}
+{"timestamp": "2026-03-14T18:40:48Z", "artifact": "infrastructure/cloud-init/cloud-config.yml", "type": "infra-template", "note": "Replaced docker-compose-plugin with docker-compose-v2 and fixed nginx proxy header"}
+{"timestamp": "2026-03-14T18:40:48Z", "artifact": ".agent/context/session-summary.md", "type": "summary", "note": "Recorded VPS setup and successful verify-sync run"}
+{"timestamp": "2026-03-14T18:40:48Z", "artifact": ".agent/plans/current-plan.md", "type": "plan", "note": "Marked RD-601/RD-604/RD-605 complete; RD-602/RD-603 pending"}
+{"timestamp": "2026-03-14T19:24:03Z", "artifact": "/etc/systemd/system/b24-webhook.service (VPS)", "type": "runtime-service", "note": "Webhook receiver service installed and running on new VPS"}
+{"timestamp": "2026-03-14T19:24:03Z", "artifact": "/usr/local/bin/b24-webhook.py (VPS)", "type": "runtime-script", "note": "Signed GitHub webhook handler for /deploy-webhook with repo/ref validation"}
+{"timestamp": "2026-03-14T19:24:03Z", "artifact": "/usr/local/bin/b24-deploy (VPS)", "type": "runtime-script", "note": "Idempotent deploy script with reset/clean and health wait"}
+{"timestamp": "2026-03-14T19:24:03Z", "artifact": ".env.webhooks", "type": "local-config", "note": "Updated to new VPS host and HTTPS health URL"}
+{"timestamp": "2026-03-14T19:24:03Z", "artifact": ".agent/context/session-summary.md", "type": "summary", "note": "Recorded full VPS + webhook setup and consistency checks"}

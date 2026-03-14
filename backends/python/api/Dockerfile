@@ -1,5 +1,6 @@
 # ---------- Base stage ----------
-FROM python:3.11-slim AS base
+# Use mirror.gcr.io to avoid Docker Hub anonymous pull rate limits on VPS.
+FROM mirror.gcr.io/library/python:3.11-slim AS base
 
 WORKDIR /var/www/api
 

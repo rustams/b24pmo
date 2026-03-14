@@ -37,6 +37,7 @@ Docker Compose подхватывает `.env` через `env_file: .env` и п
 - **VPS_HEALTH_URL** — обязателен (URL для проверки, например https://russalp.ru).
 - **VPS_DEPLOY_USER** — по умолчанию deploy.
 - **VPS_APP_PATH** — по умолчанию /opt/b24-ai-starter.
+- **VPS_REQUIRED_SERVICES** — опционально, список systemd-сервисов через пробел; по умолчанию `b24-ai-starter`.
 
 Скрипт загружает сначала `.env` (ошибка парсинга игнорируется), затем `.env.webhooks`. Переменные можно задать в любом из них; при отсутствии обеих — сообщение: задать в `.env` или `.env.webhooks` (см. `.env.webhooks.example`). Для проверки нужен SSH по ключу: `ssh ${VPS_DEPLOY_USER}@${VPS_DEPLOY_HOST}` без пароля.
 
