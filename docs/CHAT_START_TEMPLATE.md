@@ -30,6 +30,7 @@
 11) После каждого push обязательно проверяй синхронизацию деплоя на VPS (`./scripts/vps/verify-sync.sh`).
 12) При завершении задачи заполняй `Результат задачи` (что сделано + ссылка на commit).
 13) Для эпиков включай автозакрытие основной задачи при закрытии подзадач; закрытый эпик помечай словом `Завершена` в названии.
+14) Мультиагентный режим: один эпик = один агент; каждый epic-agent пишет результаты в `.agent/context/epics/<EPIC-XXX>/`, а supervisor синхронизирует общий контекст.
 
 Формат первого ответа агента в чате:
 - Active Skills (какие активированы и почему)
@@ -53,6 +54,23 @@ Definition of Done: <критерии готовности>.
 Сделай промежуточный статус: что готово/что осталось/риски.
 Закрой задачу: self-check по rubric + список измененных файлов.
 Сделай коммит и push.
+```
+
+## Команда для epic-agent режима
+
+```text
+Работаем в режиме supervisor + epic agents.
+Назначь отдельного агента на эпик <EPIC-XXX>.
+Обновляй epic-local память в `.agent/context/epics/<EPIC-XXX>/`:
+- summary.md
+- decisions.jsonl
+- artifacts.jsonl
+- handoff.json
+После каждого шага эпика синхронизируй общий контекст:
+- .agent/context/session-summary.md
+- .agent/context/decision-log.jsonl
+- .agent/context/artifact-index.jsonl
+- .agent/plans/current-plan.md
 ```
 
 ## Быстрый шаблон задачи (рекомендуется)

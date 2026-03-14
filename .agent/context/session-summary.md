@@ -89,3 +89,14 @@
 - Context Integrity: 5/5
 - Maintainability: 5/5
 - Operational Readiness: 5/5
+
+## Multi-Agent Epic Execution Update
+- Внедрена модель `supervisor + epic agents`:
+  - каждый эпик ведется отдельным агентом/сессией;
+  - результаты складываются в epic-local память в `.agent/context/epics/<EPIC-XXX>/`.
+- Добавлен операционный стандарт:
+  - `docs/EPIC_AGENT_OPERATING_MODEL.md` с ролями, контрактом handoff и supervisor loop;
+  - workflow/rules/chat-template обновлены под обязательную синхронизацию epic-local -> global context.
+- Создана стартовая структура epic-local памяти:
+  - `.agent/context/epics/README.md`
+  - `.agent/context/epics/EPIC-*/handoff.json` для всех эпиков roadmap.

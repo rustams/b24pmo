@@ -58,3 +58,6 @@
 {"timestamp":"2026-03-14T21:05:00Z","artifact":".cursor/rules/skills-and-workflows.mdc","type":"project-rule","note":"Made three context skills mandatory baseline and fixed hierarchical naming policy"}
 {"timestamp":"2026-03-14T21:05:00Z","artifact":"instructions/agents/workflows.md","type":"workflow-doc","note":"Embedded mandatory baseline skills and epic-aware numbering convention"}
 {"timestamp":"2026-03-14T21:05:00Z","artifact":"scripts/bitrix24/roadmap_sync.py","type":"automation-script","note":"Task numbering changed to epic-aware format: N.1 / N.1.1"}
+{"timestamp":"2026-03-14T21:25:00Z","artifact":"docs/EPIC_AGENT_OPERATING_MODEL.md","type":"process-doc","note":"Defined supervisor + epic-agent execution model, handoff schema, and commit policy"}
+{"timestamp":"2026-03-14T21:25:00Z","artifact":"instructions/agents/workflows.md","type":"workflow-doc","note":"Added Workflow D for epic-agent orchestration and supervisor merge responsibilities"}
+{"timestamp":"2026-03-14T21:25:00Z","artifact":".agent/context/epics/","type":"context-structure","note":"Added epic-local memory workspace with per-epic handoff.json templates"}

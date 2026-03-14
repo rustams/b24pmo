@@ -444,3 +444,17 @@
     - `RD-002`: `Задача 1.1.1...`
     - `RD-101`: `Задача 2.1...`
     - `RD-102`: `Задача 2.1.1...`
+
+### 28) Supervisor + Epic-Agent Execution Model (March 14, 2026)
+- Introduced explicit multi-agent operating model where each epic is handled by a dedicated agent/session.
+- Added process reference:
+  - `docs/EPIC_AGENT_OPERATING_MODEL.md` with roles, handoff schema, supervisor loop, and commit policy.
+- Updated governance and workflows:
+  - `instructions/agents/workflows.md` now includes Workflow D (`supervisor + epic agents`).
+  - `.cursor/rules/skills-and-workflows.mdc` enforces epic-agent model and context merge requirements.
+  - `instructions/agents/knowledge.md`, `instructions/knowledge.md`, and `docs/CHAT_START_TEMPLATE.md` aligned with the same standard.
+- Added filesystem memory contract for epic-local context:
+  - `.agent/context/epics/README.md`
+  - `.agent/context/epics/EPIC-*/handoff.json` templates for all roadmap epics.
+- Operational impact:
+  - epic-level context is isolated, while supervisor guarantees synchronization into shared project memory (`session-summary`, `decision-log`, `artifact-index`, `current-plan`).

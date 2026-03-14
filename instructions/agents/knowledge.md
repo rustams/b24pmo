@@ -46,6 +46,19 @@ Combines:
 - `.agent/context/artifact-index.jsonl`
 - `.agent/plans/current-plan.md`
 
+## Epic Agent Memory Model
+- One epic = one dedicated execution agent/session.
+- Epic-local context path: `.agent/context/epics/<EPIC-XXX>/`.
+- Required epic-local files:
+  - `summary.md`
+  - `decisions.jsonl`
+  - `artifacts.jsonl`
+  - `handoff.json`
+- Supervisor responsibilities:
+  - orchestrate epic execution order
+  - merge epic-local outcomes into global context files
+  - keep roadmap/Bitrix24 state aligned with repository source-of-truth.
+
 ## PMO Hub-Specific Defaults
 - Backend: Python (Django + b24pysdk)
 - Frontend: Nuxt 3 + Bitrix24 UI Kit

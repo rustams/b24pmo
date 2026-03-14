@@ -48,6 +48,7 @@
 - Базовая архитектура: `instructions/agents/knowledge.md`
 - Матрица активации скиллов: `instructions/agents/skill-activation-map.md`
 - Стандартные workflow: `instructions/agents/workflows.md`
+- Модель исполнения по эпикам: `docs/EPIC_AGENT_OPERATING_MODEL.md`
 - Операционные артефакты состояния: `.agent/context/*`, `.agent/plans/*`, `.agent/evaluation/*`
 - Отдельный skill для Bitrix24 task ops: `.cursor/skills/bitrix24-project-ops/SKILL.md` (и зеркально в `.claude/skills/`).
 

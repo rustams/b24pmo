@@ -31,3 +31,24 @@
 2. Run checks against functional rubric.
 3. If subjective quality ambiguity is high, use `advanced-evaluation`.
 4. Log final judgment and unresolved risks.
+
+## Workflow D: Supervisor + Epic Agents
+1. Supervisor defines epic queue and execution order.
+2. Each epic is assigned to a dedicated agent/session (`EPIC-FND`, `EPIC-INS`, `EPIC-CORE`, `EPIC-OPS`, `EPIC-SEC`, `EPIC-V11`).
+3. Epic agent works only in epic scope and writes outputs to `.agent/context/epics/<EPIC>/`.
+4. On each meaningful step, epic agent must update:
+   - `.agent/context/epics/<EPIC>/summary.md`
+   - `.agent/context/epics/<EPIC>/decisions.jsonl`
+   - `.agent/context/epics/<EPIC>/artifacts.jsonl`
+   - `.agent/context/epics/<EPIC>/handoff.json`
+5. Supervisor merges epic outputs into shared memory:
+   - `.agent/context/session-summary.md`
+   - `.agent/context/decision-log.jsonl`
+   - `.agent/context/artifact-index.jsonl`
+   - `.agent/plans/current-plan.md`
+6. Bitrix24 sync is executed after epic-agent step when relevant:
+   - `sync-epic-structure --apply`
+   - `sync-status --sync-kanban --apply` (if statuses changed)
+7. Commit policy:
+   - administrative/intermediate commits are allowed without VPS verify
+   - run `./scripts/vps/verify-sync.sh` only after large integration commit or functional completion milestone.
