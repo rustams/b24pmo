@@ -111,3 +111,14 @@
   - `epic-fnd-rd004-admin-unfold`
 - Commit created in that branch:
   - `2f13db6` (`feat(admin): modernize RD-004 with Unfold and richer diagnostics UX`)
+
+## Merge + Deploy Verification
+- Isolated branch was merged into `master`:
+  - merge commit: `567431d`
+- Global status files were synchronized:
+  - `docs/ROADMAP_EXECUTION_STATUS.json`: `RD-004 -> TESTING (4)`
+  - global context updated (`session-summary`, `decision-log`, `artifact-index`, `current-plan`)
+- Runtime rollout:
+  - pushed `master` to `origin`
+  - backend service restarted on VPS (`b24-ai-starter`)
+  - post-restart `verify-sync` result: `OK` with `HEALTH=200`
