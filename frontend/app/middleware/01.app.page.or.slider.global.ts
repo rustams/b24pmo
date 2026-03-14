@@ -62,18 +62,10 @@ export default defineNuxtRouteMiddleware(async (
     }
 
     $logger.log('>> stop')
-  } catch (error: any) {
-    const appError = createError({
-      statusCode: 404,
-      statusMessage: error?.message || error,
-      data: { description: 'Problem in middleware' },
-      cause: error,
-      fatal: true
-    })
-
-    $logger.error(appError)
-
-    showError(appError)
-    return Promise.reject(appError)
+  } catch (error: unknown) {
+    isUseB24Frame.value = false
+    const message = error instanceof Error ? error.message : String(error)
+    $logger.warn('B24 frame is unavailable, continue in demo/local mode', message)
+    return Promise.resolve()
   }
 })

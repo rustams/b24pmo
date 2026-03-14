@@ -9,7 +9,7 @@ useHead({
   title: t('page.index.seo.title')
 })
 
-const { $logger, initApp, processErrorGlobal } = useAppInit('IndexPage')
+const { $logger, initApp } = useAppInit('IndexPage')
 const { $initializeB24Frame } = useNuxtApp()
 let $b24: null | B24Frame = null
 
@@ -47,7 +47,8 @@ onMounted(async () => {
 
     isInit.value = true
   } catch (error) {
-    processErrorGlobal(error)
+    $logger.warn('Index page switched to demo mode due to init error', error)
+    isInit.value = true
   } finally {
     isLoading.value = false
   }
@@ -65,6 +66,7 @@ onMounted(async () => {
       <template #header>
         <ProseH2>{{ $t('page.index.message.title') }}</ProseH2>
         <ProseP>{{ $t('page.index.message.line1') }}</ProseP>
+        <B24Badge v-if="apiStore.isDemoMode" label="Demo mode" color="air-primary-warning" />
       </template>
 
       <BackendStatus />

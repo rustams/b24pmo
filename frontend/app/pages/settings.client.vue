@@ -4,12 +4,13 @@ import type { B24Frame } from '@bitrix24/b24jssdk'
 const { t, locales: localesI18n, setLocale } = useI18n()
 useHead({ title: 'Настройки PMO Hub' })
 
-const { $logger, initApp, processErrorGlobal } = useAppInit('SettingsPage')
+const { $logger, initApp } = useAppInit('SettingsPage')
 const { $initializeB24Frame } = useNuxtApp()
 const apiStore = useApiStore()
 
 const isLoading = ref(true)
-const payload = ref<Record<string, any> | null>(null)
+const payload = ref<Record<string, unknown> | null>(null)
+const isDemoMode = computed(() => apiStore.isDemoMode)
 
 onMounted(async () => {
   try {
@@ -20,7 +21,8 @@ onMounted(async () => {
     payload.value = await apiStore.getInstallationContext()
     $logger.info('installation context loaded', payload.value)
   } catch (error) {
-    processErrorGlobal(error)
+    $logger.warn('Settings page switched to demo mode due to init error', error)
+    payload.value = await apiStore.getInstallationContext()
   } finally {
     isLoading.value = false
   }
@@ -43,6 +45,7 @@ onMounted(async () => {
         <ProseP v-if="payload?.message" accent="less">
           {{ payload?.message }}
         </ProseP>
+        <B24Badge v-if="isDemoMode" class="mt-2" label="Demo mode" color="air-primary-warning" />
 
         <ProseH4 class="mt-4">Данные установки из нашей БД</ProseH4>
         <ProsePre class="mt-2">{{ payload }}</ProsePre>
