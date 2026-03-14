@@ -76,6 +76,30 @@ const resolvePortalBaseUrl = (): string => {
   return normalizeDomain(domainFromPayload)
 }
 
+const getErrorMessage = (error: unknown): string => {
+  if (!error) {
+    return ''
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  if (typeof error === 'object') {
+    const record = error as Record<string, unknown>
+    return String(record.description || record.error_description || record.error || record.message || '')
+  }
+  return ''
+}
+
+const scopeHint = computed(() => {
+  if (missingScopes.value.length === 0) {
+    return ''
+  }
+  return `Не хватает scope: ${missingScopes.value.join(', ')}`
+})
+
 const buildWorkplaceLink = (id: number): string => {
   const base = resolvePortalBaseUrl()
   if (!base) {
@@ -125,13 +149,13 @@ const createWorkplace = async () => {
     await sleep(250)
     workplaceProgress.value = 30
 
-    if (!b24Frame.value) {
+    if (isDemoMode.value || !b24Frame.value) {
       await sleep(450)
       const demoId = Math.floor(Date.now() / 1000)
       workplaceId.value = demoId
       workplaceLink.value = buildWorkplaceLink(demoId)
       workplaceProgress.value = 100
-      setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}"`
+      setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}" (demo mode)`
       return
     }
 
@@ -153,7 +177,9 @@ const createWorkplace = async () => {
     setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}"`
   } catch (error) {
     workplaceProgress.value = 0
-    setupError.value = 'Ошибка создания цифрового рабочего места. Проверьте права CRM и тариф портала.'
+    const details = getErrorMessage(error)
+    const hint = scopeHint.value ? ` ${scopeHint.value}.` : ''
+    setupError.value = `Ошибка создания цифрового рабочего места.${hint}${details ? ` Детали: ${details}` : ''}`
     $logger.error('Failed to create automated solution', error)
   } finally {
     isCreatingWorkplace.value = false
@@ -175,13 +201,13 @@ const createGoalsProcess = async () => {
     await sleep(250)
     goalsProgress.value = 35
 
-    if (!b24Frame.value) {
+    if (isDemoMode.value || !b24Frame.value) {
       await sleep(450)
       const demoEntityTypeId = 1030
       goalsTypeId.value = demoEntityTypeId
       goalsLink.value = buildGoalsLink(demoEntityTypeId)
       goalsProgress.value = 100
-      setupInfo.value = 'Смарт-процесс "Цели" создан'
+      setupInfo.value = 'Смарт-процесс "Цели" создан (demo mode)'
       return
     }
 
@@ -212,7 +238,9 @@ const createGoalsProcess = async () => {
     setupInfo.value = 'Смарт-процесс "Цели" создан'
   } catch (error) {
     goalsProgress.value = 0
-    setupError.value = 'Ошибка создания смарт-процесса "Цели". Проверьте права CRM и доступность метода crm.type.add.'
+    const details = getErrorMessage(error)
+    const hint = scopeHint.value ? ` ${scopeHint.value}.` : ''
+    setupError.value = `Ошибка создания смарт-процесса "Цели".${hint}${details ? ` Детали: ${details}` : ''}`
     $logger.error('Failed to create Goals smart process', error)
   } finally {
     isCreatingGoals.value = false

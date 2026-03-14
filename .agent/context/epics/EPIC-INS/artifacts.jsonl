@@ -17,3 +17,4 @@
 {"timestamp":"2026-03-14T23:06:30Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Reworked RD-102 into guided creation flow: automated solution + Goals smart process with progress and links"}
 {"timestamp":"2026-03-14T23:06:30Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Updated RD-102 title and description to reflect guided entity-creation scenario"}
 {"timestamp":"2026-03-14T23:06:30Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-metadata --apply","type":"bitrix-sync","note":"Applied RD-102 metadata update to Bitrix24 task card"}
+{"timestamp":"2026-03-14T23:29:50Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Adjusted RD-102 create actions: demo-mode simulation path and richer permission/scope error details"}
