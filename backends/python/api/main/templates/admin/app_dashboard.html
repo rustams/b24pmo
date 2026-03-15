@@ -1,0 +1,112 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="display:flex;flex-direction:column;gap:18px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <h1 style="margin:0;">Application Dashboard</h1>
+    <a class="button" href="/api/admin/main/applicationinstallation/">Installations</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px;">
+    <div class="module" style="padding:12px;">
+      <div style="font-size:12px;opacity:0.7;">Installations</div>
+      <div style="font-size:26px;font-weight:700;">{{ app_stats.installations_total }}</div>
+      <div style="font-size:12px;opacity:0.8;">with account: {{ app_stats.installations_with_account }}</div>
+    </div>
+    <div class="module" style="padding:12px;">
+      <div style="font-size:12px;opacity:0.7;">Accounts with tokens</div>
+      <div style="font-size:26px;font-weight:700;">{{ app_stats.accounts_with_tokens }} / {{ app_stats.accounts_total }}</div>
+      <div style="font-size:12px;opacity:0.8;">expired tokens: {{ app_stats.accounts_expired_tokens }}</div>
+    </div>
+    <div class="module" style="padding:12px;">
+      <div style="font-size:12px;opacity:0.7;">API requests (buffer)</div>
+      <div style="font-size:26px;font-weight:700;">{{ api_stats.total }}</div>
+      <div style="font-size:12px;opacity:0.8;">last hour: {{ api_stats.last_hour }}</div>
+    </div>
+    <div class="module" style="padding:12px;">
+      <div style="font-size:12px;opacity:0.7;">API reliability</div>
+      <div style="font-size:26px;font-weight:700;">{{ api_stats.error_rate }}%</div>
+      <div style="font-size:12px;opacity:0.8;">avg latency: {{ api_stats.avg_latency_ms }} ms</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="module" style="padding:12px;">
+      <h2 style="margin-top:0;">Installation status distribution</h2>
+      <table style="width:100%;">
+        <thead><tr><th align="left">Status</th><th align="right">Count</th></tr></thead>
+        <tbody>
+          {% for item in app_stats.installation_status_distribution %}
+          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
+          {% empty %}
+          <tr><td colspan="2">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="module" style="padding:12px;">
+      <h2 style="margin-top:0;">Account status distribution</h2>
+      <table style="width:100%;">
+        <thead><tr><th align="left">Status</th><th align="right">Count</th></tr></thead>
+        <tbody>
+          {% for item in app_stats.account_status_distribution %}
+          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
+          {% empty %}
+          <tr><td colspan="2">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="module" style="padding:12px;">
+    <h2 style="margin-top:0;">Top API paths</h2>
+    <div style="font-size:12px;opacity:0.7;margin-bottom:8px;">source: {{ api_stats.source }}</div>
+    <table style="width:100%;">
+      <thead><tr><th align="left">Path</th><th align="right">Requests</th></tr></thead>
+      <tbody>
+        {% for path, count in api_stats.top_paths %}
+        <tr><td>{{ path }}</td><td align="right">{{ count }}</td></tr>
+        {% empty %}
+        <tr><td colspan="2">No API telemetry yet. Open app pages to generate API traffic.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="module" style="padding:12px;">
+    <h2 style="margin-top:0;">Server telemetry</h2>
+    {% if server_stats.available %}
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:8px;">
+        <div><strong>CPU</strong><br>{{ server_stats.cpu_percent }}%</div>
+        <div><strong>Memory</strong><br>{{ server_stats.memory_percent }}%</div>
+        <div><strong>Disk</strong><br>{{ server_stats.disk_percent }}%</div>
+        <div><strong>Load Avg</strong><br>{{ server_stats.load_avg|join:", " }}</div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;opacity:0.8;">boot time: {{ server_stats.boot_time }}</div>
+    {% else %}
+      <div>{{ server_stats.message }}</div>
+    {% endif %}
+  </div>
+
+  <div class="module" style="padding:12px;">
+    <h2 style="margin-top:0;">Latest API events</h2>
+    <table style="width:100%;">
+      <thead><tr><th align="left">Time</th><th align="left">Method</th><th align="left">Path</th><th align="right">Status</th><th align="right">ms</th></tr></thead>
+      <tbody>
+        {% for event in api_stats.latest_events %}
+        <tr>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.method }}</td>
+          <td>{{ event.path }}</td>
+          <td align="right">{{ event.status_code }}</td>
+          <td align="right">{{ event.duration_ms }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No events collected yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -19,3 +19,8 @@
 {"timestamp":"2026-03-15T03:15:00Z","artifact":"git merge --no-ff epic-fnd-rd004-admin-unfold","type":"version-control","note":"Merged isolated EPIC-FND RD-004 branch into master with explicit merge commit"}
 {"timestamp":"2026-03-15T03:15:00Z","artifact":"git push origin master","type":"version-control","note":"Published RD-004 admin modernization and status updates to remote master"}
 {"timestamp":"2026-03-15T03:15:00Z","artifact":"./scripts/vps/verify-sync.sh","type":"runtime-verification","note":"Post-restart verification succeeded: LOCAL_HEAD=VPS_HEAD and HEALTH=200"}
+{"timestamp":"2026-03-15T03:35:00Z","artifact":"backends/python/api/main/admin.py","type":"backend-admin-dashboard","note":"Added dedicated /api/admin/dashboard/ view with application, API, and server telemetry blocks"}
+{"timestamp":"2026-03-15T03:35:00Z","artifact":"backends/python/api/main/templates/admin/app_dashboard.html","type":"admin-template","note":"Created dashboard template with KPI cards and telemetry tables"}
+{"timestamp":"2026-03-15T03:35:00Z","artifact":"backends/python/api/main/middleware/request_analytics.py","type":"telemetry-middleware","note":"Implemented API request event capture in rolling JSONL log"}
+{"timestamp":"2026-03-15T03:35:00Z","artifact":"backends/python/api/settings.py","type":"backend-config","note":"Enabled request analytics middleware in Django stack"}
+{"timestamp":"2026-03-15T03:35:00Z","artifact":"backends/python/api/requirements.txt","type":"dependency-update","note":"Added psutil for server metrics integration in admin dashboard"}

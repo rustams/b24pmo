@@ -1,10 +1,17 @@
 import json
+import os
+from collections import Counter, deque
 from datetime import datetime, timezone as dt_timezone
+from pathlib import Path
 
 from django.contrib import admin
 from django.db import connection
+from django.db.models import Count, Q
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
 from django.utils.html import format_html
 from django.utils import timezone
+from django.urls import path
 from unfold.admin import ModelAdmin
 
 from .models import ApplicationInstallation, Bitrix24Account
@@ -392,3 +399,170 @@ class ApplicationInstallationAdmin(ModelAdmin):
             return json.dumps(raw, ensure_ascii=True, indent=2)
         except (TypeError, ValueError):
             return str(raw)
+
+
+def _api_metrics_log_path() -> Path:
+    return Path(os.getenv("API_METRICS_LOG_PATH", "/tmp/b24_api_metrics.log"))
+
+
+def _load_api_metrics_snapshot():
+    log_path = _api_metrics_log_path()
+    if not log_path.exists():
+        return {
+            "source": str(log_path),
+            "total": 0,
+            "last_hour": 0,
+            "avg_latency_ms": 0,
+            "error_rate": 0,
+            "top_paths": [],
+            "latest_events": [],
+        }
+
+    recent_records = deque(maxlen=3000)
+    with log_path.open("r", encoding="utf-8", errors="ignore") as metrics_file:
+        for line in metrics_file:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                recent_records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    now_dt = timezone.now()
+    one_hour_ago = now_dt - timezone.timedelta(hours=1)
+    path_counter = Counter()
+    statuses_5xx = 0
+    latency_sum = 0.0
+    latest_events = []
+    last_hour = 0
+
+    for record in recent_records:
+        path_counter[record.get("path", "-")] += 1
+        status_code = int(record.get("status_code", 0) or 0)
+        if status_code >= 500:
+            statuses_5xx += 1
+        latency_sum += float(record.get("duration_ms", 0.0) or 0.0)
+        timestamp_raw = record.get("timestamp")
+        if timestamp_raw:
+            try:
+                ts = datetime.fromisoformat(timestamp_raw.replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=dt_timezone.utc)
+                if ts >= one_hour_ago:
+                    last_hour += 1
+            except ValueError:
+                pass
+
+    for record in list(recent_records)[-10:]:
+        latest_events.append(
+            {
+                "timestamp": record.get("timestamp", "-"),
+                "method": record.get("method", "-"),
+                "path": record.get("path", "-"),
+                "status_code": int(record.get("status_code", 0) or 0),
+                "duration_ms": round(float(record.get("duration_ms", 0.0) or 0.0), 2),
+            }
+        )
+
+    total = len(recent_records)
+    avg_latency = round(latency_sum / total, 2) if total else 0
+    error_rate = round((statuses_5xx / total) * 100, 2) if total else 0
+
+    return {
+        "source": str(log_path),
+        "total": total,
+        "last_hour": last_hour,
+        "avg_latency_ms": avg_latency,
+        "error_rate": error_rate,
+        "top_paths": path_counter.most_common(8),
+        "latest_events": list(reversed(latest_events)),
+    }
+
+
+def _server_stats_snapshot():
+    try:
+        import psutil
+    except Exception:
+        return {
+            "available": False,
+            "message": "psutil is not available yet",
+            "cpu_percent": None,
+            "memory_percent": None,
+            "disk_percent": None,
+            "load_avg": None,
+            "boot_time": None,
+        }
+
+    disk_usage = psutil.disk_usage("/")
+    load_avg = os.getloadavg() if hasattr(os, "getloadavg") else (None, None, None)
+    return {
+        "available": True,
+        "message": "",
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "memory_percent": psutil.virtual_memory().percent,
+        "disk_percent": disk_usage.percent,
+        "load_avg": [round(value, 2) for value in load_avg] if load_avg else None,
+        "boot_time": datetime.fromtimestamp(psutil.boot_time(), tz=dt_timezone.utc).isoformat(),
+    }
+
+
+def _app_stats_snapshot():
+    now_ts = int(timezone.now().timestamp())
+    installations_qs = ApplicationInstallation.objects.select_related("bitrix_24_account")
+    accounts_qs = Bitrix24Account.objects.all()
+
+    installation_totals = installations_qs.aggregate(
+        total=Count("id"),
+        with_account=Count("id", filter=Q(bitrix_24_account__isnull=False)),
+    )
+    token_totals = accounts_qs.aggregate(
+        total=Count("id"),
+        with_tokens=Count("id", filter=Q(access_token__isnull=False) & Q(refresh_token__isnull=False)),
+        expired=Count("id", filter=Q(expires__lt=now_ts)),
+    )
+
+    status_distribution = list(
+        installations_qs.values("status")
+        .annotate(count=Count("id"))
+        .order_by("-count", "status")
+    )
+    account_status_distribution = list(
+        accounts_qs.values("status")
+        .annotate(count=Count("id"))
+        .order_by("-count", "status")
+    )
+
+    return {
+        "installations_total": installation_totals.get("total", 0),
+        "installations_with_account": installation_totals.get("with_account", 0),
+        "accounts_total": token_totals.get("total", 0),
+        "accounts_with_tokens": token_totals.get("with_tokens", 0),
+        "accounts_expired_tokens": token_totals.get("expired", 0),
+        "installation_status_distribution": status_distribution,
+        "account_status_distribution": account_status_distribution,
+    }
+
+
+def app_dashboard_view(request: HttpRequest) -> HttpResponse:
+    context = {
+        **admin.site.each_context(request),
+        "title": "Application Dashboard",
+        "app_stats": _app_stats_snapshot(),
+        "api_stats": _load_api_metrics_snapshot(),
+        "server_stats": _server_stats_snapshot(),
+    }
+    return render(request, "admin/app_dashboard.html", context)
+
+
+_default_admin_get_urls = admin.site.get_urls
+
+
+def _admin_get_urls_with_dashboard():
+    custom_urls = [
+        path("dashboard/", admin.site.admin_view(app_dashboard_view), name="application-dashboard"),
+    ]
+    return custom_urls + _default_admin_get_urls()
+
+
+admin.site.get_urls = _admin_get_urls_with_dashboard

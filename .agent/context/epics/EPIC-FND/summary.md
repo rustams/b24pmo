@@ -122,3 +122,19 @@
   - pushed `master` to `origin`
   - backend service restarted on VPS (`b24-ai-starter`)
   - post-restart `verify-sync` result: `OK` with `HEALTH=200`
+
+## Stage 3 (Admin Dashboard + Telemetry Foundation)
+- Implemented a dedicated admin dashboard page at:
+  - `/api/admin/dashboard/`
+- Dashboard aggregates core product health metrics:
+  - installations total + linked accounts
+  - token health and expired token counts
+  - installation/account status distributions
+- Implemented API telemetry collection:
+  - new middleware `main.middleware.request_analytics.RequestAnalyticsMiddleware`
+  - records API request events (`method/path/status/duration`) into rolling JSONL log (`/tmp/b24_api_metrics.log`)
+  - dashboard shows request volume, last-hour traffic, error rate, average latency, top paths, and latest events
+- Added server telemetry integration:
+  - `psutil` dependency added
+  - dashboard shows CPU, memory, disk usage, load average, and boot time when available
+  - graceful fallback if telemetry module is not yet installed in runtime

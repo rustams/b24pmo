@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-FND",
-  "timestamp": "2026-03-15T03:15:00Z",
+  "timestamp": "2026-03-15T03:35:00Z",
   "status": "in_progress",
   "active_task": "RD-004",
   "dependency_gate": {
@@ -23,6 +23,9 @@
     "backends/python/api/requirements.txt",
     "backends/python/api/settings.py",
     "backends/python/api/main/admin.py",
+    "backends/python/api/main/middleware/request_analytics.py",
+    "backends/python/api/main/middleware/__init__.py",
+    "backends/python/api/main/templates/admin/app_dashboard.html",
     ".agent/context/epics/EPIC-FND/summary.md",
     ".agent/context/epics/EPIC-FND/decisions.jsonl",
     ".agent/context/epics/EPIC-FND/artifacts.jsonl",
@@ -47,8 +50,9 @@
     "Пароль суперпользователя был сброшен для восстановления доступа; требуется сменить после первого входа."
   ],
   "next_actions": [
-    "Получить пользовательскую проверку /api/admin/ после merge и restart backend.",
-    "Собрать обратную связь по плотности данных/акцентам и выполнить stage 3 (финальная полировка list/detail).",
-    "После подтверждения UI перевести RD-004 из TESTING в DONE и синхронизировать Bitrix24 статус."
+    "Применить изменения в runtime (install requirements + restart backend).",
+    "Проверить /api/admin/dashboard/ и накопление API telemetry при пользовательских сценариях.",
+    "При необходимости подключить внешний мониторинг уровня VPS (node_exporter/cadvisor) как следующий этап.",
+    "После пользовательской проверки перевести RD-004 из TESTING в DONE и синхронизировать Bitrix24 статус."
   ]
 }
