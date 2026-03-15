@@ -324,3 +324,22 @@
   - `epic-ins-rd102-goals-fields-card` (расширение мастера RD-102 по полям/карточке Goals)
 - Обе ветки объединены без конфликтов в целевых зонах.
 - Контекст и память синхронизированы для следующего шага совместной валидации.
+
+## EPIC-INS update: RD-102 scope expansion accepted
+- По подтверждению пользователя RD-102 расширен до полного сценария:
+  - рабочая группа (`sonet_group.create` + `sonet_group.update`);
+  - списки и элементы (`lists.add`, `lists.element.add`);
+  - база знаний (`landing.site.add`, `landing.site.bindingToGroup`);
+  - сохранение всех ID и статусов в backend `setup_state`.
+- Переведены API полей Goals на `userfieldconfig.*` (вместо `crm.item.userfield.*`), включая верификацию через `userfieldconfig.list`.
+- Обновлены roadmap-файлы:
+  - добавлены `RD-108`, `RD-109`, `RD-110` (дочерние к `RD-102`);
+  - `RD-102 -> IN_PROGRESS`, `RD-108 -> IN_PROGRESS`, `RD-109/110 -> NEW`, `active_task=RD-108`.
+- Bitrix24 синхронизация:
+  - `sync-metadata --apply` выполнен;
+  - `create-missing --apply` создал `RD-107#287`, `RD-108#289`, `RD-109#291`, `RD-110#293`;
+  - `sync-epic-structure --apply` привязал подзадачи к `RD-102`;
+  - `sync-status --apply` применен.
+- Проверки:
+  - `python3 -m compileall backends/python/api/main/features/installer/services.py` -> OK;
+  - `ReadLints` по измененным файлам -> ошибок нет.

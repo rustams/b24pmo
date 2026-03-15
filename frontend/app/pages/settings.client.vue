@@ -54,29 +54,51 @@ const workplaceId = ref<number | null>(null)
 const workplaceLink = ref('')
 const goalsTypeId = ref<number | null>(null)
 const goalsLink = ref('')
+const workgroupName = ref('PMO Hub - рабочая группа')
+const workgroupId = ref<number | null>(null)
+const workgroupLink = ref('')
+const isWorkgroupToolsUpdated = ref(false)
+const referenceLists = ref<Record<string, { id: number; title: string; items: string[] }>>({})
+const referenceFieldBindings = ref<Record<string, number>>({})
+const knowledgeBaseId = ref<number | null>(null)
+const knowledgeBaseLink = ref('')
+const knowledgeBaseBindingStatus = ref<'pending' | 'bound' | 'failed'>('pending')
+const knowledgeBaseChangesLog = ref<string[]>([])
 const goalsFieldsCreated = ref<Array<{ title: string; code: string; field_id: number | null; status: string }>>([])
 const goalsFieldCodesAdded = ref<string[]>([])
 const isGoalsCardConfigured = ref(false)
 const goalsVerification = ref<{ status: string; missingCodes: string[]; foundCodesCount: number }>({ status: 'pending', missingCodes: [], foundCodesCount: 0 })
 const setupState = ref<Record<string, unknown> | null>(null)
 const setupStateSaveError = ref('')
+const setupStateFromBackend = ref<Record<string, unknown> | null>(null)
+const setupStateSource = ref<'backend' | 'demo' | null>(null)
+const setupStateLoadedAt = ref<string | null>(null)
 
 const workplaceProgress = ref(0)
 const goalsProgress = ref(0)
+const workgroupProgress = ref(0)
+const referenceListsProgress = ref(0)
 const goalsFieldsProgress = ref(0)
 const goalsCardProgress = ref(0)
+const knowledgeBaseProgress = ref(0)
 const verificationProgress = ref(0)
 const isCreatingWorkplace = ref(false)
 const isCreatingGoals = ref(false)
+const isCreatingWorkgroup = ref(false)
+const isCreatingReferenceLists = ref(false)
 const isCreatingGoalsFields = ref(false)
 const isConfiguringGoalsCard = ref(false)
+const isCreatingKnowledgeBase = ref(false)
 const isVerifyingGoalsSetup = ref(false)
 
 const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1 && !isCreatingWorkplace.value)
 const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
-const canCreateGoalsFields = computed(() => goalsTypeId.value !== null && !isCreatingGoalsFields.value)
+const canCreateWorkgroup = computed(() => goalsTypeId.value !== null && !isCreatingWorkgroup.value)
+const canCreateReferenceLists = computed(() => workgroupId.value !== null && !isCreatingReferenceLists.value)
+const canCreateGoalsFields = computed(() => goalsTypeId.value !== null && Object.keys(referenceLists.value).length >= LISTS_CATALOG.length && !isCreatingGoalsFields.value)
 const canConfigureGoalsCard = computed(() => goalsTypeId.value !== null && goalsFieldsCreated.value.length > 0 && !isConfiguringGoalsCard.value)
-const canVerifyGoalsSetup = computed(() => goalsTypeId.value !== null && !isVerifyingGoalsSetup.value)
+const canCreateKnowledgeBase = computed(() => workgroupId.value !== null && !isCreatingKnowledgeBase.value)
+const canVerifyGoalsSetup = computed(() => goalsTypeId.value !== null && knowledgeBaseBindingStatus.value === 'bound' && !isVerifyingGoalsSetup.value)
 const isGoalsFieldsCreated = computed(() => goalsFieldsCreated.value.length > 0)
 const isGoalsVerificationPassed = computed(() => goalsVerification.value.status === 'passed')
 
@@ -179,6 +201,53 @@ const buildGoalsLink = (entityTypeId: number): string => {
   return `${base}/crm/type/${entityTypeId}/list/`
 }
 
+const buildWorkgroupLink = (groupId: number): string => {
+  const base = resolvePortalBaseUrl()
+  if (!base) {
+    return ''
+  }
+  return `${base}/workgroups/group/${groupId}/`
+}
+
+const buildKnowledgeBaseLink = (siteId: number): string => {
+  const base = resolvePortalBaseUrl()
+  if (!base) {
+    return ''
+  }
+  return `${base}/kb/site/${siteId}/`
+}
+
+const LISTS_CATALOG: Array<{ key: string; title: string; code: string; items: string[]; targetFieldCode: string }> = [
+  {
+    key: 'goal_type',
+    title: 'Тип цели',
+    code: 'goal_type',
+    items: ['Стратегическая', 'Операционная', 'Финансовая'],
+    targetFieldCode: 'GOAL_TYPE'
+  },
+  {
+    key: 'goal_priority',
+    title: 'Приоритет',
+    code: 'goal_priority',
+    items: ['Низкий', 'Средний', 'Высокий', 'Критический'],
+    targetFieldCode: 'GOAL_PRIORITY'
+  },
+  {
+    key: 'goal_status',
+    title: 'Статус цели',
+    code: 'goal_status',
+    items: ['В работе', 'Достигнута', 'Не достигнута', 'Отменена'],
+    targetFieldCode: 'GOAL_STATUS'
+  },
+  {
+    key: 'goal_kpi_unit',
+    title: 'Единица измерения',
+    code: 'goal_kpi_unit',
+    items: ['%', 'шт.', 'руб.', 'дни', 'часы', 'мин.', 'индексы', 'задачи', 'звонки', 'встречи', 'жалобы'],
+    targetFieldCode: 'GOAL_KPI_UNIT'
+  }
+]
+
 type GoalsFieldDefinition = {
   title: string
   codeTemplate: string
@@ -186,16 +255,18 @@ type GoalsFieldDefinition = {
   sort: number
   mandatory: boolean
   multiple: boolean
+  listBindingKey?: string
+  settings?: Record<string, unknown>
 }
 
 const GOALS_FIELD_DEFINITIONS: GoalsFieldDefinition[] = [
   { title: 'Название цели', codeTemplate: 'UF_CRM_XXX_GOAL_TITLE', userTypeId: 'string', sort: 10, mandatory: true, multiple: false },
-  { title: 'Описание цели', codeTemplate: 'UF_CRM_XXX_GOAL_DESCRIPTION', userTypeId: 'string', sort: 20, mandatory: false, multiple: false },
-  { title: 'Тип цели', codeTemplate: 'UF_CRM_XXX_GOAL_TYPE', userTypeId: 'string', sort: 30, mandatory: true, multiple: false },
-  { title: 'Приоритет', codeTemplate: 'UF_CRM_XXX_GOAL_PRIORITY', userTypeId: 'string', sort: 40, mandatory: false, multiple: false },
-  { title: 'Статус цели', codeTemplate: 'UF_CRM_XXX_GOAL_STATUS', userTypeId: 'string', sort: 50, mandatory: true, multiple: false },
+  { title: 'Описание цели', codeTemplate: 'UF_CRM_XXX_GOAL_DESCRIPTION', userTypeId: 'string', sort: 20, mandatory: false, multiple: false, settings: { rows: 6 } },
+  { title: 'Тип цели', codeTemplate: 'UF_CRM_XXX_GOAL_TYPE', userTypeId: 'iblock_element', sort: 30, mandatory: true, multiple: false, listBindingKey: 'goal_type' },
+  { title: 'Приоритет', codeTemplate: 'UF_CRM_XXX_GOAL_PRIORITY', userTypeId: 'iblock_element', sort: 40, mandatory: false, multiple: false, listBindingKey: 'goal_priority' },
+  { title: 'Статус цели', codeTemplate: 'UF_CRM_XXX_GOAL_STATUS', userTypeId: 'iblock_element', sort: 50, mandatory: true, multiple: false, listBindingKey: 'goal_status' },
   { title: 'Ключевой показатель (KPI)', codeTemplate: 'UF_CRM_XXX_GOAL_KPI', userTypeId: 'string', sort: 60, mandatory: false, multiple: true },
-  { title: 'Единица измерения', codeTemplate: 'UF_CRM_XXX_GOAL_KPI_UNIT', userTypeId: 'string', sort: 70, mandatory: true, multiple: false },
+  { title: 'Единица измерения', codeTemplate: 'UF_CRM_XXX_GOAL_KPI_UNIT', userTypeId: 'iblock_element', sort: 70, mandatory: true, multiple: false, listBindingKey: 'goal_kpi_unit' },
   { title: 'Базовое значение', codeTemplate: 'UF_CRM_XXX_GOAL_BASE_VALUE', userTypeId: 'string', sort: 80, mandatory: false, multiple: false },
   { title: 'Целевое значение', codeTemplate: 'UF_CRM_XXX_GOAL_TARGET_VALUE', userTypeId: 'string', sort: 90, mandatory: false, multiple: false },
   { title: 'Фактическое значение KPI', codeTemplate: 'UF_CRM_XXX_GOAL_FACT_VALUE', userTypeId: 'string', sort: 100, mandatory: false, multiple: false },
@@ -214,17 +285,32 @@ const extractGoalCode = (codeTemplate: string): string => {
   return match ? match[0] : codeTemplate.replace(/^UF_CRM_[A-Z0-9]+_/, '')
 }
 
-const buildGoalFieldPayload = (field: GoalsFieldDefinition) => ({
-  title: field.title,
-  fieldName: extractGoalCode(field.codeTemplate),
-  type: field.userTypeId,
-  sort: field.sort,
-  isRequired: field.mandatory ? 'Y' : 'N',
-  isMultiple: field.multiple ? 'Y' : 'N',
-  formLabel: field.title,
-  listLabel: field.title,
-  filterLabel: field.title
-})
+const buildGoalFieldPayload = (field: GoalsFieldDefinition, entityId: string, listBindings: Record<string, number>) => {
+  const fieldCode = extractGoalCode(field.codeTemplate).toUpperCase()
+  const fullFieldName = `UF_${entityId}_${fieldCode}`.slice(0, 50)
+  const settings: Record<string, unknown> = { ...(field.settings || {}) }
+  if (field.listBindingKey) {
+    const iblockId = listBindings[field.listBindingKey]
+    if (iblockId) {
+      settings.IBLOCK_ID = iblockId
+      settings.LIST_HEIGHT = 1
+      settings.DISPLAY = 'LIST'
+    }
+  }
+  return {
+    title: field.title,
+    fieldName: fullFieldName,
+    shortCode: fieldCode,
+    userTypeId: field.userTypeId,
+    sort: field.sort,
+    mandatory: field.mandatory ? 'Y' : 'N',
+    multiple: field.multiple ? 'Y' : 'N',
+    editFormLabel: { ru: field.title },
+    listColumnLabel: { ru: field.title },
+    listFilterLabel: { ru: field.title },
+    settings
+  }
+}
 
 const callMethodWithFallback = async (method: string, payloadVariants: Array<Record<string, unknown>>) => {
   if (!b24Frame.value) {
@@ -271,8 +357,14 @@ const refreshInstallerData = async () => {
     const persistedState = setupStateResult.value.setup_state as Record<string, unknown> | undefined
     if (persistedState) {
       setupState.value = persistedState
+      setupStateFromBackend.value = persistedState
+      setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
+      setupStateLoadedAt.value = new Date().toISOString()
       const workplace = (persistedState.workplace as Record<string, unknown> | undefined) ?? {}
       const goalsProcess = (persistedState.goals_process as Record<string, unknown> | undefined) ?? {}
+      const workgroup = (persistedState.workgroup as Record<string, unknown> | undefined) ?? {}
+      const referenceListsState = (persistedState.reference_lists as Record<string, unknown> | undefined) ?? {}
+      const knowledgeBaseState = (persistedState.knowledge_base as Record<string, unknown> | undefined) ?? {}
       const goalsFieldsState = (persistedState.goals_fields as Record<string, unknown> | undefined) ?? {}
       const goalsCardState = (persistedState.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
       const goalsVerificationState = (persistedState.goals_verification as Record<string, unknown> | undefined) ?? {}
@@ -284,6 +376,28 @@ const refreshInstallerData = async () => {
         ? null
         : Number(goalsProcess.entity_type_id)
       goalsLink.value = String(goalsProcess.link || '')
+      workgroupName.value = String(workgroup.name || workgroupName.value)
+      workgroupId.value = workgroup.id === null || workgroup.id === undefined ? null : Number(workgroup.id)
+      workgroupLink.value = String(workgroup.link || '')
+      isWorkgroupToolsUpdated.value = Boolean(workgroup.tools_updated)
+      referenceLists.value = (referenceListsState.lists && typeof referenceListsState.lists === 'object')
+        ? referenceListsState.lists as Record<string, { id: number; title: string; items: string[] }>
+        : {}
+      referenceFieldBindings.value = (referenceListsState.field_bindings && typeof referenceListsState.field_bindings === 'object')
+        ? Object.fromEntries(
+            Object.entries(referenceListsState.field_bindings as Record<string, unknown>)
+              .map(([key, value]) => [key, Number(value || 0)])
+              .filter(([, value]) => Number.isFinite(value) && value > 0)
+          )
+        : {}
+      knowledgeBaseId.value = knowledgeBaseState.site_id === null || knowledgeBaseState.site_id === undefined
+        ? null
+        : Number(knowledgeBaseState.site_id)
+      knowledgeBaseLink.value = String(knowledgeBaseState.link || '')
+      knowledgeBaseBindingStatus.value = String(knowledgeBaseState.binding_status || 'pending') as 'pending' | 'bound' | 'failed'
+      knowledgeBaseChangesLog.value = Array.isArray(knowledgeBaseState.changes_log)
+        ? knowledgeBaseState.changes_log.map(item => String(item))
+        : []
       goalsFieldsCreated.value = Array.isArray(goalsFieldsState.created_fields)
         ? goalsFieldsState.created_fields.map(item => item as { title: string; code: string; field_id: number | null; status: string })
         : []
@@ -300,15 +414,49 @@ const refreshInstallerData = async () => {
   }
 }
 
+const refreshSetupStateFromBackend = async () => {
+  try {
+    const response = await apiStore.getInstallerSetupState()
+    const persisted = (response.setup_state as Record<string, unknown> | undefined) ?? null
+    setupStateFromBackend.value = persisted
+    setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
+    setupStateLoadedAt.value = new Date().toISOString()
+  } catch {
+    setupStateFromBackend.value = null
+    setupStateSource.value = null
+    setupStateLoadedAt.value = null
+  }
+}
+
+const refreshSetupStateFromBackend = async () => {
+  try {
+    const result = await apiStore.getInstallerSetupState()
+    const persisted = result.setup_state as Record<string, unknown> | undefined
+    setupStateFromBackend.value = persisted ?? null
+    setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
+    setupStateLoadedAt.value = new Date().toISOString()
+  } catch {
+    setupStateFromBackend.value = null
+    setupStateSource.value = null
+    setupStateLoadedAt.value = null
+  }
+}
+
 const persistSetupState = async (partialState: Record<string, unknown>) => {
   setupStateSaveError.value = ''
   const current = (setupState.value ?? {}) as Record<string, unknown>
   const currentWorkplace = (current.workplace as Record<string, unknown> | undefined) ?? {}
   const currentGoals = (current.goals_process as Record<string, unknown> | undefined) ?? {}
+  const currentWorkgroup = (current.workgroup as Record<string, unknown> | undefined) ?? {}
+  const currentReferenceLists = (current.reference_lists as Record<string, unknown> | undefined) ?? {}
+  const currentKnowledgeBase = (current.knowledge_base as Record<string, unknown> | undefined) ?? {}
   const currentGoalsFields = (current.goals_fields as Record<string, unknown> | undefined) ?? {}
   const currentGoalsCard = (current.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
   const partialWorkplace = (partialState.workplace as Record<string, unknown> | undefined) ?? {}
   const partialGoals = (partialState.goals_process as Record<string, unknown> | undefined) ?? {}
+  const partialWorkgroup = (partialState.workgroup as Record<string, unknown> | undefined) ?? {}
+  const partialReferenceLists = (partialState.reference_lists as Record<string, unknown> | undefined) ?? {}
+  const partialKnowledgeBase = (partialState.knowledge_base as Record<string, unknown> | undefined) ?? {}
   const partialGoalsFields = (partialState.goals_fields as Record<string, unknown> | undefined) ?? {}
   const partialGoalsCard = (partialState.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
   const partialCompleted = partialState.completed_steps
@@ -328,6 +476,18 @@ const persistSetupState = async (partialState: Record<string, unknown>) => {
       ...currentGoals,
       ...partialGoals
     },
+    workgroup: {
+      ...currentWorkgroup,
+      ...partialWorkgroup
+    },
+    reference_lists: {
+      ...currentReferenceLists,
+      ...partialReferenceLists
+    },
+    knowledge_base: {
+      ...currentKnowledgeBase,
+      ...partialKnowledgeBase
+    },
     goals_fields: {
       ...currentGoalsFields,
       ...partialGoalsFields
@@ -341,7 +501,11 @@ const persistSetupState = async (partialState: Record<string, unknown>) => {
 
   try {
     const response = await apiStore.saveInstallerSetupState(mergedState)
-    setupState.value = (response.setup_state as Record<string, unknown> | undefined) ?? mergedState
+    const saved = (response.setup_state as Record<string, unknown> | undefined) ?? mergedState
+    setupState.value = saved
+    setupStateFromBackend.value = saved
+    setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
+    setupStateLoadedAt.value = new Date().toISOString()
   } catch (error) {
     setupStateSaveError.value = 'Не удалось сохранить состояние мастера настройки.'
     $logger.warn('Failed to persist installer setup state', error)
@@ -498,9 +662,222 @@ const createGoalsProcess = async () => {
   }
 }
 
+const createWorkgroup = async () => {
+  if (!goalsTypeId.value) {
+    setupError.value = 'Сначала создайте смарт-процесс "Цели".'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingWorkgroup.value = true
+  workgroupProgress.value = 10
+
+  try {
+    await sleep(250)
+    workgroupProgress.value = 35
+
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(500)
+      const demoGroupId = Math.floor(Date.now() / 1000) + 200
+      workgroupId.value = demoGroupId
+      workgroupLink.value = buildWorkgroupLink(demoGroupId)
+      isWorkgroupToolsUpdated.value = true
+      workgroupProgress.value = 100
+      setupInfo.value = `Рабочая группа "${workgroupName.value}" создана (демо-режим)`
+      await persistSetupState({
+        current_step: 'workgroup_created',
+        workgroup: {
+          id: demoGroupId,
+          name: workgroupName.value,
+          link: workgroupLink.value,
+          status: 'created',
+          tools_updated: true
+        },
+        completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created']
+      })
+      await scrollToStep(7)
+      return
+    }
+
+    const createData = await callMethodWithFallback('sonet_group.create', [
+      {
+        arFields: {
+          NAME: workgroupName.value,
+          DESCRIPTION: 'Рабочая группа PMO Hub для списков и базы знаний',
+          VISIBLE: 'Y',
+          OPENED: 'N',
+          INITIATE_PERMS: 'E',
+          SPAM_PERMS: 'E',
+          PROJECT: 'Y'
+        }
+      },
+      {
+        NAME: workgroupName.value,
+        DESCRIPTION: 'Рабочая группа PMO Hub для списков и базы знаний',
+        VISIBLE: 'Y',
+        OPENED: 'N',
+        INITIATE_PERMS: 'E',
+        SPAM_PERMS: 'E',
+        PROJECT: 'Y'
+      }
+    ])
+    workgroupProgress.value = 60
+
+    const createdGroupId = Number(createData.result || createData.id || createData.groupId || 0)
+    if (!createdGroupId) {
+      throw new Error('Не удалось получить ID рабочей группы')
+    }
+
+    await callMethodWithFallback('sonet_group.update', [
+      { GROUP_ID: createdGroupId, NAME: workgroupName.value },
+      {
+        GROUP_ID: createdGroupId,
+        NAME: workgroupName.value,
+        FEATURES: {
+          tasks: 'Y',
+          files: 'Y',
+          chat: 'Y',
+          lists: 'Y',
+          wiki: 'Y'
+        }
+      }
+    ])
+    workgroupProgress.value = 100
+
+    workgroupId.value = createdGroupId
+    workgroupLink.value = buildWorkgroupLink(createdGroupId)
+    isWorkgroupToolsUpdated.value = true
+    setupInfo.value = `Рабочая группа "${workgroupName.value}" создана и обновлена`
+    await persistSetupState({
+      current_step: 'workgroup_created',
+      workgroup: {
+        id: createdGroupId,
+        name: workgroupName.value,
+        link: workgroupLink.value,
+        status: 'created',
+        tools_updated: true
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created']
+    })
+    await scrollToStep(7)
+  } catch (error) {
+    workgroupProgress.value = 0
+    const details = getErrorMessage(error)
+    setupError.value = `Ошибка создания рабочей группы.${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to create workgroup', error)
+  } finally {
+    isCreatingWorkgroup.value = false
+  }
+}
+
+const createReferenceLists = async () => {
+  if (!workgroupId.value) {
+    setupError.value = 'Сначала создайте рабочую группу.'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingReferenceLists.value = true
+  referenceListsProgress.value = 10
+
+  try {
+    await sleep(250)
+    referenceListsProgress.value = 20
+
+    const listsState: Record<string, { id: number; title: string; items: string[] }> = {}
+    const fieldBindings: Record<string, number> = {}
+
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(800)
+      LISTS_CATALOG.forEach((listItem, index) => {
+        const listId = 7000 + index
+        listsState[listItem.key] = {
+          id: listId,
+          title: listItem.title,
+          items: listItem.items
+        }
+        fieldBindings[listItem.key] = listId
+      })
+      referenceListsProgress.value = 100
+    } else {
+      for (let index = 0; index < LISTS_CATALOG.length; index += 1) {
+        const listItem = LISTS_CATALOG[index]
+        const addData = await callMethodWithFallback('lists.add', [
+          {
+            IBLOCK_TYPE_ID: 'lists_socnet',
+            IBLOCK_CODE: `${listItem.code}_${workgroupId.value}`,
+            SOCNET_GROUP_ID: workgroupId.value,
+            FIELDS: {
+              NAME: listItem.title,
+              DESCRIPTION: `Справочник PMO Hub: ${listItem.title}`,
+              SORT: 500 + index * 10,
+              BIZPROC: 'N'
+            }
+          }
+        ])
+        const iblockId = Number(addData.result || addData.id || 0)
+        if (!iblockId) {
+          throw new Error(`Не удалось получить ID списка "${listItem.title}"`)
+        }
+
+        for (let itemIndex = 0; itemIndex < listItem.items.length; itemIndex += 1) {
+          const itemTitle = listItem.items[itemIndex]
+          await callMethodWithFallback('lists.element.add', [
+            {
+              IBLOCK_TYPE_ID: 'lists_socnet',
+              IBLOCK_ID: iblockId,
+              ELEMENT_CODE: `${listItem.code}_${itemIndex + 1}`,
+              FIELDS: {
+                NAME: itemTitle
+              }
+            }
+          ])
+        }
+
+        listsState[listItem.key] = {
+          id: iblockId,
+          title: listItem.title,
+          items: listItem.items
+        }
+        fieldBindings[listItem.key] = iblockId
+        referenceListsProgress.value = Math.min(95, 20 + Math.floor(((index + 1) / LISTS_CATALOG.length) * 75))
+      }
+      referenceListsProgress.value = 100
+    }
+
+    referenceLists.value = listsState
+    referenceFieldBindings.value = fieldBindings
+    setupInfo.value = 'Справочники рабочей группы созданы'
+    await persistSetupState({
+      current_step: 'reference_lists_created',
+      reference_lists: {
+        status: 'created',
+        group_id: workgroupId.value,
+        lists: listsState,
+        field_bindings: fieldBindings
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created', 'reference_lists_created']
+    })
+    await scrollToStep(8)
+  } catch (error) {
+    referenceListsProgress.value = 0
+    const details = getErrorMessage(error)
+    setupError.value = `Ошибка создания списков рабочей группы.${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to create reference lists', error)
+  } finally {
+    isCreatingReferenceLists.value = false
+  }
+}
+
 const createGoalsFields = async () => {
   if (!goalsTypeId.value) {
     setupError.value = 'Сначала создайте смарт-процесс "Цели".'
+    return
+  }
+  if (!workgroupId.value) {
+    setupError.value = 'Сначала создайте рабочую группу и справочники.'
     return
   }
 
@@ -514,6 +891,8 @@ const createGoalsFields = async () => {
     goalsFieldsProgress.value = 25
 
     const createdFields: Array<{ title: string; code: string; field_id: number | null; status: string }> = []
+    const entityId = `CRM_${goalsTypeId.value}`
+    const listBindings = referenceFieldBindings.value
     if (isDemoMode.value || !b24Frame.value) {
       await sleep(600)
       GOALS_FIELD_DEFINITIONS.forEach((field, index) => {
@@ -528,30 +907,29 @@ const createGoalsFields = async () => {
     } else {
       for (let index = 0; index < GOALS_FIELD_DEFINITIONS.length; index += 1) {
         const definition = GOALS_FIELD_DEFINITIONS[index]
-        const fieldPayload = buildGoalFieldPayload(definition)
-        const data = await callMethodWithFallback('crm.item.userfield.add', [
-          { entityTypeId: goalsTypeId.value, field: fieldPayload },
-          { entityTypeId: goalsTypeId.value, fields: fieldPayload },
-          { entityTypeId: goalsTypeId.value, FIELD: fieldPayload },
+        const fieldPayload = buildGoalFieldPayload(definition, entityId, listBindings)
+        const data = await callMethodWithFallback('userfieldconfig.add', [
           {
-            entityTypeId: goalsTypeId.value,
-            fields: {
-              FIELD_NAME: fieldPayload.fieldName,
-              USER_TYPE_ID: definition.userTypeId,
-              EDIT_FORM_LABEL: fieldPayload.formLabel,
-              LIST_COLUMN_LABEL: fieldPayload.listLabel,
-              LIST_FILTER_LABEL: fieldPayload.filterLabel,
-              MANDATORY: definition.mandatory ? 'Y' : 'N',
-              MULTIPLE: definition.multiple ? 'Y' : 'N',
-              SORT: definition.sort
+            moduleId: 'crm',
+            field: {
+              entityId,
+              fieldName: fieldPayload.fieldName,
+              userTypeId: fieldPayload.userTypeId,
+              sort: fieldPayload.sort,
+              mandatory: fieldPayload.mandatory,
+              multiple: fieldPayload.multiple,
+              editFormLabel: fieldPayload.editFormLabel,
+              listColumnLabel: fieldPayload.listColumnLabel,
+              listFilterLabel: fieldPayload.listFilterLabel,
+              settings: fieldPayload.settings
             }
           }
         ])
 
-        const fieldId = Number(data.id || data.fieldId || data.field_id || 0) || null
+        const fieldId = Number(data.id || data.fieldId || data.field_id || data.result || 0) || null
         createdFields.push({
           title: definition.title,
-          code: String(fieldPayload.fieldName),
+          code: String(fieldPayload.shortCode),
           field_id: fieldId,
           status: 'created'
         })
@@ -570,7 +948,7 @@ const createGoalsFields = async () => {
         created_fields: createdFields,
         codes_added: goalsFieldCodesAdded.value
       },
-      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created']
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created', 'reference_lists_created', 'goals_fields_created']
     })
     await scrollToStep(5)
   } catch (error) {
@@ -661,9 +1039,9 @@ const configureGoalsCard = async () => {
         common_scope_forced: true,
         details
       },
-      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created', 'goals_card_configured']
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created', 'reference_lists_created', 'goals_fields_created', 'goals_card_configured']
     })
-    await scrollToStep(6)
+    await scrollToStep(8)
   } catch (error) {
     goalsCardProgress.value = 0
     const details = getErrorMessage(error)
@@ -672,6 +1050,122 @@ const configureGoalsCard = async () => {
     $logger.error('Failed to configure Goals card', error)
   } finally {
     isConfiguringGoalsCard.value = false
+  }
+}
+
+const createKnowledgeBase = async () => {
+  if (!workgroupId.value) {
+    setupError.value = 'Сначала создайте рабочую группу.'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingKnowledgeBase.value = true
+  knowledgeBaseProgress.value = 10
+
+  try {
+    await sleep(250)
+    knowledgeBaseProgress.value = 30
+
+    const changesLog = [
+      `Цифровое рабочее место: ${workplaceTitle.value} (ID: ${workplaceId.value || 'n/a'})`,
+      `Смарт-процесс Цели: ${goalsTypeId.value || 'n/a'}`,
+      `Рабочая группа: ${workgroupName.value} (ID: ${workgroupId.value})`,
+      `Справочников создано: ${Object.keys(referenceLists.value).length}`,
+      `Полей создано: ${goalsFieldsCreated.value.length}`
+    ]
+
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(500)
+      const demoSiteId = Math.floor(Date.now() / 1000) + 300
+      knowledgeBaseId.value = demoSiteId
+      knowledgeBaseLink.value = buildKnowledgeBaseLink(demoSiteId)
+      knowledgeBaseBindingStatus.value = 'bound'
+      knowledgeBaseChangesLog.value = changesLog
+      knowledgeBaseProgress.value = 100
+      setupInfo.value = 'База знаний создана и привязана к рабочей группе (демо-режим)'
+      await persistSetupState({
+        current_step: 'knowledge_base_created',
+        knowledge_base: {
+          status: 'created',
+          site_id: demoSiteId,
+          link: knowledgeBaseLink.value,
+          binding_status: 'bound',
+          changes_log: changesLog
+        },
+        completed_steps: [
+          'scope_check',
+          'workplace_created',
+          'goals_created',
+          'workgroup_created',
+          'reference_lists_created',
+          'goals_fields_created',
+          'goals_card_configured',
+          'knowledge_base_created'
+        ]
+      })
+      await scrollToStep(9)
+      return
+    }
+
+    const siteData = await callMethodWithFallback('landing.site.add', [
+      {
+        scope: 'KNOWLEDGE',
+        fields: {
+          TITLE: `PMO Hub KB (${workgroupName.value})`,
+          CODE: '',
+          TYPE: 'KNOWLEDGE',
+          DESCRIPTION: 'База знаний PMO Hub'
+        }
+      }
+    ])
+    knowledgeBaseProgress.value = 65
+
+    const siteId = Number(siteData.result || siteData.id || siteData.siteId || 0)
+    if (!siteId) {
+      throw new Error('Не удалось получить ID базы знаний')
+    }
+
+    await callMethodWithFallback('landing.site.bindingToGroup', [
+      { id: siteId, groupId: workgroupId.value }
+    ])
+    knowledgeBaseProgress.value = 100
+
+    knowledgeBaseId.value = siteId
+    knowledgeBaseLink.value = buildKnowledgeBaseLink(siteId)
+    knowledgeBaseBindingStatus.value = 'bound'
+    knowledgeBaseChangesLog.value = changesLog
+    setupInfo.value = 'База знаний создана и привязана к рабочей группе'
+    await persistSetupState({
+      current_step: 'knowledge_base_created',
+      knowledge_base: {
+        status: 'created',
+        site_id: siteId,
+        link: knowledgeBaseLink.value,
+        binding_status: 'bound',
+        changes_log: changesLog
+      },
+      completed_steps: [
+        'scope_check',
+        'workplace_created',
+        'goals_created',
+        'workgroup_created',
+        'reference_lists_created',
+        'goals_fields_created',
+        'goals_card_configured',
+        'knowledge_base_created'
+      ]
+    })
+    await scrollToStep(9)
+  } catch (error) {
+    knowledgeBaseProgress.value = 0
+    knowledgeBaseBindingStatus.value = 'failed'
+    const details = getErrorMessage(error)
+    setupError.value = `Ошибка создания базы знаний.${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to create knowledge base', error)
+  } finally {
+    isCreatingKnowledgeBase.value = false
   }
 }
 
@@ -684,7 +1178,8 @@ const toRecordArray = (value: unknown): Array<Record<string, unknown>> => {
 
 const extractFieldCode = (item: Record<string, unknown>): string => {
   const raw = item.fieldName || item.FIELD_NAME || item.name || item.code || ''
-  return String(raw).trim().toUpperCase()
+  const normalized = String(raw).trim().toUpperCase()
+  return normalized.replace(/^UF_[A-Z0-9]+_/, '')
 }
 
 const verifyGoalsSetup = async () => {
@@ -709,16 +1204,19 @@ const verifyGoalsSetup = async () => {
       actualCodes = expectedCodes
       verificationProgress.value = 80
     } else {
-      const listData = await callMethodWithFallback('crm.item.userfield.list', [
-        { entityTypeId: goalsTypeId.value },
-        { entityTypeId: goalsTypeId.value, order: { sort: 'ASC' } },
-        { entityTypeId: goalsTypeId.value, filter: {} }
+      const listData = await callMethodWithFallback('userfieldconfig.list', [
+        {
+          moduleId: 'crm',
+          select: { 0: '*', language: 'ru' },
+          filter: { entityId: `CRM_${goalsTypeId.value}` },
+          order: { id: 'ASC' }
+        }
       ])
 
       const records = [
+        ...toRecordArray(listData.fields),
         ...toRecordArray(listData.items),
         ...toRecordArray(listData.userFields),
-        ...toRecordArray(listData.fields),
         ...toRecordArray(listData.result)
       ]
       actualCodes = records.map(extractFieldCode).filter(code => code.length > 0)
@@ -727,7 +1225,9 @@ const verifyGoalsSetup = async () => {
 
     const actualCodeSet = new Set(actualCodes)
     const missingCodes = expectedCodes.filter(code => !actualCodeSet.has(code))
-    const status = missingCodes.length === 0 && isGoalsCardConfigured.value ? 'passed' : 'failed'
+    const listsReady = Object.keys(referenceLists.value).length >= LISTS_CATALOG.length
+    const kbReady = knowledgeBaseBindingStatus.value === 'bound'
+    const status = (missingCodes.length === 0 && isGoalsCardConfigured.value && listsReady && kbReady) ? 'passed' : 'failed'
     goalsVerification.value = {
       status,
       missingCodes,
@@ -749,7 +1249,17 @@ const verifyGoalsSetup = async () => {
         found_codes_count: actualCodes.length,
         checked_at_utc: new Date().toISOString()
       },
-      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created', 'goals_card_configured', 'goals_verification_done']
+      completed_steps: [
+        'scope_check',
+        'workplace_created',
+        'goals_created',
+        'workgroup_created',
+        'reference_lists_created',
+        'goals_fields_created',
+        'goals_card_configured',
+        'knowledge_base_created',
+        'goals_verification_done'
+      ]
     })
   } catch (error) {
     verificationProgress.value = 0
@@ -897,9 +1407,59 @@ onMounted(async () => {
         </div>
 
         <div id="installer-step-4" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <ProseH4 class="!m-0">Шаг 4. Создать поля смарт-процесса "Цели"</ProseH4>
+          <ProseH4 class="!m-0">Шаг 4. Создать рабочую группу (sonet_group.create)</ProseH4>
           <ProseP accent="less" class="mt-2">
-            После создания смарт-процесса будут автоматически созданы поля по документу GOALS.md.
+            Создаем рабочую группу "PMO Hub - рабочая группа" и включаем необходимые инструменты.
+          </ProseP>
+          <div class="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+            <input
+              v-model="workgroupName"
+              type="text"
+              class="rounded border border-(--ui-color-accent-soft-blue-2) px-3 py-2 text-sm"
+            >
+            <B24Button :loading="isCreatingWorkgroup" :disabled="!canCreateWorkgroup" color="air-primary" @click="createWorkgroup">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isCreatingWorkgroup || workgroupProgress > 0" class="mt-3">
+            <B24Progress v-model="workgroupProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="workgroupId" class="mt-2" accent="less">
+            Рабочая группа создана (ID: {{ workgroupId }}), инструменты обновлены: {{ isWorkgroupToolsUpdated ? 'да' : 'нет' }}.
+            <a
+              v-if="workgroupLink"
+              :href="workgroupLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline"
+            >
+              Перейти
+            </a>
+          </ProseP>
+        </div>
+
+        <div id="installer-step-5" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 5. Создать списки рабочей группы (lists.add / lists.element.add)</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Создаем справочники: Тип цели, Приоритет, Статус цели, Единица измерения, и сохраняем ID списков.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isCreatingReferenceLists" :disabled="!canCreateReferenceLists" color="air-primary" @click="createReferenceLists">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isCreatingReferenceLists || referenceListsProgress > 0" class="mt-3">
+            <B24Progress v-model="referenceListsProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="Object.keys(referenceLists).length > 0" class="mt-2" accent="less">
+            Списки созданы: {{ Object.values(referenceLists).map(item => `${item.title} (#${item.id})`).join(', ') }}
+          </ProseP>
+        </div>
+
+        <div id="installer-step-6" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 6. Создать поля смарт-процесса "Цели"</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Создаем поля из GOALS.md. Для полей типа "Привязка к элементам инф. блоков" используем ID списков рабочей группы.
           </ProseP>
           <div class="mt-3">
             <B24Button :loading="isCreatingGoalsFields" :disabled="!canCreateGoalsFields" color="air-primary" @click="createGoalsFields">
@@ -914,8 +1474,8 @@ onMounted(async () => {
           </ProseP>
         </div>
 
-        <div id="installer-step-5" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <ProseH4 class="!m-0">Шаг 5. Настройка карточки цели (общий вид для всех)</ProseH4>
+        <div id="installer-step-7" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 7. Настройка карточки цели (общий вид для всех)</ProseH4>
           <ProseP accent="less" class="mt-2">
             Выполняется настройка отображения карточки через crm.item.details.configuration.get/set/reset и применение общего вида для всех пользователей.
           </ProseP>
@@ -932,10 +1492,37 @@ onMounted(async () => {
           </ProseP>
         </div>
 
-        <div id="installer-step-6" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <ProseH4 class="!m-0">Шаг 6. Проверить, что всё создано</ProseH4>
+        <div id="installer-step-8" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 8. Создать и привязать базу знаний (landing.site.*)</ProseH4>
           <ProseP accent="less" class="mt-2">
-            Проверяем наличие полей из GOALS.md и факт применения общего вида карточки.
+            Создаем базу знаний и привязываем ее к рабочей группе.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isCreatingKnowledgeBase" :disabled="!canCreateKnowledgeBase" color="air-primary" @click="createKnowledgeBase">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isCreatingKnowledgeBase || knowledgeBaseProgress > 0" class="mt-3">
+            <B24Progress v-model="knowledgeBaseProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="knowledgeBaseId" class="mt-2" accent="less">
+            База знаний создана (ID: {{ knowledgeBaseId }}), статус привязки: {{ knowledgeBaseBindingStatus }}.
+            <a
+              v-if="knowledgeBaseLink"
+              :href="knowledgeBaseLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline"
+            >
+              Перейти
+            </a>
+          </ProseP>
+        </div>
+
+        <div id="installer-step-9" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 9. Проверить, что всё создано</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Проверяем наличие полей из GOALS.md, справочников, базы знаний и факт применения общего вида карточки.
           </ProseP>
           <div class="mt-3">
             <B24Button :loading="isVerifyingGoalsSetup" :disabled="!canVerifyGoalsSetup" color="air-primary" @click="verifyGoalsSetup">
@@ -965,6 +1552,21 @@ onMounted(async () => {
 
         <details class="mt-5">
           <summary class="cursor-pointer text-sm opacity-80">Технические данные</summary>
+
+          <ProseH4 class="mt-3">Хранится в настройках приложения (RD-107)</ProseH4>
+          <ProseP v-if="setupStateSource" accent="less">
+            Источник: {{ setupStateSource === 'backend' ? 'БД (реальная запись)' : 'демо (не сохраняется в БД)' }}.
+            Загружено: {{ setupStateLoadedAt || '—' }}
+          </ProseP>
+          <ProseP v-else accent="less">Состояние ещё не загружено. Выполните шаг настройки или нажмите «Обновить из БД».</ProseP>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <B24Button size="small" color="air-secondary-accent-1" @click="refreshSetupStateFromBackend">
+              Обновить из БД
+            </B24Button>
+          </div>
+          <ProsePre v-if="setupStateFromBackend" class="mt-2 text-xs">{{ setupStateFromBackend }}</ProsePre>
+          <ProseP v-else class="mt-2 text-sm opacity-70">— пусто —</ProseP>
+
           <ProseH4 class="mt-3">Данные установки</ProseH4>
           <ProsePre class="mt-2">{{ payload }}</ProsePre>
           <ProseH4 class="mt-3">Проверка разрешений</ProseH4>
@@ -972,7 +1574,7 @@ onMounted(async () => {
           <ProseH4 class="mt-3">Снимок контракта</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
           <ProseH4 class="mt-3">Технический статус сценария</ProseH4>
-          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, goalsFieldsCreated, goalsFieldCodesAdded, isGoalsCardConfigured, goalsVerification, isDemoMode, setupState } }}</ProsePre>
+          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, workgroupId, workgroupLink, isWorkgroupToolsUpdated, referenceLists, referenceFieldBindings, knowledgeBaseId, knowledgeBaseLink, knowledgeBaseBindingStatus, goalsFieldsCreated, goalsFieldCodesAdded, isGoalsCardConfigured, goalsVerification, isDemoMode, setupState } }}</ProsePre>
         </details>
       </div>
     </B24Card>

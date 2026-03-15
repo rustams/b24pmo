@@ -113,3 +113,8 @@
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Expanded setup_state payload model to persist created fields and card configuration details"}
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Updated demo setup-state schema for new Goals fields/card configuration steps"}
 {"timestamp":"2026-03-15T00:58:16Z","artifact":".agent/context/epics/EPIC-INS/handoff.json","type":"epic-handoff","note":"Added explicit merge-readiness note for second agent (safe merge of both branches)"}
+{"timestamp":"2026-03-15T02:04:56Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added RD-108/RD-109/RD-110 subtasks for RD-102 and updated bitrix_ids map"}
+{"timestamp":"2026-03-15T02:04:56Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"RD-102 set IN_PROGRESS, RD-108 active, RD-109/RD-110 added with NEW status"}
+{"timestamp":"2026-03-15T02:04:56Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Installer wizard expanded with workgroup/lists/knowledge-base steps and userfieldconfig field flow"}
+{"timestamp":"2026-03-15T02:04:56Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Installer setup_state now persists workgroup/list/knowledge-base data model"}
+{"timestamp":"2026-03-15T02:04:56Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-epic-structure --apply","type":"bitrix-sync","note":"Linked newly created RD-107/108/109/110 as children of RD-102 in Bitrix24"}

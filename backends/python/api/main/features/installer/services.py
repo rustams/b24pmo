@@ -107,6 +107,26 @@ def get_installer_contract() -> dict:
                     "link": "",
                     "status": "pending",
                 },
+                "workgroup": {
+                    "id": None,
+                    "name": "",
+                    "link": "",
+                    "status": "pending",
+                    "tools_updated": False,
+                },
+                "reference_lists": {
+                    "status": "pending",
+                    "group_id": None,
+                    "lists": {},
+                    "field_bindings": {},
+                },
+                "knowledge_base": {
+                    "status": "pending",
+                    "site_id": None,
+                    "link": "",
+                    "binding_status": "pending",
+                    "changes_log": [],
+                },
                 "goals_fields": {
                     "status": "pending",
                     "created_fields": [],
@@ -489,6 +509,12 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
     existing_workplace = existing.get("workplace") if isinstance(existing.get("workplace"), dict) else {}
     goals_src = setup_state.get("goals_process") if isinstance(setup_state.get("goals_process"), dict) else {}
     existing_goals = existing.get("goals_process") if isinstance(existing.get("goals_process"), dict) else {}
+    workgroup_src = setup_state.get("workgroup") if isinstance(setup_state.get("workgroup"), dict) else {}
+    existing_workgroup = existing.get("workgroup") if isinstance(existing.get("workgroup"), dict) else {}
+    reference_lists_src = setup_state.get("reference_lists") if isinstance(setup_state.get("reference_lists"), dict) else {}
+    existing_reference_lists = existing.get("reference_lists") if isinstance(existing.get("reference_lists"), dict) else {}
+    knowledge_base_src = setup_state.get("knowledge_base") if isinstance(setup_state.get("knowledge_base"), dict) else {}
+    existing_knowledge_base = existing.get("knowledge_base") if isinstance(existing.get("knowledge_base"), dict) else {}
     goals_fields_src = setup_state.get("goals_fields") if isinstance(setup_state.get("goals_fields"), dict) else {}
     existing_goals_fields = existing.get("goals_fields") if isinstance(existing.get("goals_fields"), dict) else {}
     goals_card_src = (
@@ -534,6 +560,26 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
             "link": _to_text(goals_src.get("link")) or _to_text(existing_goals.get("link")) or "",
             "status": _to_text(goals_src.get("status")) or _to_text(existing_goals.get("status")) or "pending",
         },
+        "workgroup": {
+            "id": _to_int(workgroup_src.get("id")) if workgroup_src.get("id") is not None else _to_int(existing_workgroup.get("id")),
+            "name": _to_text(workgroup_src.get("name")) or _to_text(existing_workgroup.get("name")) or "",
+            "link": _to_text(workgroup_src.get("link")) or _to_text(existing_workgroup.get("link")) or "",
+            "status": _to_text(workgroup_src.get("status")) or _to_text(existing_workgroup.get("status")) or "pending",
+            "tools_updated": _to_bool(workgroup_src.get("tools_updated"), fallback=_to_bool(existing_workgroup.get("tools_updated"), fallback=False)),
+        },
+        "reference_lists": {
+            "status": _to_text(reference_lists_src.get("status")) or _to_text(existing_reference_lists.get("status")) or "pending",
+            "group_id": _to_int(reference_lists_src.get("group_id")) if reference_lists_src.get("group_id") is not None else _to_int(existing_reference_lists.get("group_id")),
+            "lists": _normalize_flat_dict(reference_lists_src.get("lists"), existing_reference_lists.get("lists")),
+            "field_bindings": _normalize_flat_dict(reference_lists_src.get("field_bindings"), existing_reference_lists.get("field_bindings")),
+        },
+        "knowledge_base": {
+            "status": _to_text(knowledge_base_src.get("status")) or _to_text(existing_knowledge_base.get("status")) or "pending",
+            "site_id": _to_int(knowledge_base_src.get("site_id")) if knowledge_base_src.get("site_id") is not None else _to_int(existing_knowledge_base.get("site_id")),
+            "link": _to_text(knowledge_base_src.get("link")) or _to_text(existing_knowledge_base.get("link")) or "",
+            "binding_status": _to_text(knowledge_base_src.get("binding_status")) or _to_text(existing_knowledge_base.get("binding_status")) or "pending",
+            "changes_log": _normalize_text_list(knowledge_base_src.get("changes_log"), existing_knowledge_base.get("changes_log")),
+        },
         "goals_fields": {
             "status": _to_text(goals_fields_src.get("status")) or _to_text(existing_goals_fields.get("status")) or "pending",
             "created_fields": _normalize_created_fields(goals_fields_src.get("created_fields"), existing_goals_fields.get("created_fields")),
@@ -578,6 +624,13 @@ def _normalize_flat_dict(value, fallback) -> dict:
 
 
 def _normalize_code_list(value, fallback) -> list[str]:
+    source = value if isinstance(value, list) else fallback
+    if not isinstance(source, list):
+        return []
+    return [str(item) for item in source if item]
+
+
+def _normalize_text_list(value, fallback) -> list[str]:
     source = value if isinstance(value, list) else fallback
     if not isinstance(source, list):
         return []

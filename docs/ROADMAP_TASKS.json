@@ -17,6 +17,10 @@
       "RD-004": 273,
       "RD-101": 193,
       "RD-102": 195,
+      "RD-107": 287,
+      "RD-108": 289,
+      "RD-109": 291,
+      "RD-110": 293,
       "RD-103": 197,
       "RD-104": 199,
       "RD-105": 235,
@@ -169,6 +173,58 @@
       "tags": [
         "installer",
         "backend",
+        "frontend",
+        "state"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-102"
+    },
+    {
+      "key": "RD-108",
+      "title": "Создать рабочую группу и справочники списков для Goals",
+      "description": "В мастере установки после создания СП \"Цели\" создать рабочую группу \"PMO Hub - рабочая группа\" (sonet_group.create), обновить доступные инструменты группы (sonet_group.update), затем создать списки в lists_socnet и заполнить их элементами: Тип цели, Приоритет, Статус цели, Единица измерения. Сохранять ID группы и ID каждого списка в setup_state.",
+      "stage": "Stage 1 - Installer",
+      "depends_on": [
+        "RD-107"
+      ],
+      "tags": [
+        "installer",
+        "bitrix24",
+        "lists",
+        "socialnetwork"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-102"
+    },
+    {
+      "key": "RD-109",
+      "title": "Создать и привязать базу знаний рабочей группы",
+      "description": "Создать базу знаний (landing.site.add, scope/type KNOWLEDGE), привязать к рабочей группе (landing.site.bindingToGroup) и сохранить сведения о созданной базе знаний и содержимом изменений в setup_state для дальнейшего пользовательского доступа.",
+      "stage": "Stage 1 - Installer",
+      "depends_on": [
+        "RD-108"
+      ],
+      "tags": [
+        "installer",
+        "knowledge-base",
+        "landing"
+      ],
+      "status": "NEW",
+      "epic": "EPIC-INS Installer & Mapping",
+      "parent": "RD-102"
+    },
+    {
+      "key": "RD-110",
+      "title": "Добавить пошаговый UI прогресса и итоговую верификацию",
+      "description": "Для всех новых шагов RD-108 и RD-109 показать progress bar, сообщение о результате и сохранить финальный state: IDs группы, списков, базы знаний, а также сведения об успешно выполненных шагах для детерминированного восстановления мастера.",
+      "stage": "Stage 1 - Installer",
+      "depends_on": [
+        "RD-109"
+      ],
+      "tags": [
+        "installer",
         "frontend",
         "state"
       ],

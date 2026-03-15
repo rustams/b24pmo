@@ -118,3 +118,24 @@
 - Финальное состояние сохраняется в `setup_state`:
   - `goals_fields` (созданные поля, `field_id`, `codes_added`);
   - `goals_card_configuration` (статус, признак common scope, тех.детали).
+
+## RD-102 Expansion: Workgroup + Lists + Knowledge Base (RD-108/109/110)
+- Roadmap расширен тремя подзадачами под `RD-102`:
+  - `RD-108` — рабочая группа + справочники;
+  - `RD-109` — база знаний и привязка к группе;
+  - `RD-110` — UI-прогресс и финальная верификация.
+- Backend `setup_state` расширен новыми контейнерами:
+  - `workgroup` (id/name/link/status/tools_updated),
+  - `reference_lists` (group_id/lists/field_bindings/status),
+  - `knowledge_base` (site_id/link/binding_status/changes_log/status).
+- Frontend мастер перестроен в последовательность 1..9:
+  1) scope-check, 2) DWS, 3) Goals SP, 4) workgroup, 5) lists, 6) Goals fields (через `userfieldconfig.add`), 7) card config, 8) knowledge base, 9) verification.
+- Поля Goals переведены с `crm.item.userfield.*` на подтвержденный MCP метод `userfieldconfig.*`:
+  - создание через `userfieldconfig.add` (`moduleId=crm`, `entityId=CRM_<entityTypeId>`),
+  - проверка через `userfieldconfig.list`.
+- Для полей типа "Привязка к элементам инф. блоков" добавлена реальная привязка к ID созданных списков (`IBLOCK_ID` в `settings` поля).
+- Bitrix24 sync выполнен:
+  - `sync-metadata --apply`;
+  - `create-missing --apply` (созданы `RD-107/108/109/110` в map-файле);
+  - `sync-epic-structure --apply` (подзадачи привязаны к `RD-102`);
+  - `sync-status --apply` (статусы применены).
