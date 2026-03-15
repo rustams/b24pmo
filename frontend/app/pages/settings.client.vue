@@ -102,7 +102,12 @@ const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1
 const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
 const canCreateWorkgroup = computed(() => goalsTypeId.value !== null && !isCreatingWorkgroup.value)
 const canCreateReferenceLists = computed(() => workgroupId.value !== null && !isCreatingReferenceLists.value)
-const canCreateGoalsFields = computed(() => goalsTypeId.value !== null && Object.keys(referenceLists.value).length >= LISTS_CATALOG.length && !isCreatingGoalsFields.value)
+const canCreateGoalsFields = computed(() => {
+  const hasGoals = goalsTypeId.value !== null
+  const hasLists = Object.keys(referenceLists.value).length >= LISTS_CATALOG.length
+  const inDemo = isDemoMode.value
+  return hasGoals && (hasLists || inDemo) && !isCreatingGoalsFields.value
+})
 const canConfigureGoalsCard = computed(() => goalsTypeId.value !== null && goalsFieldsCreated.value.length > 0 && !isConfiguringGoalsCard.value)
 const canCreateKnowledgeBase = computed(() => workgroupId.value !== null && !isCreatingKnowledgeBase.value)
 const canVerifyGoalsSetup = computed(() => goalsTypeId.value !== null && knowledgeBaseBindingStatus.value === 'bound' && !isVerifyingGoalsSetup.value)
@@ -658,7 +663,7 @@ const createWorkgroup = async () => {
         },
         completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created']
       })
-      await scrollToStep(7)
+      await scrollToStep(5)
       return
     }
 
@@ -722,7 +727,7 @@ const createWorkgroup = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created']
     })
-    await scrollToStep(7)
+    await scrollToStep(5)
   } catch (error) {
     workgroupProgress.value = 0
     const details = getErrorMessage(error)
@@ -822,7 +827,7 @@ const createReferenceLists = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created', 'reference_lists_created']
     })
-    await scrollToStep(8)
+    await scrollToStep(6)
   } catch (error) {
     referenceListsProgress.value = 0
     const details = getErrorMessage(error)
@@ -838,8 +843,8 @@ const createGoalsFields = async () => {
     setupError.value = 'Сначала создайте смарт-процесс "Цели".'
     return
   }
-  if (!workgroupId.value) {
-    setupError.value = 'Сначала создайте рабочую группу и справочники.'
+  if (!isDemoMode.value && !workgroupId.value) {
+    setupError.value = 'Сначала создайте рабочую группу и справочники (шаги 4 и 5).'
     return
   }
 
@@ -912,7 +917,7 @@ const createGoalsFields = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'workgroup_created', 'reference_lists_created', 'goals_fields_created']
     })
-    await scrollToStep(5)
+    await scrollToStep(7)
   } catch (error) {
     goalsFieldsProgress.value = 0
     const details = getErrorMessage(error)
@@ -1422,6 +1427,7 @@ onMounted(async () => {
           <ProseH4 class="!m-0">Шаг 6. Создать поля смарт-процесса "Цели"</ProseH4>
           <ProseP accent="less" class="mt-2">
             Создаем поля из GOALS.md. Для полей типа "Привязка к элементам инф. блоков" используем ID списков рабочей группы.
+            В демо-режиме шаг 6 доступен сразу после создания смарт-процесса (шаг 3). Без демо — нужны шаги 4 и 5.
           </ProseP>
           <div class="mt-3">
             <B24Button :loading="isCreatingGoalsFields" :disabled="!canCreateGoalsFields" color="air-primary" @click="createGoalsFields">
@@ -1449,6 +1455,9 @@ onMounted(async () => {
           <div v-if="isConfiguringGoalsCard || goalsCardProgress > 0" class="mt-3">
             <B24Progress v-model="goalsCardProgress" animation="elastic" />
           </div>
+          <ProseP v-if="!canConfigureGoalsCard && goalsTypeId && !isGoalsFieldsCreated" class="mt-2" accent="warning">
+            Сначала создайте поля (шаг 6).
+          </ProseP>
           <ProseP v-if="isGoalsCardConfigured" class="mt-2" accent="less">
             Настройка карточки цели завершена. Режим "Общий вид карточки" применен ко всем пользователям.
           </ProseP>
