@@ -60,6 +60,7 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
       goals_process: { entity_type_id: null, link: '', status: 'pending' },
       goals_fields: { status: 'pending', created_fields: [], codes_added: [] },
       goals_card_configuration: { status: 'pending', common_scope_forced: false, details: {} },
+      goals_verification: { status: 'pending', missing_codes: [], found_codes_count: 0, checked_at_utc: new Date().toISOString() },
       completed_steps: [],
       updated_at_utc: new Date().toISOString()
     }
@@ -74,6 +75,7 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
       goals_process: { entity_type_id: null, link: '', status: 'pending' },
       goals_fields: { status: 'pending', created_fields: [], codes_added: [] },
       goals_card_configuration: { status: 'pending', common_scope_forced: false, details: {} },
+      goals_verification: { status: 'pending', missing_codes: [], found_codes_count: 0, checked_at_utc: new Date().toISOString() },
       completed_steps: [],
       updated_at_utc: new Date().toISOString()
     }

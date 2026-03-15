@@ -57,6 +57,7 @@ const goalsLink = ref('')
 const goalsFieldsCreated = ref<Array<{ title: string; code: string; field_id: number | null; status: string }>>([])
 const goalsFieldCodesAdded = ref<string[]>([])
 const isGoalsCardConfigured = ref(false)
+const goalsVerification = ref<{ status: string; missingCodes: string[]; foundCodesCount: number }>({ status: 'pending', missingCodes: [], foundCodesCount: 0 })
 const setupState = ref<Record<string, unknown> | null>(null)
 const setupStateSaveError = ref('')
 
@@ -64,18 +65,29 @@ const workplaceProgress = ref(0)
 const goalsProgress = ref(0)
 const goalsFieldsProgress = ref(0)
 const goalsCardProgress = ref(0)
+const verificationProgress = ref(0)
 const isCreatingWorkplace = ref(false)
 const isCreatingGoals = ref(false)
 const isCreatingGoalsFields = ref(false)
 const isConfiguringGoalsCard = ref(false)
+const isVerifyingGoalsSetup = ref(false)
 
 const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1 && !isCreatingWorkplace.value)
 const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
 const canCreateGoalsFields = computed(() => goalsTypeId.value !== null && !isCreatingGoalsFields.value)
 const canConfigureGoalsCard = computed(() => goalsTypeId.value !== null && goalsFieldsCreated.value.length > 0 && !isConfiguringGoalsCard.value)
+const canVerifyGoalsSetup = computed(() => goalsTypeId.value !== null && !isVerifyingGoalsSetup.value)
 const isGoalsFieldsCreated = computed(() => goalsFieldsCreated.value.length > 0)
+const isGoalsVerificationPassed = computed(() => goalsVerification.value.status === 'passed')
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const scrollToStep = async (stepNumber: number) => {
+  await nextTick()
+  const element = document.getElementById(`installer-step-${stepNumber}`)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 const toPlainObject = (value: unknown): Record<string, any> => {
   if (!value || typeof value !== 'object') {
@@ -263,6 +275,7 @@ const refreshInstallerData = async () => {
       const goalsProcess = (persistedState.goals_process as Record<string, unknown> | undefined) ?? {}
       const goalsFieldsState = (persistedState.goals_fields as Record<string, unknown> | undefined) ?? {}
       const goalsCardState = (persistedState.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
+      const goalsVerificationState = (persistedState.goals_verification as Record<string, unknown> | undefined) ?? {}
 
       workplaceTitle.value = String(workplace.title || workplaceTitle.value)
       workplaceId.value = workplace.id === null || workplace.id === undefined ? null : Number(workplace.id)
@@ -278,6 +291,11 @@ const refreshInstallerData = async () => {
         ? goalsFieldsState.codes_added.map(code => String(code))
         : []
       isGoalsCardConfigured.value = Boolean(goalsCardState.status === 'configured')
+      goalsVerification.value = {
+        status: String(goalsVerificationState.status || 'pending'),
+        missingCodes: Array.isArray(goalsVerificationState.missing_codes) ? goalsVerificationState.missing_codes.map(code => String(code)) : [],
+        foundCodesCount: Number(goalsVerificationState.found_codes_count || 0)
+      }
     }
   }
 }
@@ -357,6 +375,7 @@ const createWorkplace = async () => {
         },
         completed_steps: ['scope_check', 'workplace_created']
       })
+      await scrollToStep(3)
       return
     }
 
@@ -386,6 +405,7 @@ const createWorkplace = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created']
     })
+    await scrollToStep(3)
   } catch (error) {
     workplaceProgress.value = 0
     const details = getErrorMessage(error)
@@ -428,6 +448,7 @@ const createGoalsProcess = async () => {
         },
         completed_steps: ['scope_check', 'workplace_created', 'goals_created']
       })
+      await scrollToStep(4)
       return
     }
 
@@ -465,6 +486,7 @@ const createGoalsProcess = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created']
     })
+    await scrollToStep(4)
   } catch (error) {
     goalsProgress.value = 0
     const details = getErrorMessage(error)
@@ -550,6 +572,7 @@ const createGoalsFields = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created']
     })
+    await scrollToStep(5)
   } catch (error) {
     goalsFieldsProgress.value = 0
     const details = getErrorMessage(error)
@@ -640,6 +663,7 @@ const configureGoalsCard = async () => {
       },
       completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created', 'goals_card_configured']
     })
+    await scrollToStep(6)
   } catch (error) {
     goalsCardProgress.value = 0
     const details = getErrorMessage(error)
@@ -648,6 +672,92 @@ const configureGoalsCard = async () => {
     $logger.error('Failed to configure Goals card', error)
   } finally {
     isConfiguringGoalsCard.value = false
+  }
+}
+
+const toRecordArray = (value: unknown): Array<Record<string, unknown>> => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.filter(item => item && typeof item === 'object').map(item => item as Record<string, unknown>)
+}
+
+const extractFieldCode = (item: Record<string, unknown>): string => {
+  const raw = item.fieldName || item.FIELD_NAME || item.name || item.code || ''
+  return String(raw).trim().toUpperCase()
+}
+
+const verifyGoalsSetup = async () => {
+  if (!goalsTypeId.value) {
+    setupError.value = 'Сначала создайте смарт-процесс "Цели".'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isVerifyingGoalsSetup.value = true
+  verificationProgress.value = 10
+
+  try {
+    const expectedCodes = GOALS_FIELD_DEFINITIONS.map(field => extractGoalCode(field.codeTemplate).toUpperCase())
+    await sleep(250)
+    verificationProgress.value = 35
+
+    let actualCodes: string[] = []
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(550)
+      actualCodes = expectedCodes
+      verificationProgress.value = 80
+    } else {
+      const listData = await callMethodWithFallback('crm.item.userfield.list', [
+        { entityTypeId: goalsTypeId.value },
+        { entityTypeId: goalsTypeId.value, order: { sort: 'ASC' } },
+        { entityTypeId: goalsTypeId.value, filter: {} }
+      ])
+
+      const records = [
+        ...toRecordArray(listData.items),
+        ...toRecordArray(listData.userFields),
+        ...toRecordArray(listData.fields),
+        ...toRecordArray(listData.result)
+      ]
+      actualCodes = records.map(extractFieldCode).filter(code => code.length > 0)
+      verificationProgress.value = 80
+    }
+
+    const actualCodeSet = new Set(actualCodes)
+    const missingCodes = expectedCodes.filter(code => !actualCodeSet.has(code))
+    const status = missingCodes.length === 0 && isGoalsCardConfigured.value ? 'passed' : 'failed'
+    goalsVerification.value = {
+      status,
+      missingCodes,
+      foundCodesCount: actualCodes.length
+    }
+
+    verificationProgress.value = 100
+    if (status === 'passed') {
+      setupInfo.value = 'Проверка завершена: все поля и настройка карточки применены.'
+    } else {
+      setupError.value = `Проверка завершена с замечаниями. Не найдены поля: ${missingCodes.join(', ') || 'нет'}.`
+    }
+
+    await persistSetupState({
+      current_step: 'goals_verification_done',
+      goals_verification: {
+        status,
+        missing_codes: missingCodes,
+        found_codes_count: actualCodes.length,
+        checked_at_utc: new Date().toISOString()
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created', 'goals_card_configured', 'goals_verification_done']
+    })
+  } catch (error) {
+    verificationProgress.value = 0
+    const details = getErrorMessage(error)
+    setupError.value = `Ошибка проверки созданных полей и карточки.${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to verify Goals setup', error)
+  } finally {
+    isVerifyingGoalsSetup.value = false
   }
 }
 
@@ -690,7 +800,7 @@ onMounted(async () => {
         </ProseP>
         <B24Badge v-if="isDemoMode" class="mt-2" label="Демо-режим" color="air-primary-warning" />
 
-        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+        <div id="installer-step-1" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
           <div class="flex flex-wrap items-center gap-2">
             <ProseH4 class="!m-0">Шаг 1. Проверка прав (RD-103)</ProseH4>
             <B24Badge v-if="isScopeReady" label="Готово" color="air-primary-success" />
@@ -725,43 +835,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <ProseH4 class="!m-0">Шаг 4. Создать поля смарт-процесса "Цели"</ProseH4>
-          <ProseP accent="less" class="mt-2">
-            После создания смарт-процесса будут автоматически созданы поля по документу GOALS.md.
-          </ProseP>
-          <div class="mt-3">
-            <B24Button :loading="isCreatingGoalsFields" :disabled="!canCreateGoalsFields" color="air-primary" @click="createGoalsFields">
-              Продолжить
-            </B24Button>
-          </div>
-          <div v-if="isCreatingGoalsFields || goalsFieldsProgress > 0" class="mt-3">
-            <B24Progress v-model="goalsFieldsProgress" animation="elastic" />
-          </div>
-          <ProseP v-if="isGoalsFieldsCreated" class="mt-2" accent="less">
-            Поля для смарт-процесса "Цели" созданы
-          </ProseP>
-        </div>
-
-        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
-          <ProseH4 class="!m-0">Шаг 5. Настройка карточки цели (общий вид для всех)</ProseH4>
-          <ProseP accent="less" class="mt-2">
-            Выполняется настройка отображения карточки через crm.item.details.configuration.get/set/reset и применение общего вида для всех пользователей.
-          </ProseP>
-          <div class="mt-3">
-            <B24Button :loading="isConfiguringGoalsCard" :disabled="!canConfigureGoalsCard" color="air-primary" @click="configureGoalsCard">
-              Продолжить
-            </B24Button>
-          </div>
-          <div v-if="isConfiguringGoalsCard || goalsCardProgress > 0" class="mt-3">
-            <B24Progress v-model="goalsCardProgress" animation="elastic" />
-          </div>
-          <ProseP v-if="isGoalsCardConfigured" class="mt-2" accent="less">
-            Настройка карточки цели завершена. Режим "Общий вид карточки" применен ко всем пользователям.
-          </ProseP>
-        </div>
-
-        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+        <div id="installer-step-2" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
           <ProseH4 class="!m-0">Шаг 2. Создать цифровое рабочее место (crm.automatedsolution.add)</ProseH4>
           <ProseP accent="less" class="mt-2">
             Введите название цифрового рабочего места и нажмите "Продолжить".
@@ -795,7 +869,7 @@ onMounted(async () => {
           </ProseP>
         </div>
 
-        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+        <div id="installer-step-3" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
           <ProseH4 class="!m-0">Шаг 3. Создать смарт-процесс "Цели" (crm.type.add)</ProseH4>
           <ProseP accent="less" class="mt-2">
             После создания цифрового рабочего места нажмите "Продолжить".
@@ -822,6 +896,64 @@ onMounted(async () => {
           </ProseP>
         </div>
 
+        <div id="installer-step-4" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 4. Создать поля смарт-процесса "Цели"</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            После создания смарт-процесса будут автоматически созданы поля по документу GOALS.md.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isCreatingGoalsFields" :disabled="!canCreateGoalsFields" color="air-primary" @click="createGoalsFields">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isCreatingGoalsFields || goalsFieldsProgress > 0" class="mt-3">
+            <B24Progress v-model="goalsFieldsProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="isGoalsFieldsCreated" class="mt-2" accent="less">
+            Поля для смарт-процесса "Цели" созданы
+          </ProseP>
+        </div>
+
+        <div id="installer-step-5" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 5. Настройка карточки цели (общий вид для всех)</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Выполняется настройка отображения карточки через crm.item.details.configuration.get/set/reset и применение общего вида для всех пользователей.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isConfiguringGoalsCard" :disabled="!canConfigureGoalsCard" color="air-primary" @click="configureGoalsCard">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isConfiguringGoalsCard || goalsCardProgress > 0" class="mt-3">
+            <B24Progress v-model="goalsCardProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="isGoalsCardConfigured" class="mt-2" accent="less">
+            Настройка карточки цели завершена. Режим "Общий вид карточки" применен ко всем пользователям.
+          </ProseP>
+        </div>
+
+        <div id="installer-step-6" class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 6. Проверить, что всё создано</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Проверяем наличие полей из GOALS.md и факт применения общего вида карточки.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isVerifyingGoalsSetup" :disabled="!canVerifyGoalsSetup" color="air-primary" @click="verifyGoalsSetup">
+              Проверить
+            </B24Button>
+          </div>
+          <div v-if="isVerifyingGoalsSetup || verificationProgress > 0" class="mt-3">
+            <B24Progress v-model="verificationProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="goalsVerification.status !== 'pending'" class="mt-2" :accent="isGoalsVerificationPassed ? 'less' : 'warning'">
+            Статус проверки: {{ isGoalsVerificationPassed ? 'успешно' : 'есть замечания' }}.
+            Найдено кодов: {{ goalsVerification.foundCodesCount }}.
+            <span v-if="goalsVerification.missingCodes.length > 0">
+              Не найдены: {{ goalsVerification.missingCodes.join(', ') }}.
+            </span>
+          </ProseP>
+        </div>
+
         <div class="mt-5 flex flex-wrap items-center gap-2">
           <B24Button color="air-secondary-accent-1" @click="refreshInstallerData">
             Обновить данные
@@ -840,7 +972,7 @@ onMounted(async () => {
           <ProseH4 class="mt-3">Снимок контракта</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
           <ProseH4 class="mt-3">Технический статус сценария</ProseH4>
-          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, goalsFieldsCreated, goalsFieldCodesAdded, isGoalsCardConfigured, isDemoMode, setupState } }}</ProsePre>
+          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, goalsFieldsCreated, goalsFieldCodesAdded, isGoalsCardConfigured, goalsVerification, isDemoMode, setupState } }}</ProsePre>
         </details>
       </div>
     </B24Card>

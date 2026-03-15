@@ -116,6 +116,11 @@ def get_installer_contract() -> dict:
                     "status": "pending",
                     "common_scope_forced": False,
                 },
+                "goals_verification": {
+                    "status": "pending",
+                    "missing_codes": [],
+                    "found_codes_count": 0,
+                },
                 "completed_steps": [],
                 "updated_at_utc": "ISO-8601",
             },
@@ -496,6 +501,16 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
         if isinstance(existing.get("goals_card_configuration"), dict)
         else {}
     )
+    goals_verification_src = (
+        setup_state.get("goals_verification")
+        if isinstance(setup_state.get("goals_verification"), dict)
+        else {}
+    )
+    existing_goals_verification = (
+        existing.get("goals_verification")
+        if isinstance(existing.get("goals_verification"), dict)
+        else {}
+    )
 
     current_step = _to_text(setup_state.get("current_step")) or _to_text(existing.get("current_step")) or "scope_check"
     completed_steps_raw = setup_state.get("completed_steps")
@@ -528,6 +543,12 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
             "status": _to_text(goals_card_src.get("status")) or _to_text(existing_goals_card.get("status")) or "pending",
             "common_scope_forced": _to_bool(goals_card_src.get("common_scope_forced"), fallback=_to_bool(existing_goals_card.get("common_scope_forced"), fallback=False)),
             "details": _normalize_flat_dict(goals_card_src.get("details"), existing_goals_card.get("details")),
+        },
+        "goals_verification": {
+            "status": _to_text(goals_verification_src.get("status")) or _to_text(existing_goals_verification.get("status")) or "pending",
+            "missing_codes": _normalize_code_list(goals_verification_src.get("missing_codes"), existing_goals_verification.get("missing_codes")),
+            "found_codes_count": _to_int(goals_verification_src.get("found_codes_count")) if goals_verification_src.get("found_codes_count") is not None else _to_int(existing_goals_verification.get("found_codes_count")) or 0,
+            "checked_at_utc": _to_text(goals_verification_src.get("checked_at_utc")) or _to_text(existing_goals_verification.get("checked_at_utc")) or current_now_iso,
         },
         "completed_steps": completed_steps,
         "updated_at_utc": current_now_iso,
