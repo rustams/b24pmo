@@ -91,6 +91,13 @@ const isConfiguringGoalsCard = ref(false)
 const isCreatingKnowledgeBase = ref(false)
 const isVerifyingGoalsSetup = ref(false)
 
+const LISTS_CATALOG: Array<{ key: string; title: string; code: string; items: string[]; targetFieldCode: string }> = [
+  { key: 'goal_type', title: 'Тип цели', code: 'goal_type', items: ['Стратегическая', 'Операционная', 'Финансовая'], targetFieldCode: 'GOAL_TYPE' },
+  { key: 'goal_priority', title: 'Приоритет', code: 'goal_priority', items: ['Низкий', 'Средний', 'Высокий', 'Критический'], targetFieldCode: 'GOAL_PRIORITY' },
+  { key: 'goal_status', title: 'Статус цели', code: 'goal_status', items: ['В работе', 'Достигнута', 'Не достигнута', 'Отменена'], targetFieldCode: 'GOAL_STATUS' },
+  { key: 'goal_kpi_unit', title: 'Единица измерения', code: 'goal_kpi_unit', items: ['%', 'шт.', 'руб.', 'дни', 'часы', 'мин.', 'индексы', 'задачи', 'звонки', 'встречи', 'жалобы'], targetFieldCode: 'GOAL_KPI_UNIT' }
+]
+
 const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1 && !isCreatingWorkplace.value)
 const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
 const canCreateWorkgroup = computed(() => goalsTypeId.value !== null && !isCreatingWorkgroup.value)
@@ -216,37 +223,6 @@ const buildKnowledgeBaseLink = (siteId: number): string => {
   }
   return `${base}/kb/site/${siteId}/`
 }
-
-const LISTS_CATALOG: Array<{ key: string; title: string; code: string; items: string[]; targetFieldCode: string }> = [
-  {
-    key: 'goal_type',
-    title: 'Тип цели',
-    code: 'goal_type',
-    items: ['Стратегическая', 'Операционная', 'Финансовая'],
-    targetFieldCode: 'GOAL_TYPE'
-  },
-  {
-    key: 'goal_priority',
-    title: 'Приоритет',
-    code: 'goal_priority',
-    items: ['Низкий', 'Средний', 'Высокий', 'Критический'],
-    targetFieldCode: 'GOAL_PRIORITY'
-  },
-  {
-    key: 'goal_status',
-    title: 'Статус цели',
-    code: 'goal_status',
-    items: ['В работе', 'Достигнута', 'Не достигнута', 'Отменена'],
-    targetFieldCode: 'GOAL_STATUS'
-  },
-  {
-    key: 'goal_kpi_unit',
-    title: 'Единица измерения',
-    code: 'goal_kpi_unit',
-    items: ['%', 'шт.', 'руб.', 'дни', 'часы', 'мин.', 'индексы', 'задачи', 'звонки', 'встречи', 'жалобы'],
-    targetFieldCode: 'GOAL_KPI_UNIT'
-  }
-]
 
 type GoalsFieldDefinition = {
   title: string
@@ -419,20 +395,6 @@ const refreshSetupStateFromBackend = async () => {
     const response = await apiStore.getInstallerSetupState()
     const persisted = (response.setup_state as Record<string, unknown> | undefined) ?? null
     setupStateFromBackend.value = persisted
-    setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
-    setupStateLoadedAt.value = new Date().toISOString()
-  } catch {
-    setupStateFromBackend.value = null
-    setupStateSource.value = null
-    setupStateLoadedAt.value = null
-  }
-}
-
-const refreshSetupStateFromBackend = async () => {
-  try {
-    const result = await apiStore.getInstallerSetupState()
-    const persisted = result.setup_state as Record<string, unknown> | undefined
-    setupStateFromBackend.value = persisted ?? null
     setupStateSource.value = apiStore.isDemoMode ? 'demo' : 'backend'
     setupStateLoadedAt.value = new Date().toISOString()
   } catch {
