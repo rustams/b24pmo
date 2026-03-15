@@ -138,3 +138,12 @@
   - `psutil` dependency added
   - dashboard shows CPU, memory, disk usage, load average, and boot time when available
   - graceful fallback if telemetry module is not yet installed in runtime
+
+## Stage 3 Runtime Rollout
+- Changes were committed and pushed to `master`:
+  - `6509571` (`feat(admin): add operational dashboard with api and server telemetry`)
+- VPS runtime verification:
+  - `b24-ai-starter` restarted successfully
+  - `psutil` import in `api-python` container: `psutil_ok 7.2.2`
+  - `/api/admin/dashboard/` responds through nginx (302 redirect to admin auth flow)
+  - `verify-sync` passed with `LOCAL_HEAD=VPS_HEAD=6509571` and `HEALTH=200`

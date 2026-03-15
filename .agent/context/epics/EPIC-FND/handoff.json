@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-FND",
-  "timestamp": "2026-03-15T03:35:00Z",
+  "timestamp": "2026-03-15T03:40:00Z",
   "status": "in_progress",
   "active_task": "RD-004",
   "dependency_gate": {
@@ -42,7 +42,9 @@
     "vps_installations_list": "passed",
     "vps_installation_detail_with_analytics": "passed",
     "vps_bitrix24account_list": "passed",
-    "verify_sync_after_master_merge": "passed"
+    "verify_sync_after_master_merge": "passed",
+    "dashboard_route_reachable": "passed",
+    "psutil_runtime_import": "passed"
   },
   "open_risks": [
     "Текущий UX Django admin устаревший и перегруженный; без redesign есть риск низкой продуктивности администраторов.",
@@ -50,8 +52,8 @@
     "Пароль суперпользователя был сброшен для восстановления доступа; требуется сменить после первого входа."
   ],
   "next_actions": [
-    "Применить изменения в runtime (install requirements + restart backend).",
-    "Проверить /api/admin/dashboard/ и накопление API telemetry при пользовательских сценариях.",
+    "Получить пользовательскую проверку /api/admin/dashboard/ под учеткой admin.",
+    "Накопить API telemetry при пользовательских сценариях и подтвердить полноту метрик.",
     "При необходимости подключить внешний мониторинг уровня VPS (node_exporter/cadvisor) как следующий этап.",
     "После пользовательской проверки перевести RD-004 из TESTING в DONE и синхронизировать Bitrix24 статус."
   ]
