@@ -107,6 +107,15 @@ def get_installer_contract() -> dict:
                     "link": "",
                     "status": "pending",
                 },
+                "goals_fields": {
+                    "status": "pending",
+                    "created_fields": [],
+                    "codes_added": [],
+                },
+                "goals_card_configuration": {
+                    "status": "pending",
+                    "common_scope_forced": False,
+                },
                 "completed_steps": [],
                 "updated_at_utc": "ISO-8601",
             },
@@ -475,6 +484,18 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
     existing_workplace = existing.get("workplace") if isinstance(existing.get("workplace"), dict) else {}
     goals_src = setup_state.get("goals_process") if isinstance(setup_state.get("goals_process"), dict) else {}
     existing_goals = existing.get("goals_process") if isinstance(existing.get("goals_process"), dict) else {}
+    goals_fields_src = setup_state.get("goals_fields") if isinstance(setup_state.get("goals_fields"), dict) else {}
+    existing_goals_fields = existing.get("goals_fields") if isinstance(existing.get("goals_fields"), dict) else {}
+    goals_card_src = (
+        setup_state.get("goals_card_configuration")
+        if isinstance(setup_state.get("goals_card_configuration"), dict)
+        else {}
+    )
+    existing_goals_card = (
+        existing.get("goals_card_configuration")
+        if isinstance(existing.get("goals_card_configuration"), dict)
+        else {}
+    )
 
     current_step = _to_text(setup_state.get("current_step")) or _to_text(existing.get("current_step")) or "scope_check"
     completed_steps_raw = setup_state.get("completed_steps")
@@ -498,6 +519,64 @@ def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | Non
             "link": _to_text(goals_src.get("link")) or _to_text(existing_goals.get("link")) or "",
             "status": _to_text(goals_src.get("status")) or _to_text(existing_goals.get("status")) or "pending",
         },
+        "goals_fields": {
+            "status": _to_text(goals_fields_src.get("status")) or _to_text(existing_goals_fields.get("status")) or "pending",
+            "created_fields": _normalize_created_fields(goals_fields_src.get("created_fields"), existing_goals_fields.get("created_fields")),
+            "codes_added": _normalize_code_list(goals_fields_src.get("codes_added"), existing_goals_fields.get("codes_added")),
+        },
+        "goals_card_configuration": {
+            "status": _to_text(goals_card_src.get("status")) or _to_text(existing_goals_card.get("status")) or "pending",
+            "common_scope_forced": _to_bool(goals_card_src.get("common_scope_forced"), fallback=_to_bool(existing_goals_card.get("common_scope_forced"), fallback=False)),
+            "details": _normalize_flat_dict(goals_card_src.get("details"), existing_goals_card.get("details")),
+        },
         "completed_steps": completed_steps,
         "updated_at_utc": current_now_iso,
     }
+
+
+def _to_bool(value, fallback: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"y", "yes", "true", "1"}:
+            return True
+        if lowered in {"n", "no", "false", "0"}:
+            return False
+    if isinstance(value, int):
+        return value != 0
+    return fallback
+
+
+def _normalize_flat_dict(value, fallback) -> dict:
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(fallback, dict):
+        return dict(fallback)
+    return {}
+
+
+def _normalize_code_list(value, fallback) -> list[str]:
+    source = value if isinstance(value, list) else fallback
+    if not isinstance(source, list):
+        return []
+    return [str(item) for item in source if item]
+
+
+def _normalize_created_fields(value, fallback) -> list[dict]:
+    source = value if isinstance(value, list) else fallback
+    if not isinstance(source, list):
+        return []
+    normalized: list[dict] = []
+    for item in source:
+        if not isinstance(item, dict):
+            continue
+        normalized.append(
+            {
+                "title": _to_text(item.get("title")) or "",
+                "code": _to_text(item.get("code")) or "",
+                "field_id": _to_int(item.get("field_id")),
+                "status": _to_text(item.get("status")) or "created",
+            }
+        )
+    return normalized

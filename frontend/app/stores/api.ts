@@ -58,6 +58,8 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
       current_step: 'scope_check',
       workplace: { title: 'PMO Hub', id: null, link: '', status: 'pending' },
       goals_process: { entity_type_id: null, link: '', status: 'pending' },
+      goals_fields: { status: 'pending', created_fields: [], codes_added: [] },
+      goals_card_configuration: { status: 'pending', common_scope_forced: false, details: {} },
       completed_steps: [],
       updated_at_utc: new Date().toISOString()
     }
@@ -70,6 +72,8 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
       current_step: 'scope_check',
       workplace: { title: 'PMO Hub', id: null, link: '', status: 'pending' },
       goals_process: { entity_type_id: null, link: '', status: 'pending' },
+      goals_fields: { status: 'pending', created_fields: [], codes_added: [] },
+      goals_card_configuration: { status: 'pending', common_scope_forced: false, details: {} },
       completed_steps: [],
       updated_at_utc: new Date().toISOString()
     }

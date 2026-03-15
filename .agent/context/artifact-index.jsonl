@@ -106,3 +106,8 @@
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Moved RD-107 to DONE (5) and added to completed_tasks"}
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"git commit e470979a0bcc44e5ab9fa1f44f58c4c70654767c","type":"version-control","note":"Committed RD-107 setup-state persistence and context updates"}
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"git push origin master","type":"version-control","note":"Published RD-107 closure commit to remote"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"docs/GOALS.md","type":"reference-doc","note":"Imported Goals smart-process fields specification for installer automation"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Added installer steps to create Goals fields and configure common card view with Bitrix methods"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Expanded setup_state payload model to persist created fields and card configuration details"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Updated demo setup-state schema for new Goals fields/card configuration steps"}
+{"timestamp":"2026-03-15T00:58:16Z","artifact":".agent/context/epics/EPIC-INS/handoff.json","type":"epic-handoff","note":"Added explicit merge-readiness note for second agent (safe merge of both branches)"}
