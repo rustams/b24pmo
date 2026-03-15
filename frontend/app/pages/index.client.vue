@@ -65,6 +65,14 @@ onMounted(async () => {
 
       <template #footer>
         <B24Button label="Настроить приложение" color="air-primary" to="/settings" />
+        <a
+          href="/api/admin/dashboard/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition"
+        >
+          Открыть дашборд
+        </a>
       </template>
     </B24Card>
   </div>

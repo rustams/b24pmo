@@ -17,6 +17,22 @@ from unfold.admin import ModelAdmin
 from .models import ApplicationInstallation, Bitrix24Account
 
 
+def _to_chart_rows(rows: list[dict], label_key: str = "status", value_key: str = "count") -> list[dict]:
+    total = sum(int(item.get(value_key, 0) or 0) for item in rows) or 1
+    chart = []
+    for item in rows:
+        value = int(item.get(value_key, 0) or 0)
+        label = str(item.get(label_key) or "unknown")
+        chart.append(
+            {
+                "label": label,
+                "value": value,
+                "percent": round((value / total) * 100, 2),
+            }
+        )
+    return chart
+
+
 @admin.register(Bitrix24Account)
 class Bitrix24AccountAdmin(ModelAdmin):
     list_display = (
@@ -46,7 +62,7 @@ class Bitrix24AccountAdmin(ModelAdmin):
 
     fieldsets = (
         (
-            "Account",
+            "Аккаунт",
             {
                 "fields": (
                     "id",
@@ -61,7 +77,7 @@ class Bitrix24AccountAdmin(ModelAdmin):
             },
         ),
         (
-            "Auth Analytics",
+            "Авторизация и токены",
             {
                 "fields": (
                     "has_valid_tokens",
@@ -76,16 +92,16 @@ class Bitrix24AccountAdmin(ModelAdmin):
             },
         ),
         (
-            "Timestamps",
+            "Временные метки",
             {"fields": ("created_at_utc", "updated_at_utc")},
         ),
     )
 
-    @admin.display(boolean=True, description="Has tokens")
+    @admin.display(boolean=True, description="Токены есть")
     def has_valid_tokens(self, obj: Bitrix24Account) -> bool:
         return bool(obj.access_token and obj.refresh_token)
 
-    @admin.display(description="Status")
+    @admin.display(description="Статус")
     def status_badge(self, obj: Bitrix24Account) -> str:
         status_value = (obj.status or "unknown").lower()
         colors = {
@@ -105,7 +121,7 @@ class Bitrix24AccountAdmin(ModelAdmin):
             obj.status or "unknown",
         )
 
-    @admin.display(description="Token TTL (h)")
+    @admin.display(description="TTL токена (ч)")
     def token_ttl_hours(self, obj: Bitrix24Account):
         if not obj.expires:
             return "unknown"
@@ -115,7 +131,7 @@ class Bitrix24AccountAdmin(ModelAdmin):
             return "invalid"
         return round(ttl_seconds / 3600, 2)
 
-    @admin.display(description="Token expires at")
+    @admin.display(description="Токен истекает")
     def token_expires_at(self, obj: Bitrix24Account):
         if not obj.expires:
             return "unknown"
@@ -124,7 +140,7 @@ class Bitrix24AccountAdmin(ModelAdmin):
         except (TypeError, ValueError, OSError):
             return "invalid"
 
-    @admin.display(description="Current scope")
+    @admin.display(description="Текущий scope")
     def scope_preview(self, obj: Bitrix24Account) -> str:
         if not obj.current_scope:
             return "-"
@@ -185,7 +201,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
 
     fieldsets = (
         (
-            "Installation",
+            "Установка",
             {
                 "fields": (
                     "id",
@@ -204,7 +220,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             },
         ),
         (
-            "Portal Analytics",
+            "Аналитика портала",
             {
                 "fields": (
                     "domain_url",
@@ -221,7 +237,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             },
         ),
         (
-            "Diagnostic Payload",
+            "Диагностический payload",
             {"fields": ("status_payload_preview",)},
         ),
     )
@@ -231,13 +247,13 @@ class ApplicationInstallationAdmin(ModelAdmin):
         # while Django JSONField loader expects text and crashes in admin list.
         return super().get_queryset(request).defer("status_code")
 
-    @admin.display(description="Portal domain", ordering="bitrix_24_account__domain_url")
+    @admin.display(description="Домен портала", ordering="bitrix_24_account__domain_url")
     def domain_url(self, obj: ApplicationInstallation) -> str:
         if not obj.bitrix_24_account:
             return "-"
         return obj.bitrix_24_account.domain_url
 
-    @admin.display(description="Status")
+    @admin.display(description="Статус")
     def status_badge(self, obj: ApplicationInstallation) -> str:
         status_value = (obj.status or "unknown").lower()
         colors = {
@@ -257,13 +273,13 @@ class ApplicationInstallationAdmin(ModelAdmin):
             obj.status or "unknown",
         )
 
-    @admin.display(description="Account status", ordering="bitrix_24_account__status")
+    @admin.display(description="Статус аккаунта", ordering="bitrix_24_account__status")
     def account_status(self, obj: ApplicationInstallation) -> str:
         if not obj.bitrix_24_account:
             return "missing_account"
         return obj.bitrix_24_account.status or "unknown"
 
-    @admin.display(description="Account")
+    @admin.display(description="Аккаунт")
     def account_status_badge(self, obj: ApplicationInstallation) -> str:
         value = self.account_status(obj)
         status_value = value.lower()
@@ -289,7 +305,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             return "-"
         return obj.bitrix_24_account.member_id or "-"
 
-    @admin.display(description="Auth health")
+    @admin.display(description="Состояние авторизации")
     def auth_health(self, obj: ApplicationInstallation) -> str:
         account = obj.bitrix_24_account
         if not account:
@@ -300,7 +316,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             return "warn:expired_token"
         return "ok"
 
-    @admin.display(description="Auth health")
+    @admin.display(description="Состояние авторизации")
     def auth_health_badge(self, obj: ApplicationInstallation) -> str:
         value = self.auth_health(obj)
         colors = {
@@ -318,7 +334,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             value,
         )
 
-    @admin.display(description="Portal tier")
+    @admin.display(description="Размер портала")
     def portal_size_tier(self, obj: ApplicationInstallation) -> str:
         users = obj.portal_users_count or 0
         if users <= 0:
@@ -329,7 +345,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             return "medium (50-249)"
         return "large (250+)"
 
-    @admin.display(description="Portal overview")
+    @admin.display(description="Сводка портала")
     def portal_overview(self, obj: ApplicationInstallation) -> str:
         return (
             f"domain={self.domain_url(obj)}; "
@@ -338,7 +354,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             f"tier={self.portal_size_tier(obj)}"
         )
 
-    @admin.display(description="Token TTL (h)")
+    @admin.display(description="TTL токена (ч)")
     def token_ttl_hours(self, obj: ApplicationInstallation):
         account = obj.bitrix_24_account
         if not account or not account.expires:
@@ -349,7 +365,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
             return "invalid"
         return round(ttl_seconds / 3600, 2)
 
-    @admin.display(description="Token expires at")
+    @admin.display(description="Токен истекает")
     def token_expires_at(self, obj: ApplicationInstallation):
         account = obj.bitrix_24_account
         if not account or not account.expires:
@@ -359,7 +375,7 @@ class ApplicationInstallationAdmin(ModelAdmin):
         except (TypeError, ValueError, OSError):
             return "invalid"
 
-    @admin.display(description="Installation age (hours)")
+    @admin.display(description="Возраст установки (часы)")
     def installation_age_hours(self, obj: ApplicationInstallation):
         if not obj.created_at_utc:
             return "unknown"
@@ -369,14 +385,14 @@ class ApplicationInstallationAdmin(ModelAdmin):
         delta = timezone.now() - created_at
         return round(delta.total_seconds() / 3600, 2)
 
-    @admin.display(description="Auth timeline")
+    @admin.display(description="Таймлайн авторизации")
     def auth_timeline(self, obj: ApplicationInstallation) -> str:
         health = self.auth_health(obj)
         expires_at = self.token_expires_at(obj)
         ttl_hours = self.token_ttl_hours(obj)
         return f"health={health}; token_expires_at={expires_at}; token_ttl_h={ttl_hours}"
 
-    @admin.display(description="Status payload preview")
+    @admin.display(description="Предпросмотр payload статуса")
     def status_payload_preview(self, obj: ApplicationInstallation) -> str:
         raw_payload = self._fetch_status_payload_text(obj)
         if not raw_payload:
@@ -468,6 +484,7 @@ def _load_api_metrics_snapshot():
     total = len(recent_records)
     avg_latency = round(latency_sum / total, 2) if total else 0
     error_rate = round((statuses_5xx / total) * 100, 2) if total else 0
+    top_paths = [{"path": path, "count": count} for path, count in path_counter.most_common(8)]
 
     return {
         "source": str(log_path),
@@ -475,7 +492,8 @@ def _load_api_metrics_snapshot():
         "last_hour": last_hour,
         "avg_latency_ms": avg_latency,
         "error_rate": error_rate,
-        "top_paths": path_counter.most_common(8),
+        "top_paths": top_paths,
+        "top_paths_chart": _to_chart_rows(top_paths, label_key="path", value_key="count"),
         "latest_events": list(reversed(latest_events)),
     }
 
@@ -541,16 +559,28 @@ def _app_stats_snapshot():
         "accounts_expired_tokens": token_totals.get("expired", 0),
         "installation_status_distribution": status_distribution,
         "account_status_distribution": account_status_distribution,
+        "installation_status_chart": _to_chart_rows(status_distribution),
+        "account_status_chart": _to_chart_rows(account_status_distribution),
     }
 
 
 def app_dashboard_view(request: HttpRequest) -> HttpResponse:
+    app_stats = _app_stats_snapshot()
+    api_stats = _load_api_metrics_snapshot()
+    server_stats = _server_stats_snapshot()
     context = {
         **admin.site.each_context(request),
-        "title": "Application Dashboard",
-        "app_stats": _app_stats_snapshot(),
-        "api_stats": _load_api_metrics_snapshot(),
-        "server_stats": _server_stats_snapshot(),
+        "title": "Дашборд приложения",
+        "app_stats": app_stats,
+        "api_stats": api_stats,
+        "server_stats": server_stats,
+        "tokens_health_percent": round(
+            ((app_stats["accounts_with_tokens"] / app_stats["accounts_total"]) * 100)
+            if app_stats["accounts_total"]
+            else 0,
+            2,
+        ),
+        "api_success_percent": round(100 - float(api_stats["error_rate"]), 2),
     }
     return render(request, "admin/app_dashboard.html", context)
 

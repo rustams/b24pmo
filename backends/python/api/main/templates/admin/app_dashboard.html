@@ -1,112 +1,206 @@
 {% extends "admin/base_site.html" %}
 
 {% block content %}
-<div style="display:flex;flex-direction:column;gap:18px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;">
-    <h1 style="margin:0;">Application Dashboard</h1>
-    <a class="button" href="/api/admin/main/applicationinstallation/">Installations</a>
-  </div>
+<style>
+  .dash-wrap { display:flex; flex-direction:column; gap:16px; }
+  .dash-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .dash-grid-4 { display:grid; grid-template-columns:repeat(4,minmax(220px,1fr)); gap:12px; }
+  .dash-grid-2 { display:grid; grid-template-columns:repeat(2,minmax(320px,1fr)); gap:12px; }
+  .dash-card { border-radius:14px; padding:14px; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); box-shadow:0 1px 2px rgba(16,24,40,.06); border:1px solid #e2e8f0; }
+  .dash-kpi-title { font-size:12px; opacity:.75; margin-bottom:4px; }
+  .dash-kpi-value { font-size:28px; font-weight:700; line-height:1.15; }
+  .dash-muted { font-size:12px; opacity:.75; }
+  .dash-chart-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+  .dash-row { display:grid; grid-template-columns:minmax(80px,220px) 1fr auto; gap:10px; align-items:center; font-size:13px; }
+  .dash-bar { width:100%; height:10px; border-radius:999px; background:#e2e8f0; overflow:hidden; }
+  .dash-bar > span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#2563eb,#06b6d4); }
+  .dash-donut { width:110px; height:110px; border-radius:50%; display:grid; place-items:center; margin:0 auto; }
+  .dash-donut-inner { width:72px; height:72px; border-radius:50%; background:white; display:grid; place-items:center; font-weight:700; font-size:14px; color:#0f172a; }
+  .dash-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .dash-table th, .dash-table td { padding:8px 6px; border-bottom:1px solid #eef2f7; }
+  .dash-table th { color:#334155; font-weight:600; }
+  @media (max-width: 1200px) { .dash-grid-4 { grid-template-columns:repeat(2,minmax(220px,1fr)); } }
+  @media (max-width: 860px) { .dash-grid-2, .dash-grid-4 { grid-template-columns:1fr; } }
+</style>
 
-  <div style="display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px;">
-    <div class="module" style="padding:12px;">
-      <div style="font-size:12px;opacity:0.7;">Installations</div>
-      <div style="font-size:26px;font-weight:700;">{{ app_stats.installations_total }}</div>
-      <div style="font-size:12px;opacity:0.8;">with account: {{ app_stats.installations_with_account }}</div>
-    </div>
-    <div class="module" style="padding:12px;">
-      <div style="font-size:12px;opacity:0.7;">Accounts with tokens</div>
-      <div style="font-size:26px;font-weight:700;">{{ app_stats.accounts_with_tokens }} / {{ app_stats.accounts_total }}</div>
-      <div style="font-size:12px;opacity:0.8;">expired tokens: {{ app_stats.accounts_expired_tokens }}</div>
-    </div>
-    <div class="module" style="padding:12px;">
-      <div style="font-size:12px;opacity:0.7;">API requests (buffer)</div>
-      <div style="font-size:26px;font-weight:700;">{{ api_stats.total }}</div>
-      <div style="font-size:12px;opacity:0.8;">last hour: {{ api_stats.last_hour }}</div>
-    </div>
-    <div class="module" style="padding:12px;">
-      <div style="font-size:12px;opacity:0.7;">API reliability</div>
-      <div style="font-size:26px;font-weight:700;">{{ api_stats.error_rate }}%</div>
-      <div style="font-size:12px;opacity:0.8;">avg latency: {{ api_stats.avg_latency_ms }} ms</div>
-    </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div class="module" style="padding:12px;">
-      <h2 style="margin-top:0;">Installation status distribution</h2>
-      <table style="width:100%;">
-        <thead><tr><th align="left">Status</th><th align="right">Count</th></tr></thead>
-        <tbody>
-          {% for item in app_stats.installation_status_distribution %}
-          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
-          {% empty %}
-          <tr><td colspan="2">No data</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div class="module" style="padding:12px;">
-      <h2 style="margin-top:0;">Account status distribution</h2>
-      <table style="width:100%;">
-        <thead><tr><th align="left">Status</th><th align="right">Count</th></tr></thead>
-        <tbody>
-          {% for item in app_stats.account_status_distribution %}
-          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
-          {% empty %}
-          <tr><td colspan="2">No data</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="dash-wrap">
+  <div class="dash-head">
+    <h1 style="margin:0;">Дашборд приложения</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a class="button" href="/api/admin/main/applicationinstallation/">Установки</a>
+      <a class="button" href="/api/admin/main/bitrix24account/">Аккаунты Bitrix24</a>
     </div>
   </div>
 
-  <div class="module" style="padding:12px;">
-    <h2 style="margin-top:0;">Top API paths</h2>
-    <div style="font-size:12px;opacity:0.7;margin-bottom:8px;">source: {{ api_stats.source }}</div>
-    <table style="width:100%;">
-      <thead><tr><th align="left">Path</th><th align="right">Requests</th></tr></thead>
-      <tbody>
-        {% for path, count in api_stats.top_paths %}
-        <tr><td>{{ path }}</td><td align="right">{{ count }}</td></tr>
-        {% empty %}
-        <tr><td colspan="2">No API telemetry yet. Open app pages to generate API traffic.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="dash-grid-4">
+    <div class="dash-card">
+      <div class="dash-kpi-title">Установки</div>
+      <div class="dash-kpi-value">{{ app_stats.installations_total }}</div>
+      <div class="dash-muted">с привязанным аккаунтом: {{ app_stats.installations_with_account }}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-kpi-title">Аккаунты с токенами</div>
+      <div class="dash-kpi-value">{{ app_stats.accounts_with_tokens }} / {{ app_stats.accounts_total }}</div>
+      <div class="dash-muted">просрочено токенов: {{ app_stats.accounts_expired_tokens }}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-kpi-title">API запросы (буфер)</div>
+      <div class="dash-kpi-value">{{ api_stats.total }}</div>
+      <div class="dash-muted">за последний час: {{ api_stats.last_hour }}</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-kpi-title">Ошибки API (5xx)</div>
+      <div class="dash-kpi-value">{{ api_stats.error_rate }}%</div>
+      <div class="dash-muted">средняя задержка: {{ api_stats.avg_latency_ms }} мс</div>
+    </div>
   </div>
 
-  <div class="module" style="padding:12px;">
-    <h2 style="margin-top:0;">Server telemetry</h2>
-    {% if server_stats.available %}
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:8px;">
-        <div><strong>CPU</strong><br>{{ server_stats.cpu_percent }}%</div>
-        <div><strong>Memory</strong><br>{{ server_stats.memory_percent }}%</div>
-        <div><strong>Disk</strong><br>{{ server_stats.disk_percent }}%</div>
-        <div><strong>Load Avg</strong><br>{{ server_stats.load_avg|join:", " }}</div>
+  <div class="dash-grid-2">
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Здоровье токенов</h2>
+      <div class="dash-grid-2" style="grid-template-columns:130px 1fr;align-items:center;">
+        <div class="dash-donut" style="background:conic-gradient(#16a34a {{ tokens_health_percent }}%, #e2e8f0 0);">
+          <div class="dash-donut-inner">{{ tokens_health_percent }}%</div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">Покрытие токенами</div>
+          <div class="dash-muted">Доля аккаунтов с access/refresh токенами.</div>
+          <div style="margin-top:10px;font-size:13px;">
+            <div>Всего аккаунтов: <strong>{{ app_stats.accounts_total }}</strong></div>
+            <div>С токенами: <strong>{{ app_stats.accounts_with_tokens }}</strong></div>
+            <div>Просрочены: <strong>{{ app_stats.accounts_expired_tokens }}</strong></div>
+          </div>
+        </div>
       </div>
-      <div style="margin-top:8px;font-size:12px;opacity:0.8;">boot time: {{ server_stats.boot_time }}</div>
+    </div>
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Надежность API</h2>
+      <div class="dash-grid-2" style="grid-template-columns:130px 1fr;align-items:center;">
+        <div class="dash-donut" style="background:conic-gradient(#2563eb {{ api_success_percent }}%, #e2e8f0 0);">
+          <div class="dash-donut-inner">{{ api_success_percent }}%</div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">Успешные ответы</div>
+          <div class="dash-muted">100% - доля 5xx ошибок в собранной телеметрии.</div>
+          <div style="margin-top:10px;font-size:13px;">
+            <div>Запросов в буфере: <strong>{{ api_stats.total }}</strong></div>
+            <div>За час: <strong>{{ api_stats.last_hour }}</strong></div>
+            <div>Средняя задержка: <strong>{{ api_stats.avg_latency_ms }} мс</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid-2">
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Распределение статусов установок</h2>
+      <div class="dash-chart-list">
+        {% for item in app_stats.installation_status_chart %}
+        <div class="dash-row">
+          <div>{{ item.label }}</div>
+          <div class="dash-bar"><span style="width:{{ item.percent }}%;"></span></div>
+          <div><strong>{{ item.value }}</strong> ({{ item.percent }}%)</div>
+        </div>
+        {% empty %}
+        <div class="dash-muted">Нет данных</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Распределение статусов аккаунтов</h2>
+      <div class="dash-chart-list">
+        {% for item in app_stats.account_status_chart %}
+        <div class="dash-row">
+          <div>{{ item.label }}</div>
+          <div class="dash-bar"><span style="width:{{ item.percent }}%;"></span></div>
+          <div><strong>{{ item.value }}</strong> ({{ item.percent }}%)</div>
+        </div>
+        {% empty %}
+        <div class="dash-muted">Нет данных</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-card">
+    <h2 style="margin-top:0;">Топ API маршрутов</h2>
+    <div class="dash-muted" style="margin-bottom:8px;">Источник: {{ api_stats.source }}</div>
+    <div class="dash-chart-list">
+      {% for row in api_stats.top_paths_chart %}
+      <div class="dash-row">
+        <div style="word-break:break-all;">{{ row.label }}</div>
+        <div class="dash-bar"><span style="width:{{ row.percent }}%;"></span></div>
+        <div><strong>{{ row.value }}</strong> ({{ row.percent }}%)</div>
+      </div>
+      {% empty %}
+      <div class="dash-muted">Телеметрия API пока пуста. Открой несколько страниц приложения, чтобы собрать данные.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="dash-card">
+    <h2 style="margin-top:0;">Состояние сервера</h2>
+    {% if server_stats.available %}
+      <div class="dash-grid-4" style="grid-template-columns:repeat(4,minmax(170px,1fr));">
+        <div><div class="dash-kpi-title">CPU</div><div class="dash-kpi-value" style="font-size:24px;">{{ server_stats.cpu_percent }}%</div></div>
+        <div><div class="dash-kpi-title">Память</div><div class="dash-kpi-value" style="font-size:24px;">{{ server_stats.memory_percent }}%</div></div>
+        <div><div class="dash-kpi-title">Диск</div><div class="dash-kpi-value" style="font-size:24px;">{{ server_stats.disk_percent }}%</div></div>
+        <div><div class="dash-kpi-title">Load Average</div><div class="dash-kpi-value" style="font-size:20px;">{{ server_stats.load_avg|join:", " }}</div></div>
+      </div>
+      <div class="dash-muted" style="margin-top:8px;">Время запуска сервера: {{ server_stats.boot_time }}</div>
     {% else %}
-      <div>{{ server_stats.message }}</div>
+      <div class="dash-muted">{{ server_stats.message }}</div>
     {% endif %}
   </div>
 
-  <div class="module" style="padding:12px;">
-    <h2 style="margin-top:0;">Latest API events</h2>
-    <table style="width:100%;">
-      <thead><tr><th align="left">Time</th><th align="left">Method</th><th align="left">Path</th><th align="right">Status</th><th align="right">ms</th></tr></thead>
+  <div class="dash-card">
+    <h2 style="margin-top:0;">Последние события API</h2>
+    <table class="dash-table">
+      <thead><tr><th align="left">Время</th><th align="left">Метод</th><th align="left">Путь</th><th align="right">Статус</th><th align="right">мс</th></tr></thead>
       <tbody>
         {% for event in api_stats.latest_events %}
         <tr>
           <td>{{ event.timestamp }}</td>
           <td>{{ event.method }}</td>
-          <td>{{ event.path }}</td>
+          <td style="word-break:break-all;">{{ event.path }}</td>
           <td align="right">{{ event.status_code }}</td>
           <td align="right">{{ event.duration_ms }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">No events collected yet.</td></tr>
+        <tr><td colspan="5" class="dash-muted">События пока не собраны.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div class="dash-grid-2">
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Статусы установок (таблица)</h2>
+      <table class="dash-table">
+        <thead><tr><th align="left">Статус</th><th align="right">Кол-во</th></tr></thead>
+        <tbody>
+          {% for item in app_stats.installation_status_distribution %}
+          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
+          {% empty %}
+          <tr><td colspan="2" class="dash-muted">Нет данных</td></tr>
+          {% endfor %}
+        </tbody>        
+      </table>
+    </div>
+    <div class="dash-card">
+      <h2 style="margin-top:0;">Статусы аккаунтов (таблица)</h2>
+      <table class="dash-table">
+        <thead><tr><th align="left">Статус</th><th align="right">Кол-во</th></tr></thead>
+        <tbody>
+          {% for item in app_stats.account_status_distribution %}
+          <tr><td>{{ item.status|default:"unknown" }}</td><td align="right">{{ item.count }}</td></tr>
+          {% empty %}
+          <tr><td colspan="2" class="dash-muted">Нет данных</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}
