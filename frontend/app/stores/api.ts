@@ -42,8 +42,37 @@ const DEMO_RESPONSES: Record<string, DemoResponse> = {
     required_scopes: ['crm', 'lists', 'tasks', 'user', 'placement', 'userfieldconfig'],
     current_scopes: ['crm', 'user', 'placement'],
     missing_scopes: ['lists', 'tasks', 'userfieldconfig'],
+    scope_recommendations: [
+      { scope: 'lists', hint: 'Нужен для работы со списками (риски, вехи, бюджеты и т.д.).' },
+      { scope: 'tasks', hint: 'Нужен для интеграции задач и синхронизации прогресса.' },
+      { scope: 'userfieldconfig', hint: 'Нужен для создания и обновления пользовательских полей.' }
+    ],
     is_admin: true,
-    is_ready: false
+    is_ready: false,
+    next_steps: ['Выдайте приложению недостающие разрешения и переустановите приложение.']
+  },
+  '/api/pmo/installer/setup-state': {
+    contract_version: '2026-03-15',
+    setup_state: {
+      version: '1.0',
+      current_step: 'scope_check',
+      workplace: { title: 'PMO Hub', id: null, link: '', status: 'pending' },
+      goals_process: { entity_type_id: null, link: '', status: 'pending' },
+      completed_steps: [],
+      updated_at_utc: new Date().toISOString()
+    }
+  },
+  '/api/pmo/installer/setup-state/save': {
+    message: 'Состояние мастера сохранено',
+    contract_version: '2026-03-15',
+    setup_state: {
+      version: '1.0',
+      current_step: 'scope_check',
+      workplace: { title: 'PMO Hub', id: null, link: '', status: 'pending' },
+      goals_process: { entity_type_id: null, link: '', status: 'pending' },
+      completed_steps: [],
+      updated_at_utc: new Date().toISOString()
+    }
   },
   '/api/pmo/goals': { module: 'strategy.goals', status: 'demo', next: 'Подтвердить KPI и OKR на квартал' },
   '/api/pmo/initiatives': { module: 'strategy.initiatives', status: 'demo', next: 'Приоритизировать инициативы в roadmap' },
@@ -170,6 +199,14 @@ export const useApiStore = defineStore('api', () => {
     return await authGet('/api/pmo/installer/scope-check')
   }
 
+  const getInstallerSetupState = async (): Promise<Record<string, unknown>> => {
+    return await authGet('/api/pmo/installer/setup-state')
+  }
+
+  const saveInstallerSetupState = async (setupState: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    return await authPost('/api/pmo/installer/setup-state/save', { setup_state: setupState })
+  }
+
   const postInstall = async (data: Record<string, unknown>): Promise<Record<string, unknown>> => {
     return await $api('/api/install', {
       method: 'POST',
@@ -238,6 +275,8 @@ export const useApiStore = defineStore('api', () => {
     getInstallerMapping,
     saveInstallerMapping,
     getInstallerScopeCheck,
+    getInstallerSetupState,
+    saveInstallerSetupState,
     postInstall,
     authGet,
     authPost

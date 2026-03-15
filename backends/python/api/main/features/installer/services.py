@@ -8,6 +8,7 @@ from ...utils import AuthorizedRequest
 
 INSTALLER_CONTRACT_VERSION = "2026-03-15"
 INSTALLER_MAPPING_MODEL_VERSION = "1.0"
+INSTALLER_SETUP_STATE_VERSION = "1.0"
 REQUIRED_INSTALLER_SCOPES = (
     "crm",
     "lists",
@@ -16,6 +17,15 @@ REQUIRED_INSTALLER_SCOPES = (
     "placement",
     "userfieldconfig",
 )
+
+SCOPE_HINTS_RU = {
+    "crm": "Нужен для создания цифрового рабочего места и смарт-процессов.",
+    "lists": "Нужен для работы со списками (риски, вехи, бюджеты и т.д.).",
+    "tasks": "Нужен для интеграции задач и синхронизации прогресса.",
+    "user": "Нужен для чтения пользователей и ответственных.",
+    "placement": "Нужен для встраивания интерфейса в Bitrix24.",
+    "userfieldconfig": "Нужен для создания и обновления пользовательских полей.",
+}
 
 
 def get_installer_contract() -> dict:
@@ -52,6 +62,16 @@ def get_installer_contract() -> dict:
                 "path": "/api/pmo/installer/scope-check",
                 "description": "Check required scopes and admin rights for installer",
             },
+            "installer_setup_state_get": {
+                "method": "GET",
+                "path": "/api/pmo/installer/setup-state",
+                "description": "Read persisted installer setup state for current installation",
+            },
+            "installer_setup_state_save": {
+                "method": "POST",
+                "path": "/api/pmo/installer/setup-state/save",
+                "description": "Persist installer setup progress and created entities",
+            },
         },
         "idempotency": {
             "strategy": "domain+member+normalized_payload_fingerprint",
@@ -70,6 +90,26 @@ def get_installer_contract() -> dict:
                 },
             },
             "note": "RD-102/RD-103 can evolve fields while preserving versioned container",
+        },
+        "setup_state_model": {
+            "version": INSTALLER_SETUP_STATE_VERSION,
+            "state_container": "application_installation.status_code.setup_state",
+            "shape": {
+                "current_step": "scope_check",
+                "workplace": {
+                    "title": "",
+                    "id": None,
+                    "link": "",
+                    "status": "pending",
+                },
+                "goals_process": {
+                    "entity_type_id": None,
+                    "link": "",
+                    "status": "pending",
+                },
+                "completed_steps": [],
+                "updated_at_utc": "ISO-8601",
+            },
         },
         "required_scopes": list(REQUIRED_INSTALLER_SCOPES),
     }
@@ -96,10 +136,12 @@ def upsert_installation(request: AuthorizedRequest) -> dict:
                 "installation": _serialize_installation(existing_installation),
             }
 
+    existing_status_code = existing_installation.status_code if (existing_installation and isinstance(existing_installation.status_code, dict)) else {}
     status_payload = _build_status_payload(
         raw_payload=payload,
         normalized_payload=normalized_payload,
         idempotency_fingerprint=idempotency_fingerprint,
+        existing_status_code=existing_status_code,
     )
 
     installation, _ = ApplicationInstallation.objects.update_or_create(
@@ -195,13 +237,64 @@ def get_scope_check(request: AuthorizedRequest) -> dict:
     has_required_scopes = len(missing_scopes) == 0
     is_admin = bool(account.is_b24_user_admin)
 
+    scope_recommendations = [
+        {
+            "scope": scope,
+            "hint": SCOPE_HINTS_RU.get(scope, "Требуется для корректной работы мастера настройки."),
+        }
+        for scope in missing_scopes
+    ]
+
+    next_steps = []
+    if not is_admin:
+        next_steps.append("Откройте приложение под учетной записью администратора Bitrix24.")
+    if missing_scopes:
+        next_steps.append("Выдайте приложению недостающие разрешения и переустановите приложение.")
+    if is_admin and has_required_scopes:
+        next_steps.append("Разрешения в норме. Можно переходить к следующим шагам настройки.")
+
     return {
         "contract_version": INSTALLER_CONTRACT_VERSION,
         "required_scopes": list(REQUIRED_INSTALLER_SCOPES),
         "current_scopes": sorted(current_scope_set),
         "missing_scopes": missing_scopes,
+        "scope_recommendations": scope_recommendations,
         "is_admin": is_admin,
         "is_ready": bool(is_admin and has_required_scopes),
+        "next_steps": next_steps,
+    }
+
+
+def get_installer_setup_state(request: AuthorizedRequest) -> dict:
+    installation = _get_or_create_installation(request)
+    return {
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "setup_state": _extract_setup_state(installation.status_code),
+    }
+
+
+def save_installer_setup_state(request: AuthorizedRequest) -> dict:
+    installation = _get_or_create_installation(request)
+    payload = request.data or {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    setup_payload = payload.get("setup_state")
+    if not isinstance(setup_payload, dict):
+        setup_payload = payload
+
+    current_status_code = installation.status_code if isinstance(installation.status_code, dict) else {}
+    existing_setup = _extract_setup_state(current_status_code)
+    normalized_setup = _normalize_setup_state_payload(setup_payload, existing_setup=existing_setup)
+    current_status_code["setup_state"] = normalized_setup
+
+    installation.status_code = current_status_code
+    installation.save(update_fields=["status_code", "update_at_utc"])
+
+    return {
+        "message": "Состояние мастера сохранено",
+        "contract_version": INSTALLER_CONTRACT_VERSION,
+        "setup_state": normalized_setup,
     }
 
 
@@ -299,14 +392,20 @@ def _normalize_installation_payload(payload: dict, bitrix24_account) -> dict:
     }
 
 
-def _build_status_payload(raw_payload: dict, normalized_payload: dict, idempotency_fingerprint: str) -> dict:
+def _build_status_payload(raw_payload: dict, normalized_payload: dict, idempotency_fingerprint: str, existing_status_code: dict | None = None) -> dict:
     now_iso = datetime.utcnow().isoformat() + "Z"
     status_payload = dict(raw_payload)
+    current_existing = existing_status_code if isinstance(existing_status_code, dict) else {}
+
     mapping = status_payload.get("mapping")
     if not isinstance(mapping, dict):
-        mapping = {}
+        mapping = current_existing.get("mapping") if isinstance(current_existing.get("mapping"), dict) else {}
 
     status_payload["mapping"] = _normalize_mapping_payload(mapping, now_iso=now_iso)
+    status_payload["setup_state"] = _normalize_setup_state_payload(
+        status_payload.get("setup_state") if isinstance(status_payload.get("setup_state"), dict) else {},
+        existing_setup=_extract_setup_state(current_existing),
+    )
     status_payload["_contract"] = {
         "version": INSTALLER_CONTRACT_VERSION,
         "idempotency_fingerprint": idempotency_fingerprint,
@@ -356,4 +455,49 @@ def _normalize_mapping_payload(mapping: dict, now_iso: str | None = None) -> dic
             "state": _to_text(meta.get("state")) or "not_configured",
             "updated_at_utc": current_now_iso,
         },
+    }
+
+
+def _extract_setup_state(status_code) -> dict:
+    if not isinstance(status_code, dict):
+        return _normalize_setup_state_payload({})
+    setup_state = status_code.get("setup_state")
+    if not isinstance(setup_state, dict):
+        return _normalize_setup_state_payload({})
+    return _normalize_setup_state_payload(setup_state)
+
+
+def _normalize_setup_state_payload(setup_state: dict, existing_setup: dict | None = None) -> dict:
+    current_now_iso = datetime.utcnow().isoformat() + "Z"
+    existing = existing_setup if isinstance(existing_setup, dict) else {}
+
+    workplace_src = setup_state.get("workplace") if isinstance(setup_state.get("workplace"), dict) else {}
+    existing_workplace = existing.get("workplace") if isinstance(existing.get("workplace"), dict) else {}
+    goals_src = setup_state.get("goals_process") if isinstance(setup_state.get("goals_process"), dict) else {}
+    existing_goals = existing.get("goals_process") if isinstance(existing.get("goals_process"), dict) else {}
+
+    current_step = _to_text(setup_state.get("current_step")) or _to_text(existing.get("current_step")) or "scope_check"
+    completed_steps_raw = setup_state.get("completed_steps")
+    if isinstance(completed_steps_raw, list):
+        completed_steps = [str(step) for step in completed_steps_raw if step]
+    else:
+        fallback_steps = existing.get("completed_steps")
+        completed_steps = [str(step) for step in fallback_steps] if isinstance(fallback_steps, list) else []
+
+    return {
+        "version": INSTALLER_SETUP_STATE_VERSION,
+        "current_step": current_step,
+        "workplace": {
+            "title": _to_text(workplace_src.get("title")) or _to_text(existing_workplace.get("title")) or "",
+            "id": _to_int(workplace_src.get("id")) if workplace_src.get("id") is not None else _to_int(existing_workplace.get("id")),
+            "link": _to_text(workplace_src.get("link")) or _to_text(existing_workplace.get("link")) or "",
+            "status": _to_text(workplace_src.get("status")) or _to_text(existing_workplace.get("status")) or "pending",
+        },
+        "goals_process": {
+            "entity_type_id": _to_int(goals_src.get("entity_type_id")) if goals_src.get("entity_type_id") is not None else _to_int(existing_goals.get("entity_type_id")),
+            "link": _to_text(goals_src.get("link")) or _to_text(existing_goals.get("link")) or "",
+            "status": _to_text(goals_src.get("status")) or _to_text(existing_goals.get("status")) or "pending",
+        },
+        "completed_steps": completed_steps,
+        "updated_at_utc": current_now_iso,
     }

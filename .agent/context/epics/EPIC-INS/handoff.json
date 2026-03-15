@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-INS",
-  "timestamp": "2026-03-14T23:06:30Z",
+  "timestamp": "2026-03-15T00:19:19Z",
   "status": "in_progress",
   "completed_tasks": [
     "RD-101"
@@ -16,6 +16,13 @@
     "docs/ROADMAP_TASKS.json",
     "frontend/app/pages/index.client.vue",
     "frontend/app/pages/settings.client.vue",
+    "backends/python/api/main/features/installer/services.py",
+    "backends/python/api/main/features/installer/views.py",
+    "backends/python/api/main/urls.py",
+    "frontend/app/stores/api.ts",
+    "frontend/app/pages/settings.client.vue",
+    "docs/ROADMAP_TASKS.json",
+    "docs/ROADMAP_EXECUTION_STATUS.json",
     ".agent/context/epics/EPIC-INS/summary.md",
     ".agent/context/epics/EPIC-INS/decisions.jsonl",
     ".agent/context/epics/EPIC-INS/artifacts.jsonl",
@@ -31,10 +38,12 @@
   },
   "open_risks": [
     "Нужна пользовательская приемка нового сценария RD-102 в реальном портале: создание DWS и SP 'Цели' с проверкой ссылок.",
+    "Нужна пользовательская приемка persistence-сценария RD-107 (восстановление шага/сущностей после перезагрузки).",
     "RD-103 показывает диагностику scope/прав, но еще нужны UX-инструкции по исправлению недостающих scope."
   ],
   "next_actions": [
-    "Провести пользовательскую проверку нового сценария RD-102 (DWS add -> Goals add).",
+    "Провести пользовательскую проверку RD-107: создание DWS/Goals, перезагрузка, проверка восстановления шагов и ссылок.",
+    "После подтверждения продолжить реализацию полей сущности (следующий шаг в RD-102).",
     "Продолжить реализацию RD-103: пользовательские подсказки по недостающим scope и правам администратора.",
     "RD-104 не запускать до завершения RD-102 и RD-103."
   ]

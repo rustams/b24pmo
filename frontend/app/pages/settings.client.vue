@@ -22,12 +22,40 @@ const missingScopes = computed<string[]>(() => {
   const raw = scopeCheck.value?.missing_scopes
   return Array.isArray(raw) ? raw.map(scope => String(scope)) : []
 })
+const requiredScopes = computed<string[]>(() => {
+  const raw = scopeCheck.value?.required_scopes
+  return Array.isArray(raw) ? raw.map(scope => String(scope)) : []
+})
+const currentScopes = computed<string[]>(() => {
+  const raw = scopeCheck.value?.current_scopes
+  return Array.isArray(raw) ? raw.map(scope => String(scope)) : []
+})
+const scopeRecommendations = computed<Array<{ scope: string; hint: string }>>(() => {
+  const raw = scopeCheck.value?.scope_recommendations
+  if (!Array.isArray(raw)) {
+    return []
+  }
+  return raw
+    .map(item => item as Record<string, unknown>)
+    .map(item => ({
+      scope: String(item.scope || ''),
+      hint: String(item.hint || '')
+    }))
+    .filter(item => item.scope.length > 0)
+})
+const nextSteps = computed<string[]>(() => {
+  const raw = scopeCheck.value?.next_steps
+  return Array.isArray(raw) ? raw.map(step => String(step)) : []
+})
+const isPortalAdmin = computed(() => Boolean(scopeCheck.value?.is_admin))
 
 const workplaceTitle = ref('PMO Hub')
 const workplaceId = ref<number | null>(null)
 const workplaceLink = ref('')
 const goalsTypeId = ref<number | null>(null)
 const goalsLink = ref('')
+const setupState = ref<Record<string, unknown> | null>(null)
+const setupStateSaveError = ref('')
 
 const workplaceProgress = ref(0)
 const goalsProgress = ref(0)
@@ -130,11 +158,12 @@ const buildGoalsLink = (entityTypeId: number): string => {
 }
 
 const refreshInstallerData = async () => {
-  const [installationResult, contractResult, scopeResult, mappingResult] = await Promise.allSettled([
+  const [installationResult, contractResult, scopeResult, mappingResult, setupStateResult] = await Promise.allSettled([
     apiStore.getInstallationContext(),
     apiStore.getInstallerContract(),
     apiStore.getInstallerScopeCheck(),
-    apiStore.getInstallerMapping()
+    apiStore.getInstallerMapping(),
+    apiStore.getInstallerSetupState()
   ])
 
   payload.value = installationResult.status === 'fulfilled'
@@ -150,6 +179,59 @@ const refreshInstallerData = async () => {
     : { is_ready: false, note: 'Проверка прав временно недоступна' }
 
   void mappingResult
+
+  if (setupStateResult.status === 'fulfilled') {
+    const persistedState = setupStateResult.value.setup_state as Record<string, unknown> | undefined
+    if (persistedState) {
+      setupState.value = persistedState
+      const workplace = (persistedState.workplace as Record<string, unknown> | undefined) ?? {}
+      const goalsProcess = (persistedState.goals_process as Record<string, unknown> | undefined) ?? {}
+
+      workplaceTitle.value = String(workplace.title || workplaceTitle.value)
+      workplaceId.value = workplace.id === null || workplace.id === undefined ? null : Number(workplace.id)
+      workplaceLink.value = String(workplace.link || '')
+      goalsTypeId.value = goalsProcess.entity_type_id === null || goalsProcess.entity_type_id === undefined
+        ? null
+        : Number(goalsProcess.entity_type_id)
+      goalsLink.value = String(goalsProcess.link || '')
+    }
+  }
+}
+
+const persistSetupState = async (partialState: Record<string, unknown>) => {
+  setupStateSaveError.value = ''
+  const current = (setupState.value ?? {}) as Record<string, unknown>
+  const currentWorkplace = (current.workplace as Record<string, unknown> | undefined) ?? {}
+  const currentGoals = (current.goals_process as Record<string, unknown> | undefined) ?? {}
+  const partialWorkplace = (partialState.workplace as Record<string, unknown> | undefined) ?? {}
+  const partialGoals = (partialState.goals_process as Record<string, unknown> | undefined) ?? {}
+  const partialCompleted = partialState.completed_steps
+  const currentCompleted = Array.isArray(current.completed_steps) ? current.completed_steps.map(step => String(step)) : []
+  const mergedCompleted = Array.isArray(partialCompleted)
+    ? Array.from(new Set([...currentCompleted, ...partialCompleted.map(step => String(step))]))
+    : currentCompleted
+
+  const mergedState = {
+    ...current,
+    ...partialState,
+    workplace: {
+      ...currentWorkplace,
+      ...partialWorkplace
+    },
+    goals_process: {
+      ...currentGoals,
+      ...partialGoals
+    },
+    completed_steps: mergedCompleted
+  }
+
+  try {
+    const response = await apiStore.saveInstallerSetupState(mergedState)
+    setupState.value = (response.setup_state as Record<string, unknown> | undefined) ?? mergedState
+  } catch (error) {
+    setupStateSaveError.value = 'Не удалось сохранить состояние мастера настройки.'
+    $logger.warn('Failed to persist installer setup state', error)
+  }
 }
 
 const createWorkplace = async () => {
@@ -169,6 +251,16 @@ const createWorkplace = async () => {
       workplaceLink.value = buildWorkplaceLink(demoId)
       workplaceProgress.value = 100
       setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}" (демо-режим)`
+      await persistSetupState({
+        current_step: 'workplace_created',
+        workplace: {
+          title: workplaceTitle.value.trim(),
+          id: demoId,
+          link: workplaceLink.value,
+          status: 'created'
+        },
+        completed_steps: ['scope_check', 'workplace_created']
+      })
       return
     }
 
@@ -188,6 +280,16 @@ const createWorkplace = async () => {
     workplaceLink.value = buildWorkplaceLink(createdId)
     workplaceProgress.value = 100
     setupInfo.value = `Создано цифровое рабочее место "${workplaceTitle.value.trim()}"`
+    await persistSetupState({
+      current_step: 'workplace_created',
+      workplace: {
+        title: workplaceTitle.value.trim(),
+        id: createdId,
+        link: workplaceLink.value,
+        status: 'created'
+      },
+      completed_steps: ['scope_check', 'workplace_created']
+    })
   } catch (error) {
     workplaceProgress.value = 0
     const details = getErrorMessage(error)
@@ -221,6 +323,15 @@ const createGoalsProcess = async () => {
       goalsLink.value = buildGoalsLink(demoEntityTypeId)
       goalsProgress.value = 100
       setupInfo.value = 'Смарт-процесс "Цели" создан (демо-режим)'
+      await persistSetupState({
+        current_step: 'goals_created',
+        goals_process: {
+          entity_type_id: demoEntityTypeId,
+          link: goalsLink.value,
+          status: 'created'
+        },
+        completed_steps: ['scope_check', 'workplace_created', 'goals_created']
+      })
       return
     }
 
@@ -249,6 +360,15 @@ const createGoalsProcess = async () => {
     goalsLink.value = buildGoalsLink(resolvedTypeId)
     goalsProgress.value = 100
     setupInfo.value = 'Смарт-процесс "Цели" создан'
+    await persistSetupState({
+      current_step: 'goals_created',
+      goals_process: {
+        entity_type_id: resolvedTypeId,
+        link: goalsLink.value,
+        status: 'created'
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created']
+    })
   } catch (error) {
     goalsProgress.value = 0
     const details = getErrorMessage(error)
@@ -305,12 +425,33 @@ onMounted(async () => {
             <B24Badge v-if="isScopeReady" label="Готово" color="air-primary-success" />
             <B24Badge v-else label="Требует действий" color="air-primary-alert" />
           </div>
-          <ProseP v-if="!isScopeReady" accent="warning" class="mt-2">
-            Не хватает разрешений: {{ missingScopes.join(', ') || 'неизвестно' }}
-          </ProseP>
-          <ProseP v-else accent="less" class="mt-2">
-            Все необходимые права присутствуют.
-          </ProseP>
+          <div class="mt-3 grid gap-2">
+            <ProseP accent="less">Текущий пользователь: {{ isPortalAdmin ? 'Администратор' : 'Не администратор' }}</ProseP>
+            <ProseP accent="less">Обязательные разрешения: {{ requiredScopes.join(', ') || 'не определены' }}</ProseP>
+            <ProseP accent="less">Текущие разрешения: {{ currentScopes.join(', ') || 'не определены' }}</ProseP>
+            <ProseP v-if="!isScopeReady" accent="warning">
+              Не хватает разрешений: {{ missingScopes.join(', ') || 'неизвестно' }}
+            </ProseP>
+            <ProseP v-else accent="less">Все необходимые права присутствуют.</ProseP>
+          </div>
+
+          <div v-if="scopeRecommendations.length > 0" class="mt-3">
+            <ProseH4 class="!m-0">Что нужно исправить</ProseH4>
+            <ul class="mt-2 list-disc pl-5 text-sm">
+              <li v-for="item in scopeRecommendations" :key="item.scope">
+                <span class="font-semibold">{{ item.scope }}:</span> {{ item.hint }}
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="nextSteps.length > 0" class="mt-3">
+            <ProseH4 class="!m-0">Дальнейшие действия</ProseH4>
+            <ol class="mt-2 list-decimal pl-5 text-sm">
+              <li v-for="(step, index) in nextSteps" :key="`next-step-${index}`">
+                {{ step }}
+              </li>
+            </ol>
+          </div>
         </div>
 
         <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
@@ -380,6 +521,7 @@ onMounted(async () => {
           </B24Button>
           <ProseP v-if="setupInfo" accent="less">{{ setupInfo }}</ProseP>
           <ProseP v-if="setupError" accent="warning">{{ setupError }}</ProseP>
+          <ProseP v-if="setupStateSaveError" accent="warning">{{ setupStateSaveError }}</ProseP>
         </div>
 
         <details class="mt-5">
@@ -391,7 +533,7 @@ onMounted(async () => {
           <ProseH4 class="mt-3">Снимок контракта</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
           <ProseH4 class="mt-3">Технический статус сценария</ProseH4>
-          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, isDemoMode } }}</ProsePre>
+          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, isDemoMode, setupState } }}</ProsePre>
         </details>
       </div>
     </B24Card>

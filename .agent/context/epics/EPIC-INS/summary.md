@@ -70,3 +70,35 @@
 - Roadmap metadata обновлена:
   - `docs/ROADMAP_TASKS.json` для `RD-102` (title + description);
   - `sync-metadata --apply` выполнен в Bitrix24.
+
+## RD-102 Demo Acceptance
+- Пользователь подтвердил, что в демо-режиме весь сценарий проходит без ошибок:
+  - шаг создания цифрового рабочего места;
+  - шаг создания смарт-процесса `Цели`;
+  - прогресс и сообщения отображаются корректно.
+- `RD-102` переведена в `TESTING` (`STATUS=4`) в `docs/ROADMAP_EXECUTION_STATUS.json`.
+- Выполнена синхронизация статусов и канбана в Bitrix24 (`sync-status --sync-kanban --apply`).
+
+## RD-103 Progress (permissions guidance)
+- Расширен backend-ответ `installer/scope-check`:
+  - добавлены `scope_recommendations` с объяснением по каждому недостающему разрешению;
+  - добавлены `next_steps` для администратора.
+- Обновлен UI шага 1 в `Settings`:
+  - показ обязательных/текущих/недостающих разрешений;
+  - блок `Что нужно исправить` с практическими подсказками;
+  - блок `Дальнейшие действия` с последовательными шагами.
+
+## RD-107 (subtask of RD-102): installer setup-state persistence
+- Добавлена отдельная подзадача `RD-107` как дочерняя к `RD-102` в `docs/ROADMAP_TASKS.json`.
+- Реализован backend API для состояния мастера установки:
+  - `GET /api/pmo/installer/setup-state`;
+  - `POST /api/pmo/installer/setup-state/save`.
+- Состояние теперь хранится в `application_installation.status_code.setup_state`:
+  - текущий шаг (`current_step`);
+  - данные созданного DWS (`workplace`);
+  - данные созданного СП `Цели` (`goals_process`);
+  - список завершенных шагов (`completed_steps`).
+- UI `settings` теперь:
+  - восстанавливает сохраненное состояние при открытии страницы;
+  - сохраняет прогресс после успешного создания DWS и СП `Цели`.
+- Совместимость сохранена: при повторном `POST /api/install` ранее сохраненные `mapping` и `setup_state` не теряются.

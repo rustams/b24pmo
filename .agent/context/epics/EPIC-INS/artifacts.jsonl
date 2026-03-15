@@ -18,3 +18,15 @@
 {"timestamp":"2026-03-14T23:06:30Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Updated RD-102 title and description to reflect guided entity-creation scenario"}
 {"timestamp":"2026-03-14T23:06:30Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-metadata --apply","type":"bitrix-sync","note":"Applied RD-102 metadata update to Bitrix24 task card"}
 {"timestamp":"2026-03-14T23:29:50Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Adjusted RD-102 create actions: demo-mode simulation path and richer permission/scope error details"}
+{"timestamp":"2026-03-15T00:08:35Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Moved RD-102 from IN_PROGRESS to TESTING and set active_task=RD-103"}
+{"timestamp":"2026-03-15T00:08:35Z","artifact":"scripts/bitrix24/roadmap_sync.py sync-status --sync-kanban --apply","type":"bitrix-sync","note":"Applied RD-102 status=4 (TESTING) in Bitrix24 kanban"}
+{"timestamp":"2026-03-15T00:12:32Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Extended scope-check response with scope recommendations and next-step guidance"}
+{"timestamp":"2026-03-15T00:12:32Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Extended demo scope-check payload with recommendations and next steps"}
+{"timestamp":"2026-03-15T00:12:32Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Rendered actionable RD-103 permission guidance blocks for required/current/missing scopes"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Added installer setup-state storage model and read/save services in status_code.setup_state"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"backends/python/api/main/features/installer/views.py","type":"backend-endpoint","note":"Added installer setup-state GET/POST views with auth_required"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"backends/python/api/main/urls.py","type":"routing","note":"Registered /api/pmo/installer/setup-state and /api/pmo/installer/setup-state/save"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Added installer setup-state API methods and demo responses"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Implemented setup-state restore and persistence after DWS/Goals creation steps"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"docs/ROADMAP_TASKS.json","type":"planning-data","note":"Added RD-107 as subtask of RD-102 for installer setup-state persistence"}
+{"timestamp":"2026-03-15T00:19:19Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Marked RD-107 as IN_PROGRESS (3) in roadmap execution status"}

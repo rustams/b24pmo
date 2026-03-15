@@ -13,6 +13,8 @@ from .services import (
     get_installer_mapping,
     save_installer_mapping,
     get_scope_check,
+    get_installer_setup_state,
+    save_installer_setup_state,
 )
 
 
@@ -77,3 +79,21 @@ def installer_mapping_save(request: AuthorizedRequest):
 @auth_required
 def installer_scope_check(request: AuthorizedRequest):
     return JsonResponse(get_scope_check(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_GET
+@log_errors("installer_setup_state_get")
+@auth_required
+def installer_setup_state_get(request: AuthorizedRequest):
+    return JsonResponse(get_installer_setup_state(request))
+
+
+@xframe_options_exempt
+@csrf_exempt
+@require_POST
+@log_errors("installer_setup_state_save")
+@auth_required
+def installer_setup_state_save(request: AuthorizedRequest):
+    return JsonResponse(save_installer_setup_state(request))

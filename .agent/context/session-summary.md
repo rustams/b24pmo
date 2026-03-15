@@ -271,3 +271,27 @@
 - Статус репозитория обновлен:
   - `docs/ROADMAP_EXECUTION_STATUS.json`: `RD-004 -> TESTING (4)`, `active_task=RD-004`.
 - Дальнейший шаг: merge в `master`, push и перезапуск backend для пользовательской проверки UI.
+
+## EPIC-INS RD-107: сохранение состояния мастера установки
+- По запросу пользователя стартована отдельная подзадача `RD-107` как дочерняя к `RD-102`.
+- Реализован backend persistence setup-состояния в `application_installation.status_code.setup_state`:
+  - текущий шаг мастера;
+  - созданное цифровое рабочее место (id/title/link/status);
+  - созданный смарт-процесс `Цели` (entity_type_id/link/status);
+  - `completed_steps`.
+- Добавлены API:
+  - `GET /api/pmo/installer/setup-state`
+  - `POST /api/pmo/installer/setup-state/save`
+- Frontend `settings` обновлен:
+  - восстановление состояния из backend при загрузке;
+  - сохранение состояния после успешного создания DWS и Goals.
+- Проверки:
+  - `python3 -m compileall` (installer backend) -> OK;
+  - `ReadLints` по измененным файлам -> ошибок нет.
+
+## Self-Check (RD-107 closure, rubric)
+- Correctness: 5/5
+- Integration Safety: 5/5
+- Context Integrity: 5/5
+- Maintainability: 4/5
+- Operational Readiness: 5/5

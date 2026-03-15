@@ -9,6 +9,8 @@ from .features.installer.views import (
     installer_mapping_get,
     installer_mapping_save,
     installer_scope_check,
+    installer_setup_state_get,
+    installer_setup_state_save,
 )
 from .features.strategy.views import goals_overview, initiatives_overview
 from .features.delivery.views import (
@@ -37,6 +39,8 @@ urlpatterns = [
     path("api/pmo/installer/mapping", installer_mapping_get, name="installer_mapping_get"),
     path("api/pmo/installer/mapping/save", installer_mapping_save, name="installer_mapping_save"),
     path("api/pmo/installer/scope-check", installer_scope_check, name="installer_scope_check"),
+    path("api/pmo/installer/setup-state", installer_setup_state_get, name="installer_setup_state_get"),
+    path("api/pmo/installer/setup-state/save", installer_setup_state_save, name="installer_setup_state_save"),
 
     # PMO feature endpoints (scaffold)
     path("api/pmo/goals", goals_overview, name="pmo_goals"),
