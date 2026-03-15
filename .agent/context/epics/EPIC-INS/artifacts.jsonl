@@ -32,3 +32,7 @@
 {"timestamp":"2026-03-15T00:19:19Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Marked RD-107 as IN_PROGRESS (3) in roadmap execution status"}
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"docs/ROADMAP_EXECUTION_STATUS.json","type":"execution-state","note":"Marked RD-107 as DONE (5) and added to completed_tasks"}
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"git commit e470979a0bcc44e5ab9fa1f44f58c4c70654767c","type":"version-control","note":"Published RD-107 implementation on master with context updates"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"docs/GOALS.md","type":"reference-doc","note":"Imported field catalog for Goals smart process from pmohubsk repository"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Added step 4 (Goals fields creation) and step 5 (Goals card configuration) with progress and persistence"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Extended setup_state schema with goals_fields and goals_card_configuration containers"}
+{"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Extended demo setup-state payload with goals_fields and goals_card_configuration"}

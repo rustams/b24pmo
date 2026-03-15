@@ -54,16 +54,26 @@ const workplaceId = ref<number | null>(null)
 const workplaceLink = ref('')
 const goalsTypeId = ref<number | null>(null)
 const goalsLink = ref('')
+const goalsFieldsCreated = ref<Array<{ title: string; code: string; field_id: number | null; status: string }>>([])
+const goalsFieldCodesAdded = ref<string[]>([])
+const isGoalsCardConfigured = ref(false)
 const setupState = ref<Record<string, unknown> | null>(null)
 const setupStateSaveError = ref('')
 
 const workplaceProgress = ref(0)
 const goalsProgress = ref(0)
+const goalsFieldsProgress = ref(0)
+const goalsCardProgress = ref(0)
 const isCreatingWorkplace = ref(false)
 const isCreatingGoals = ref(false)
+const isCreatingGoalsFields = ref(false)
+const isConfiguringGoalsCard = ref(false)
 
 const canCreateWorkplace = computed(() => workplaceTitle.value.trim().length > 1 && !isCreatingWorkplace.value)
 const canCreateGoals = computed(() => workplaceId.value !== null && !isCreatingGoals.value)
+const canCreateGoalsFields = computed(() => goalsTypeId.value !== null && !isCreatingGoalsFields.value)
+const canConfigureGoalsCard = computed(() => goalsTypeId.value !== null && goalsFieldsCreated.value.length > 0 && !isConfiguringGoalsCard.value)
+const isGoalsFieldsCreated = computed(() => goalsFieldsCreated.value.length > 0)
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -157,6 +167,71 @@ const buildGoalsLink = (entityTypeId: number): string => {
   return `${base}/crm/type/${entityTypeId}/list/`
 }
 
+type GoalsFieldDefinition = {
+  title: string
+  codeTemplate: string
+  userTypeId: string
+  sort: number
+  mandatory: boolean
+  multiple: boolean
+}
+
+const GOALS_FIELD_DEFINITIONS: GoalsFieldDefinition[] = [
+  { title: 'Название цели', codeTemplate: 'UF_CRM_XXX_GOAL_TITLE', userTypeId: 'string', sort: 10, mandatory: true, multiple: false },
+  { title: 'Описание цели', codeTemplate: 'UF_CRM_XXX_GOAL_DESCRIPTION', userTypeId: 'string', sort: 20, mandatory: false, multiple: false },
+  { title: 'Тип цели', codeTemplate: 'UF_CRM_XXX_GOAL_TYPE', userTypeId: 'string', sort: 30, mandatory: true, multiple: false },
+  { title: 'Приоритет', codeTemplate: 'UF_CRM_XXX_GOAL_PRIORITY', userTypeId: 'string', sort: 40, mandatory: false, multiple: false },
+  { title: 'Статус цели', codeTemplate: 'UF_CRM_XXX_GOAL_STATUS', userTypeId: 'string', sort: 50, mandatory: true, multiple: false },
+  { title: 'Ключевой показатель (KPI)', codeTemplate: 'UF_CRM_XXX_GOAL_KPI', userTypeId: 'string', sort: 60, mandatory: false, multiple: true },
+  { title: 'Единица измерения', codeTemplate: 'UF_CRM_XXX_GOAL_KPI_UNIT', userTypeId: 'string', sort: 70, mandatory: true, multiple: false },
+  { title: 'Базовое значение', codeTemplate: 'UF_CRM_XXX_GOAL_BASE_VALUE', userTypeId: 'string', sort: 80, mandatory: false, multiple: false },
+  { title: 'Целевое значение', codeTemplate: 'UF_CRM_XXX_GOAL_TARGET_VALUE', userTypeId: 'string', sort: 90, mandatory: false, multiple: false },
+  { title: 'Фактическое значение KPI', codeTemplate: 'UF_CRM_XXX_GOAL_FACT_VALUE', userTypeId: 'string', sort: 100, mandatory: false, multiple: false },
+  { title: 'Прогресс выполнения', codeTemplate: 'UF_CRM_XXX_GOAL_PROGRESS', userTypeId: 'double', sort: 110, mandatory: false, multiple: false },
+  { title: 'Владелец цели', codeTemplate: 'UF_CRM_XXX_GOAL_OWNER', userTypeId: 'employee', sort: 120, mandatory: true, multiple: false },
+  { title: 'Крайний срок', codeTemplate: 'UF_CRM_XXX_GOAL_DEADLINE', userTypeId: 'date', sort: 130, mandatory: false, multiple: false },
+  { title: 'Дата фактического достижения', codeTemplate: 'UF_CRM_XXX_GOAL_ACHIEVE_DATE', userTypeId: 'date', sort: 140, mandatory: false, multiple: false },
+  { title: 'Ключевые риски', codeTemplate: 'UF_CRM_XXX_GOAL_KEY_RISKS', userTypeId: 'string', sort: 150, mandatory: true, multiple: false },
+  { title: 'Меры минимизации', codeTemplate: 'UF_CRM_XXX_GOAL_RISK_MITIGATION', userTypeId: 'string', sort: 160, mandatory: true, multiple: false },
+  { title: 'Связанные инициативы', codeTemplate: 'UF_CRM_XXX_GOAL_LINKED_INITIATIVES', userTypeId: 'string', sort: 170, mandatory: false, multiple: true },
+  { title: 'Связанные проекты', codeTemplate: 'UF_CRM_XXX_GOAL_LINKED_PROJECTS', userTypeId: 'string', sort: 180, mandatory: false, multiple: true }
+]
+
+const extractGoalCode = (codeTemplate: string): string => {
+  const match = codeTemplate.match(/(GAOL|GOAL)[A-Z0-9_]+/)
+  return match ? match[0] : codeTemplate.replace(/^UF_CRM_[A-Z0-9]+_/, '')
+}
+
+const buildGoalFieldPayload = (field: GoalsFieldDefinition) => ({
+  title: field.title,
+  fieldName: extractGoalCode(field.codeTemplate),
+  type: field.userTypeId,
+  sort: field.sort,
+  isRequired: field.mandatory ? 'Y' : 'N',
+  isMultiple: field.multiple ? 'Y' : 'N',
+  formLabel: field.title,
+  listLabel: field.title,
+  filterLabel: field.title
+})
+
+const callMethodWithFallback = async (method: string, payloadVariants: Array<Record<string, unknown>>) => {
+  if (!b24Frame.value) {
+    throw new Error('Фрейм Bitrix24 недоступен')
+  }
+
+  let lastError: unknown = null
+  for (const params of payloadVariants) {
+    try {
+      const response = await b24Frame.value.callMethod(method, params)
+      return extractResultData(response?.getData ? response.getData() : response)
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError ?? new Error(`Не удалось вызвать метод ${method}`)
+}
+
 const refreshInstallerData = async () => {
   const [installationResult, contractResult, scopeResult, mappingResult, setupStateResult] = await Promise.allSettled([
     apiStore.getInstallationContext(),
@@ -186,6 +261,8 @@ const refreshInstallerData = async () => {
       setupState.value = persistedState
       const workplace = (persistedState.workplace as Record<string, unknown> | undefined) ?? {}
       const goalsProcess = (persistedState.goals_process as Record<string, unknown> | undefined) ?? {}
+      const goalsFieldsState = (persistedState.goals_fields as Record<string, unknown> | undefined) ?? {}
+      const goalsCardState = (persistedState.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
 
       workplaceTitle.value = String(workplace.title || workplaceTitle.value)
       workplaceId.value = workplace.id === null || workplace.id === undefined ? null : Number(workplace.id)
@@ -194,6 +271,13 @@ const refreshInstallerData = async () => {
         ? null
         : Number(goalsProcess.entity_type_id)
       goalsLink.value = String(goalsProcess.link || '')
+      goalsFieldsCreated.value = Array.isArray(goalsFieldsState.created_fields)
+        ? goalsFieldsState.created_fields.map(item => item as { title: string; code: string; field_id: number | null; status: string })
+        : []
+      goalsFieldCodesAdded.value = Array.isArray(goalsFieldsState.codes_added)
+        ? goalsFieldsState.codes_added.map(code => String(code))
+        : []
+      isGoalsCardConfigured.value = Boolean(goalsCardState.status === 'configured')
     }
   }
 }
@@ -203,8 +287,12 @@ const persistSetupState = async (partialState: Record<string, unknown>) => {
   const current = (setupState.value ?? {}) as Record<string, unknown>
   const currentWorkplace = (current.workplace as Record<string, unknown> | undefined) ?? {}
   const currentGoals = (current.goals_process as Record<string, unknown> | undefined) ?? {}
+  const currentGoalsFields = (current.goals_fields as Record<string, unknown> | undefined) ?? {}
+  const currentGoalsCard = (current.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
   const partialWorkplace = (partialState.workplace as Record<string, unknown> | undefined) ?? {}
   const partialGoals = (partialState.goals_process as Record<string, unknown> | undefined) ?? {}
+  const partialGoalsFields = (partialState.goals_fields as Record<string, unknown> | undefined) ?? {}
+  const partialGoalsCard = (partialState.goals_card_configuration as Record<string, unknown> | undefined) ?? {}
   const partialCompleted = partialState.completed_steps
   const currentCompleted = Array.isArray(current.completed_steps) ? current.completed_steps.map(step => String(step)) : []
   const mergedCompleted = Array.isArray(partialCompleted)
@@ -221,6 +309,14 @@ const persistSetupState = async (partialState: Record<string, unknown>) => {
     goals_process: {
       ...currentGoals,
       ...partialGoals
+    },
+    goals_fields: {
+      ...currentGoalsFields,
+      ...partialGoalsFields
+    },
+    goals_card_configuration: {
+      ...currentGoalsCard,
+      ...partialGoalsCard
     },
     completed_steps: mergedCompleted
   }
@@ -380,6 +476,181 @@ const createGoalsProcess = async () => {
   }
 }
 
+const createGoalsFields = async () => {
+  if (!goalsTypeId.value) {
+    setupError.value = 'Сначала создайте смарт-процесс "Цели".'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isCreatingGoalsFields.value = true
+  goalsFieldsProgress.value = 10
+
+  try {
+    await sleep(250)
+    goalsFieldsProgress.value = 25
+
+    const createdFields: Array<{ title: string; code: string; field_id: number | null; status: string }> = []
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(600)
+      GOALS_FIELD_DEFINITIONS.forEach((field, index) => {
+        createdFields.push({
+          title: field.title,
+          code: extractGoalCode(field.codeTemplate),
+          field_id: 5000 + index,
+          status: 'created'
+        })
+      })
+      goalsFieldsProgress.value = 100
+    } else {
+      for (let index = 0; index < GOALS_FIELD_DEFINITIONS.length; index += 1) {
+        const definition = GOALS_FIELD_DEFINITIONS[index]
+        const fieldPayload = buildGoalFieldPayload(definition)
+        const data = await callMethodWithFallback('crm.item.userfield.add', [
+          { entityTypeId: goalsTypeId.value, field: fieldPayload },
+          { entityTypeId: goalsTypeId.value, fields: fieldPayload },
+          { entityTypeId: goalsTypeId.value, FIELD: fieldPayload },
+          {
+            entityTypeId: goalsTypeId.value,
+            fields: {
+              FIELD_NAME: fieldPayload.fieldName,
+              USER_TYPE_ID: definition.userTypeId,
+              EDIT_FORM_LABEL: fieldPayload.formLabel,
+              LIST_COLUMN_LABEL: fieldPayload.listLabel,
+              LIST_FILTER_LABEL: fieldPayload.filterLabel,
+              MANDATORY: definition.mandatory ? 'Y' : 'N',
+              MULTIPLE: definition.multiple ? 'Y' : 'N',
+              SORT: definition.sort
+            }
+          }
+        ])
+
+        const fieldId = Number(data.id || data.fieldId || data.field_id || 0) || null
+        createdFields.push({
+          title: definition.title,
+          code: String(fieldPayload.fieldName),
+          field_id: fieldId,
+          status: 'created'
+        })
+        goalsFieldsProgress.value = Math.min(95, 25 + Math.floor(((index + 1) / GOALS_FIELD_DEFINITIONS.length) * 70))
+      }
+      goalsFieldsProgress.value = 100
+    }
+
+    goalsFieldsCreated.value = createdFields
+    goalsFieldCodesAdded.value = createdFields.map(field => field.code)
+    setupInfo.value = 'Поля для смарт-процесса "Цели" созданы'
+    await persistSetupState({
+      current_step: 'goals_fields_created',
+      goals_fields: {
+        status: 'created',
+        created_fields: createdFields,
+        codes_added: goalsFieldCodesAdded.value
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created']
+    })
+  } catch (error) {
+    goalsFieldsProgress.value = 0
+    const details = getErrorMessage(error)
+    const hint = scopeHint.value ? ` ${scopeHint.value}.` : ''
+    setupError.value = `Ошибка создания полей смарт-процесса "Цели".${hint}${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to create Goals fields', error)
+  } finally {
+    isCreatingGoalsFields.value = false
+  }
+}
+
+const configureGoalsCard = async () => {
+  if (!goalsTypeId.value) {
+    setupError.value = 'Сначала создайте смарт-процесс "Цели".'
+    return
+  }
+  if (goalsFieldCodesAdded.value.length === 0) {
+    setupError.value = 'Сначала создайте поля смарт-процесса "Цели".'
+    return
+  }
+
+  setupError.value = ''
+  setupInfo.value = ''
+  isConfiguringGoalsCard.value = true
+  goalsCardProgress.value = 10
+
+  try {
+    await sleep(250)
+    goalsCardProgress.value = 30
+
+    const details: Record<string, unknown> = {
+      field_codes: goalsFieldCodesAdded.value
+    }
+
+    if (isDemoMode.value || !b24Frame.value) {
+      await sleep(700)
+      details.mode = 'demo'
+      goalsCardProgress.value = 100
+    } else {
+      await callMethodWithFallback('crm.item.details.configuration.reset', [
+        { entityTypeId: goalsTypeId.value, scope: 'common' },
+        { entityTypeId: goalsTypeId.value }
+      ])
+      goalsCardProgress.value = 45
+
+      const currentConfiguration = await callMethodWithFallback('crm.item.details.configuration.get', [
+        { entityTypeId: goalsTypeId.value, scope: 'common' },
+        { entityTypeId: goalsTypeId.value }
+      ])
+      details.before = currentConfiguration
+
+      const preparedConfiguration = {
+        view: 'common',
+        sections: [
+          {
+            id: 'main',
+            title: 'Общий вид карточки',
+            elements: goalsFieldCodesAdded.value
+          }
+        ]
+      }
+
+      const setResult = await callMethodWithFallback('crm.item.details.configuration.set', [
+        { entityTypeId: goalsTypeId.value, scope: 'common', configuration: preparedConfiguration },
+        { entityTypeId: goalsTypeId.value, scope: 'common', config: preparedConfiguration },
+        { entityTypeId: goalsTypeId.value, configuration: preparedConfiguration }
+      ])
+      details.after_set = setResult
+      goalsCardProgress.value = 80
+
+      const forceResult = await callMethodWithFallback('crm.item.details.configuration.forceCommonScopeForAll', [
+        { entityTypeId: goalsTypeId.value },
+        { entityTypeId: goalsTypeId.value, value: true },
+        {}
+      ])
+      details.after_force_common_scope = forceResult
+      goalsCardProgress.value = 100
+    }
+
+    isGoalsCardConfigured.value = true
+    setupInfo.value = 'Настройка карточки цели завершена'
+    await persistSetupState({
+      current_step: 'goals_card_configured',
+      goals_card_configuration: {
+        status: 'configured',
+        common_scope_forced: true,
+        details
+      },
+      completed_steps: ['scope_check', 'workplace_created', 'goals_created', 'goals_fields_created', 'goals_card_configured']
+    })
+  } catch (error) {
+    goalsCardProgress.value = 0
+    const details = getErrorMessage(error)
+    const hint = scopeHint.value ? ` ${scopeHint.value}.` : ''
+    setupError.value = `Ошибка настройки карточки цели.${hint}${details ? ` Детали: ${details}` : ''}`
+    $logger.error('Failed to configure Goals card', error)
+  } finally {
+    isConfiguringGoalsCard.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const $b24: B24Frame = await $initializeB24Frame()
@@ -452,6 +723,42 @@ onMounted(async () => {
               </li>
             </ol>
           </div>
+        </div>
+
+        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 4. Создать поля смарт-процесса "Цели"</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            После создания смарт-процесса будут автоматически созданы поля по документу GOALS.md.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isCreatingGoalsFields" :disabled="!canCreateGoalsFields" color="air-primary" @click="createGoalsFields">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isCreatingGoalsFields || goalsFieldsProgress > 0" class="mt-3">
+            <B24Progress v-model="goalsFieldsProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="isGoalsFieldsCreated" class="mt-2" accent="less">
+            Поля для смарт-процесса "Цели" созданы
+          </ProseP>
+        </div>
+
+        <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
+          <ProseH4 class="!m-0">Шаг 5. Настройка карточки цели (общий вид для всех)</ProseH4>
+          <ProseP accent="less" class="mt-2">
+            Выполняется настройка отображения карточки через crm.item.details.configuration.get/set/reset и применение общего вида для всех пользователей.
+          </ProseP>
+          <div class="mt-3">
+            <B24Button :loading="isConfiguringGoalsCard" :disabled="!canConfigureGoalsCard" color="air-primary" @click="configureGoalsCard">
+              Продолжить
+            </B24Button>
+          </div>
+          <div v-if="isConfiguringGoalsCard || goalsCardProgress > 0" class="mt-3">
+            <B24Progress v-model="goalsCardProgress" animation="elastic" />
+          </div>
+          <ProseP v-if="isGoalsCardConfigured" class="mt-2" accent="less">
+            Настройка карточки цели завершена. Режим "Общий вид карточки" применен ко всем пользователям.
+          </ProseP>
         </div>
 
         <div class="mt-5 rounded border border-(--ui-color-accent-soft-blue-2) p-3">
@@ -533,7 +840,7 @@ onMounted(async () => {
           <ProseH4 class="mt-3">Снимок контракта</ProseH4>
           <ProsePre class="mt-2">{{ installerContract }}</ProsePre>
           <ProseH4 class="mt-3">Технический статус сценария</ProseH4>
-          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, isDemoMode, setupState } }}</ProsePre>
+          <ProsePre class="mt-2">{{ { workplaceId, workplaceLink, goalsTypeId, goalsLink, goalsFieldsCreated, goalsFieldCodesAdded, isGoalsCardConfigured, isDemoMode, setupState } }}</ProsePre>
         </details>
       </div>
     </B24Card>

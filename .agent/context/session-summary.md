@@ -300,3 +300,20 @@
 - `RD-107` formally closed in roadmap (`DONE=5`), commit pushed to `master`:
   - `e470979a0bcc44e5ab9fa1f44f58c4c70654767c`
 - Bitrix status sync command executed in status-only mode; output indicates task updates outside expected RD-107 scope, therefore board state is marked for manual verification in follow-up.
+
+## RD-102 installer extension: fields and card configuration
+- Импортирован `docs/GOALS.md` как источник структуры полей для СП `Цели`.
+- В `Settings` добавлены новые шаги мастера:
+  - шаг создания полей СП `Цели` с progress bar и сообщением об успехе;
+  - шаг настройки карточки через `crm.item.details.configuration.*` и применение общего scope для всех.
+- Для кода поля в вызовах создания используется только суффикс начиная с `GOAL`/`GAOL` (без префиксной части).
+- Расширено backend-хранилище `setup_state`:
+  - `goals_fields` (список созданных полей, `field_id`, `codes_added`);
+  - `goals_card_configuration` (статус и тех.детали применения common view).
+- Проверки:
+  - `python3 -m compileall backends/python/api/main/features/installer/services.py` -> OK;
+  - `ReadLints` по измененным файлам -> ошибок нет.
+- Комментарий для второго агента:
+  - изменения изолированы в отдельной ветке EPIC-INS;
+  - эта ветка не включает правки RD-004/admin;
+  - допускается одновременный merge обеих веток без взаимного перетирания по целевым зонам.

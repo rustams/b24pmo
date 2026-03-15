@@ -1,6 +1,6 @@
 {
   "epic": "EPIC-INS",
-  "timestamp": "2026-03-15T00:25:18Z",
+  "timestamp": "2026-03-15T00:49:45Z",
   "status": "in_progress",
   "completed_tasks": [
     "RD-101",
@@ -24,6 +24,10 @@
     "frontend/app/pages/settings.client.vue",
     "docs/ROADMAP_TASKS.json",
     "docs/ROADMAP_EXECUTION_STATUS.json",
+    "docs/GOALS.md",
+    "backends/python/api/main/features/installer/services.py",
+    "frontend/app/stores/api.ts",
+    "frontend/app/pages/settings.client.vue",
     ".agent/context/epics/EPIC-INS/summary.md",
     ".agent/context/epics/EPIC-INS/decisions.jsonl",
     ".agent/context/epics/EPIC-INS/artifacts.jsonl",
@@ -38,14 +42,15 @@
     "sync_status": "applied (status-only, requires verification)"
   },
   "open_risks": [
-    "Нужна пользовательская приемка нового сценария RD-102 в реальном портале: создание DWS и SP 'Цели' с проверкой ссылок.",
+    "Нужна пользовательская приемка нового сценария RD-102 в реальном портале: создание DWS, SP 'Цели', полей и карточки.",
     "Нужна пользовательская приемка persistence-сценария RD-107 (восстановление шага/сущностей после перезагрузки).",
     "RD-103 показывает диагностику scope/прав, но еще нужны UX-инструкции по исправлению недостающих scope."
   ],
   "next_actions": [
-    "Провести пользовательскую проверку RD-107: создание DWS/Goals, перезагрузка, проверка восстановления шагов и ссылок.",
-    "После подтверждения продолжить реализацию полей сущности (следующий шаг в RD-102).",
+    "Провести пользовательскую проверку шагов RD-102: создание полей `GOAL*` и настройка общего вида карточки.",
+    "Проверить корректность созданных кодов полей (только суффикс `GOAL*`) и сохранение в setup_state.",
     "Продолжить реализацию RD-103: пользовательские подсказки по недостающим scope и правам администратора.",
     "RD-104 не запускать до завершения RD-102 и RD-103."
-  ]
+  ],
+  "merge_note_for_second_agent": "Эта ветка содержит только изменения EPIC-INS по RD-102 (GOALS fields + card configuration + setup_state persistence + docs/GOALS.md + контекст). Можно безопасно мержить её вместе с веткой второго агента: изменений в RD-004/admin-части здесь нет."
 }

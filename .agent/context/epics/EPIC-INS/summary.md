@@ -105,3 +105,16 @@
 - Задача закрыта:
   - `RD-107` переведена в `DONE (5)` в `docs/ROADMAP_EXECUTION_STATUS.json`;
   - commit/push: `e470979a0bcc44e5ab9fa1f44f58c4c70654767c` (`master`).
+
+## RD-102 Follow-up: Goals fields + card configuration
+- В мастер `Settings` добавлены новые шаги после создания СП `Цели`:
+  1. Создание полей СП `Цели` по `docs/GOALS.md` (кнопка `Продолжить`, progress bar, сообщение об успехе).
+  2. Настройка карточки цели через:
+     - `crm.item.details.configuration.reset`
+     - `crm.item.details.configuration.get`
+     - `crm.item.details.configuration.set`
+     - `crm.item.details.configuration.forceCommonScopeForAll`
+- Для кодов полей используется только суффикс начиная с `GOAL`/`GAOL` (без `UF_CRM_...` префикса).
+- Финальное состояние сохраняется в `setup_state`:
+  - `goals_fields` (созданные поля, `field_id`, `codes_added`);
+  - `goals_card_configuration` (статус, признак common scope, тех.детали).
