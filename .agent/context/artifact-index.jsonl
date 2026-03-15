@@ -107,6 +107,8 @@
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"git commit e470979a0bcc44e5ab9fa1f44f58c4c70654767c","type":"version-control","note":"Committed RD-107 setup-state persistence and context updates"}
 {"timestamp":"2026-03-15T00:25:18Z","artifact":"git push origin master","type":"version-control","note":"Published RD-107 closure commit to remote"}
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"docs/GOALS.md","type":"reference-doc","note":"Imported Goals smart-process fields specification for installer automation"}
+{"timestamp":"2026-03-15T01:05:00Z","artifact":"git merge epic-ins-rd102-goals-fields-card -> master","type":"version-control","note":"Merged synchronized EPIC-INS branch containing RD-102 fields/card workflow and global context updates"}
+{"timestamp":"2026-03-15T01:05:00Z","artifact":"git merge includes epic-fnd-dashboard-ru-ui commit f1d9b1d","type":"version-control","note":"Master now includes Russian localized dashboard UI with chart-style presentation and index dashboard link"}
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/pages/settings.client.vue","type":"frontend-ui","note":"Added installer steps to create Goals fields and configure common card view with Bitrix methods"}
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"backends/python/api/main/features/installer/services.py","type":"backend-feature","note":"Expanded setup_state payload model to persist created fields and card configuration details"}
 {"timestamp":"2026-03-15T00:49:45Z","artifact":"frontend/app/stores/api.ts","type":"frontend-api","note":"Updated demo setup-state schema for new Goals fields/card configuration steps"}

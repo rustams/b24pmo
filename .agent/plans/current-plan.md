@@ -52,5 +52,11 @@
 1. Выполнить изоляцию изменений RD-004 в отдельной ветке `epic-fnd-rd004-admin-unfold`. ✅
 2. Завершить stage 1+2 (Unfold integration + admin UX information architecture). ✅
 3. Обновить глобальные и epic-local артефакты после реализации. ✅
-4. Выполнить merge ветки в `master`, push и перезапуск backend для пользовательской проверки. ⏳
+4. Выполнить merge ветки в `master`, push и перезапуск backend для пользовательской проверки. ✅
 5. Держать `RD-004` в `TESTING` до подтверждения UI-проверки пользователем. ⏳
+
+## Supervisor sync after parallel agents
+1. Синхронизировать указания второго агента и проверить merge-ready состояние веток. ✅
+2. Объединить `epic-fnd-dashboard-ru-ui` и `epic-ins-rd102-goals-fields-card` в `master`. ✅
+3. Обновить global memory/plan после общего merge. ✅
+4. Перейти к совместной пользовательской валидации объединенного набора изменений. ⏳
