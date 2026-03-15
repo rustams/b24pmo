@@ -2,6 +2,8 @@
   "epic": "EPIC-INS",
   "timestamp": "2026-03-15T02:04:56Z",
   "status": "in_progress",
+  "rd107_branch": "epic-ins-rd107-persistence-verification-ui",
+  "rd107_commit": "2d6b1f5",
   "completed_tasks": [
     "RD-101",
     "RD-107"
