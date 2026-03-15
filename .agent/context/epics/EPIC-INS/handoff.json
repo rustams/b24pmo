@@ -1,9 +1,10 @@
 {
   "epic": "EPIC-INS",
-  "timestamp": "2026-03-15T00:19:19Z",
+  "timestamp": "2026-03-15T00:25:18Z",
   "status": "in_progress",
   "completed_tasks": [
-    "RD-101"
+    "RD-101",
+    "RD-107"
   ],
   "changed_files": [
     "backends/python/api/main/features/installer/services.py",
@@ -34,7 +35,7 @@
   ],
   "bitrix_sync": {
     "sync_epic_structure": "not_required",
-    "sync_status": "applied"
+    "sync_status": "applied (status-only, requires verification)"
   },
   "open_risks": [
     "Нужна пользовательская приемка нового сценария RD-102 в реальном портале: создание DWS и SP 'Цели' с проверкой ссылок.",
